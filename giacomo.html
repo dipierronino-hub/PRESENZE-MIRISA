@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Presenze Mirisa - Operatore</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #121212; color: #fff; margin: 0; padding: 20px; }
+    .card { background: #1e1e1e; border-radius: 12px; padding: 20px; max-width: 480px; margin: 0 auto; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+    h2 { margin-top: 0; color: #4dabf7; text-align: center; }
+    label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; }
+    select, input[type="date"] { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #333; background: #2a2a2a; color: #fff; font-size: 16px; box-sizing: border-box; }
+    .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+    .btn-status { padding: 14px; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; background: #333; color: #aaa; }
+    .btn-status.active { background: #1971c2; color: #fff; }
+    .btn-save { width: 100%; margin-top: 25px; padding: 15px; border: none; border-radius: 8px; background: #2f9e44; color: #fff; font-size: 18px; font-weight: bold; cursor: pointer; }
+    #msg { text-align: center; margin-top: 15px; font-weight: bold; }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    // Configurazione Firebase del tuo progetto presenze
+    const firebaseConfig = {
+      databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    let statoSelezionato = "Intera";
+    const dateInput = document.getElementById("data");
+    dateInput.value = new Date().toISOString().split("T")[0];
+
+    window.selectStato = function(stato, btn) {
+      statoSelezionato = stato;
+      document.querySelectorAll(".btn-status").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    };
+
+    window.salvaPresenza = function() {
+      const dipendente = document.getElementById("dipendente").value;
+      const data = dateInput.value;
+      if (!dipendente || !data) return;
+
+      const path = `presenze/${data}/${dipendente}`;
+      set(ref(db, path), {
+        dipendente: dipendente,
+        data: data,
+        stato: statoSelezionato,
+        orarioRegistrazione: new Date().toISOString()
+      }).then(() => {
+        const msg = document.getElementById("msg");
+        msg.style.color = "#40c057";
+        msg.textContent = `Registrato: ${dipendente} (${statoSelezionato})`;
+        setTimeout(() => msg.textContent = "", 3000);
+      }).catch(err => {
+        const msg = document.getElementById("msg");
+        msg.style.color = "#fa5252";
+        msg.textContent = "Errore salvataggio: " + err.message;
+      });
+    };
+  </script>
+</head>
+<body>
+  <div class="card">
+    <h2>Registra Presenza</h2>
+    <label for="data">Data</label>
+    <input type="date" id="data">
+
+    <label for="dipendente">Lavoratore</label>
+    <select id="dipendente">
+      <option value="Dipendente 1">Lavoratore 1</option>
+      <option value="Dipendente 2">Lavoratore 2</option>
+      <option value="Dipendente 3">Lavoratore 3</option>
+    </select>
+
+    <label>Presenza</label>
+    <div class="btn-group">
+      <button class="btn-status active" onclick="selectStato('Intera', this)">Intera</button>
+      <button class="btn-status" onclick="selectStato('Mattina', this)">Mattina</button>
+      <button class="btn-status" onclick="selectStato('Pomeriggio', this)">Pomeriggio</button>
+      <button class="btn-status" onclick="selectStato('Assente', this)">Assente</button>
+    </div>
+
+    <button class="btn-save" onclick="salvaPresenza()">Salva Presenza</button>
+    <div id="msg"></div>
+  </div>
+</body>
+</html>
