@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mirisa - Amministrazione Presenze</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 25px; }
+    .container { max-width: 900px; margin: 0 auto; }
+    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 15px; margin-bottom: 20px; }
+    h1 { margin: 0; color: #38bdf8; font-size: 24px; }
+    .controls { display: flex; gap: 15px; align-items: center; }
+    input[type="month"] { padding: 8px 12px; border-radius: 6px; border: 1px solid #475569; background: #1e293b; color: #fff; }
+    button { background: #0284c7; color: #fff; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #1e293b; border-radius: 8px; overflow: hidden; }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #334155; }
+    th { background: #0f172a; color: #94a3b8; text-transform: uppercase; font-size: 13px; }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const monthInput = document.getElementById("meseSelezionato");
+    monthInput.value = new Date().toISOString().slice(0, 7);
+
+    let presenzeMese = {};
+
+    function caricaDati() {
+      const mese = monthInput.value;
+      onValue(ref(db, "presenze"), (snapshot) => {
+        const data = snapshot.val() || {};
+        presenzeMese = {};
+
+        Object.keys(data).forEach(dataGiorno => {
+          if (dataGiorno.startsWith(mese)) {
+            const dipendentiGiorno = data[dataGiorno];
+            Object.keys(dipendentiGiorno).forEach(nome => {
+              if (!presenzeMese[nome]) presenzeMese[nome] = { intere: 0, mezze: 0, assenze: 0 };
+              const stato = dipendentiGiorno[nome].stato;
+              if (stato === "Intera") presenzeMese[nome].intere++;
+              else if (stato === "Mattina" || stato === "Pomeriggio") presenzeMese[nome].mezze++;
+              else if (stato === "Assente") presenzeMese[nome].assenze++;
+            });
+          }
+        });
+        renderTabella();
+      });
+    }
+
+    function renderTabella() {
+      const tbody = document.getElementById("tabellaPresenze");
+      tbody.innerHTML = "";
+      Object.keys(presenzeMese).forEach(nome => {
+        const stats = presenzeMese[nome];
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><strong>${nome}</strong></td>
+          <td>${stats.intere}</td>
+          <td>${stats.mezze}</td>
+          <td>${stats.assenze}</td>
+          <td>${stats.intere + (stats.mezze * 0.5)} gg</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    monthInput.addEventListener("change", caricaDati);
+    caricaDati();
+
+    window.esportaPDF = function() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+
+      doc.setFontSize(18);
+      doc.text("MIRISA CERAMICHE - Riepilogo Presenze", 14, 20);
+      doc.setFontSize(12);
+      doc.text(`Periodo: ${monthInput.value}`, 14, 28);
+
+      let y = 45;
+      doc.setFontSize(11);
+      doc.text("Dipendente", 14, y);
+      doc.text("Intere", 80, y);
+      doc.text("Mezze", 110, y);
+      doc.text("Assenze", 140, y);
+      doc.text("Tot. Equivalente", 170, y);
+      doc.line(14, y + 2, 196, y + 2);
+
+      y += 10;
+      Object.keys(presenzeMese).forEach(nome => {
+        const s = presenzeMese[nome];
+        doc.text(nome, 14, y);
+        doc.text(String(s.intere), 80, y);
+        doc.text(String(s.mezze), 110, y);
+        doc.text(String(s.assenze), 140, y);
+        doc.text(`${s.intere + (s.mezze * 0.5)} gg`, 170, y);
+        y += 8;
+      });
+
+      doc.save(`Presenze_Mirisa_${monthInput.value}.pdf`);
+    };
+  </script>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Pannello Amministrazione - Presenze</h1>
+      <div class="controls">
+        <input type="month" id="meseSelezionato">
+        <button onclick="esportaPDF()">Scarica PDF per Consulente</button>
+      </div>
+    </header>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Lavoratore</th>
+          <th>Giornate Intere</th>
+          <th>Mezze Giornate</th>
+          <th>Assenze</th>
+          <th>Totale Lavorato</th>
+        </tr>
+      </thead>
+      <tbody id="tabellaPresenze"></tbody>
+    </table>
+  </div>
+</body>
+</html>
