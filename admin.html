@@ -3,68 +3,99 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mirisa Ceramiche - Gestione Presenze & Compensi</title>
+  <title>Mirisa Ceramiche S.r.l. - Portale Amministrazione Presenze</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     :root {
-      --bg: #0b1329;
-      --card-bg: #152243;
+      --bg: #090e1a;
+      --surface: #111b2e;
+      --surface-border: #1e2e4d;
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
       --accent: #38bdf8;
       --text: #f8fafc;
       --text-muted: #94a3b8;
-      --border: #233560;
-      --success: #22c55e;
+      --success: #10b981;
       --warning: #f59e0b;
       --danger: #ef4444;
+      --purple: #8b5cf6;
+      --radius: 10px;
     }
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-    body { background: var(--bg); color: var(--text); margin: 0; padding: 24px; }
-    .container { max-width: 1200px; margin: 0 auto; }
+    body { background-color: var(--bg); color: var(--text); margin: 0; padding: 24px; }
+    .container { max-width: 1380px; margin: 0 auto; }
 
-    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 24px; }
-    .brand h1 { margin: 0; font-size: 24px; color: var(--accent); letter-spacing: 0.5px; }
+    /* Topbar */
+    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 20px; border-bottom: 1px solid var(--surface-border); margin-bottom: 24px; }
+    .brand h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #fff; display: flex; align-items: center; gap: 10px; }
+    .brand h1 span { color: var(--accent); }
     .brand p { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); }
-    .header-actions { display: flex; gap: 12px; align-items: center; }
+    .top-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 
-    input[type="month"], input[type="text"], input[type="number"], input[type="tel"] {
-      padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: #0e172f; color: #fff; font-size: 14px; outline: none;
+    /* Inputs & Buttons */
+    input, select {
+      background: #090e1a; border: 1px solid var(--surface-border); color: #fff; padding: 10px 14px; border-radius: var(--radius); font-size: 14px; outline: none; transition: border-color 0.2s;
     }
-
-    button {
-      background: #0284c7; color: #fff; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;
+    input:focus, select:focus { border-color: var(--accent); }
+    
+    .btn {
+      padding: 10px 16px; border-radius: var(--radius); font-size: 14px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;
     }
-    button:hover { background: #0369a1; }
-    button.btn-success { background: #16a34a; }
-    button.btn-success:hover { background: #15803d; }
-    button.btn-danger { background: #dc2626; padding: 6px 10px; font-size: 12px; }
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-primary:hover { background: var(--primary-hover); }
+    .btn-success { background: #059669; color: #fff; }
+    .btn-success:hover { background: #047857; }
+    .btn-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
+    .btn-danger:hover { background: var(--danger); color: #fff; }
+    .btn-secondary { background: var(--surface-border); color: #fff; }
+    .btn-secondary:hover { background: #2d426b; }
+    .btn-icon { padding: 8px 12px; font-size: 13px; }
 
-    /* KPI Cards */
+    /* KPI Grid */
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-    .kpi-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
-    .kpi-label { font-size: 13px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; }
-    .kpi-val { font-size: 26px; font-weight: 700; color: #fff; }
+    .kpi-card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 18px 20px; }
+    .kpi-title { font-size: 12px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.5px; display: flex; justify-content: space-between; }
+    .kpi-value { font-size: 28px; font-weight: 800; }
 
-    /* Tables & Cards */
-    .section-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
-    .section-title { margin: 0 0 16px; font-size: 18px; color: var(--accent); }
+    /* Grid Split Layout */
+    .main-grid { display: grid; grid-template-columns: 1fr; gap: 24px; }
+    .card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 22px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .card-title { margin: 0; font-size: 17px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 8px; }
 
+    /* Tables */
+    .table-responsive { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; text-align: left; }
-    th, td { padding: 14px; border-bottom: 1px solid var(--border); }
-    th { font-size: 12px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; background: rgba(0,0,0,0.15); }
-    td strong { font-size: 15px; }
+    th { background: rgba(0,0,0,0.25); color: var(--text-muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; padding: 12px 16px; border-bottom: 1px solid var(--surface-border); }
+    td { padding: 14px 16px; border-bottom: 1px solid var(--surface-border); font-size: 14px; vertical-align: middle; }
+    tr:hover td { background: rgba(255,255,255,0.015); }
 
-    .badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; }
-    .badge-full { background: rgba(34,197,94,0.15); color: var(--success); }
-    .badge-half { background: rgba(245,158,11,0.15); color: var(--warning); }
-    .badge-abs { background: rgba(239,68,68,0.15); color: var(--danger); }
+    /* Badges */
+    .badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; }
+    .badge-full { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+    .badge-half { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+    .badge-abs { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
+    .badge-leave { background: rgba(139, 92, 246, 0.15); color: var(--purple); }
 
-    /* Form Dipendente */
-    .add-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) 120px; gap: 12px; align-items: end; }
+    /* Modals */
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); }
+    .modal { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); width: 100%; max-width: 520px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .modal-header h3 { margin: 0; font-size: 18px; color: #fff; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; }
+    .form-group input, .form-group select { width: 100%; }
+    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+
+    /* Sub-bar for manual logging */
+    .inline-editor { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) auto; gap: 10px; align-items: end; background: #0c1424; padding: 14px; border-radius: var(--radius); border: 1px solid var(--surface-border); margin-bottom: 16px; }
   </style>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, onValue, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
       databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app"
@@ -76,184 +107,342 @@
     const monthInput = document.getElementById("meseSelezionato");
     monthInput.value = new Date().toISOString().slice(0, 7);
 
+    // Variabili di stato globale
     let dipendentiData = {};
     let presenzeData = {};
+    let editDipendenteId = null;
 
-    // Sincronizzazione Dipendenti
+    // Inizializzazione data per rettifiche rapide
+    document.getElementById("manual-date").value = new Date().toISOString().split("T")[0];
+
+    // Ascolto Firebase Dipendenti
     onValue(ref(db, "dipendenti"), (snapshot) => {
       dipendentiData = snapshot.val() || {};
+      popolaTendineDipendenti();
       aggiornaDashboard();
     });
 
-    // Sincronizzazione Presenze
+    // Ascolto Firebase Presenze
     onValue(ref(db, "presenze"), (snapshot) => {
       presenzeData = snapshot.val() || {};
       aggiornaDashboard();
+      aggiornaLogPresenzeRecenti();
     });
+
+    function popolaTendineDipendenti() {
+      const selectManual = document.getElementById("manual-dipendente");
+      selectManual.innerHTML = "";
+      Object.keys(dipendentiData).forEach(id => {
+        const d = dipendentiData[id];
+        const opt = document.createElement("option");
+        opt.value = d.nome;
+        opt.textContent = `${d.nome} (${d.mansione || 'Dipendente'})`;
+        selectManual.appendChild(opt);
+      });
+    }
 
     function aggiornaDashboard() {
       const mese = monthInput.value;
-      let totIntere = 0, totMezze = 0, totAssenze = 0, totaleStipendi = 0;
+      let totIntere = 0, totMezze = 0, totAssenze = 0, totFerie = 0, totaleMeseStipendi = 0;
 
-      const statsLavoratori = {};
+      // Inizializza tabella dipendenti
+      const stats = {};
       Object.keys(dipendentiData).forEach(id => {
-        statsLavoratori[id] = {
+        stats[id] = {
+          id: id,
           nome: dipendentiData[id].nome,
-          tariffa: Number(dipendentiData[id].tariffa || 0),
-          bonus: Number(dipendentiData[id].bonus || 0),
+          mansione: dipendentiData[id].mansione || "Lavoratore",
+          telefono: dipendentiData[id].telefono || "-",
+          email: dipendentiData[id].email || "-",
+          tariffa: parseFloat(dipendentiData[id].tariffa || 0),
+          bonus: parseFloat(dipendentiData[id].bonus || 0),
           intere: 0,
           mezze: 0,
-          assenze: 0
+          assenze: 0,
+          ferie: 0
         };
       });
 
-      // Calcolo presenze del mese
+      // Elaborazione presenze del mese
       Object.keys(presenzeData).forEach(dataGiorno => {
         if (dataGiorno.startsWith(mese)) {
-          const registroGiorno = presenzeData[dataGiorno];
-          Object.keys(registroGiorno).forEach(idOgg => {
-            const entry = registroGiorno[idOgg];
-            const targetId = Object.keys(statsLavoratori).find(k => statsLavoratori[k].nome === entry.dipendente) || idOgg;
+          const registro = presenzeData[dataGiorno];
+          Object.keys(registro).forEach(k => {
+            const entry = registro[k];
+            // Match tramite nome o ID
+            const targetId = Object.keys(stats).find(id => stats[id].nome.toLowerCase() === (entry.dipendente || "").toLowerCase());
             
-            if (!statsLavoratori[targetId]) {
-              statsLavoratori[targetId] = { nome: entry.dipendente || targetId, tariffa: 0, bonus: 0, intere: 0, mezze: 0, assenze: 0 };
+            if (targetId) {
+              if (entry.stato === "Intera") { stats[targetId].intere++; totIntere++; }
+              else if (entry.stato === "Mattina" || entry.stato === "Pomeriggio") { stats[targetId].mezze++; totMezze++; }
+              else if (entry.stato === "Assente") { stats[targetId].assenze++; totAssenze++; }
+              else if (entry.stato === "Ferie" || entry.stato === "Malattia") { stats[targetId].ferie++; totFerie++; }
             }
-
-            if (entry.stato === "Intera") { statsLavoratori[targetId].intere++; totIntere++; }
-            else if (entry.stato === "Mattina" || entry.stato === "Pomeriggio") { statsLavoratori[targetId].mezze++; totMezze++; }
-            else if (entry.stato === "Assente") { statsLavoratori[targetId].assenze++; totAssenze++; }
           });
         }
       });
 
-      // Rendering metriche
-      document.getElementById("stat-intere").textContent = totIntere;
-      document.getElementById("stat-mezze").textContent = totMezze;
-      document.getElementById("stat-assenze").textContent = totAssenze;
+      // Aggiorna KPI in alto
+      document.getElementById("kpi-intere").textContent = totIntere;
+      document.getElementById("kpi-mezze").textContent = totMezze;
+      document.getElementById("kpi-assenze").textContent = totAssenze;
+      document.getElementById("kpi-ferie").textContent = totFerie;
 
-      // Rendering Tabella
+      // Rendering Tabella Principale
       const tbody = document.getElementById("tabellaBody");
       tbody.innerHTML = "";
 
-      Object.keys(statsLavoratori).forEach(id => {
-        const item = statsLavoratori[id];
+      Object.keys(stats).forEach(id => {
+        const item = stats[id];
         const giorniEquiv = item.intere + (item.mezze * 0.5);
-        const compenso = (giorniEquiv * item.tariffa) + item.bonus;
-        totaleStipendi += compenso;
+        const compensoLordo = (giorniEquiv * item.tariffa) + item.bonus;
+        totaleMeseStipendi += compensoLordo;
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td><strong>${item.nome}</strong></td>
+          <td>
+            <div style="font-weight:700; color:#fff;">${item.nome}</div>
+            <div style="font-size:12px; color:var(--text-muted);">${item.mansione} &bull; ${item.telefono}</div>
+          </td>
           <td><span class="badge badge-full">${item.intere}</span></td>
           <td><span class="badge badge-half">${item.mezze}</span></td>
           <td><span class="badge badge-abs">${item.assenze}</span></td>
-          <td><strong>${giorniEquiv} gg</strong></td>
+          <td><span class="badge badge-leave">${item.ferie}</span></td>
+          <td><strong style="color:#fff;">${giorniEquiv} gg</strong></td>
           <td>€ ${item.tariffa.toFixed(2)}</td>
-          <td>€ ${item.bonus.toFixed(2)}</td>
-          <td><strong style="color:var(--accent);">€ ${compenso.toFixed(2)}</strong></td>
-          <td><button class="btn-danger" onclick="eliminaDipendente('${id}')">Rimuovi</button></td>
+          <td>
+            <span style="color:${item.bonus >= 0 ? 'var(--accent)' : 'var(--danger)'};">
+              € ${item.bonus.toFixed(2)}
+            </span>
+          </td>
+          <td><strong style="color:var(--success); font-size:15px;">€ ${compensoLordo.toFixed(2)}</strong></td>
+          <td>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-secondary btn-icon" onclick="apriModificaDipendente('${id}')" title="Modifica Anagrafica e Compensi">
+                <i class="fa-solid fa-pen"></i>
+              </button>
+              <button class="btn btn-danger btn-icon" onclick="eliminaDipendente('${id}', '${item.nome}')" title="Rimuovi">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            </div>
+          </td>
         `;
         tbody.appendChild(tr);
       });
 
-      document.getElementById("stat-totale").textContent = `€ ${totaleStipendi.toLocaleString('it-IT', { minimumFractionDigits: 2 })}`;
-      window.currentCalculations = { stats: statsLavoratori, mese: mese, totale: totaleStipendi };
+      document.getElementById("kpi-totale").textContent = `€ ${totaleMeseStipendi.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      window.cachedSummary = { stats: stats, mese: mese, totaleGlobale: totaleMeseStipendi };
+    }
+
+    function aggiornaLogPresenzeRecenti() {
+      const logBody = document.getElementById("logPresenzeBody");
+      logBody.innerHTML = "";
+      
+      const records = [];
+      Object.keys(presenzeData).forEach(data => {
+        const sub = presenzeData[data];
+        Object.keys(sub).forEach(idReg => {
+          records.push({ data: data, id: idReg, ...sub[idReg] });
+        });
+      });
+
+      // Ordina per data decrescente (le più recenti in cima)
+      records.sort((a,b) => b.data.localeCompare(a.data));
+
+      records.slice(0, 15).forEach(r => {
+        let badgeClass = "badge-full";
+        if (r.stato === "Mattina" || r.stato === "Pomeriggio") badgeClass = "badge-half";
+        if (r.stato === "Assente") badgeClass = "badge-abs";
+        if (r.stato === "Ferie" || r.stato === "Malattia") badgeClass = "badge-leave";
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><strong>${r.data}</strong></td>
+          <td>${r.dipendente}</td>
+          <td><span class="badge ${badgeClass}">${r.stato}</span></td>
+          <td style="font-size:12px; color:var(--text-muted);">${r.orarioRegistrazione ? new Date(r.orarioRegistrazione).toLocaleTimeString('it-IT', {hour:'2-digit', minute:'2-digit'}) : '-'}</td>
+          <td>
+            <button class="btn btn-danger btn-icon" onclick="eliminaSingolaPresenza('${r.data}', '${r.id}')" title="Cancella registrazione">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </td>
+        `;
+        logBody.appendChild(tr);
+      });
     }
 
     monthInput.addEventListener("change", aggiornaDashboard);
 
-    // Azione Aggiungi Dipendente
-    window.aggiungiDipendente = function() {
-      const nome = document.getElementById("nuovoNome").value.trim();
-      const tariffa = parseFloat(document.getElementById("nuovaTariffa").value) || 0;
-      const tel = document.getElementById("nuovoTel").value.trim();
-
-      if (!nome) return alert("Inserisci il nome del dipendente");
-
-      const id = Date.now().toString();
-      set(ref(db, `dipendenti/${id}`), {
-        nome: nome,
-        tariffa: tariffa,
-        telefono: tel,
-        bonus: 0
-      }).then(() => {
-        document.getElementById("nuovoNome").value = "";
-        document.getElementById("nuovaTariffa").value = "";
-        document.getElementById("nuovoTel").value = "";
-      });
+    // FUNZIONI CRUD DIPENDENTI
+    window.apriModaleNuovo = function() {
+      editDipendenteId = null;
+      document.getElementById("modalTitolo").textContent = "Aggiungi Nuovo Collaboratore";
+      document.getElementById("form-nome").value = "";
+      document.getElementById("form-mansione").value = "";
+      document.getElementById("form-tariffa").value = "";
+      document.getElementById("form-bonus").value = "0";
+      document.getElementById("form-telefono").value = "";
+      document.getElementById("modalDipendente").style.display = "flex";
     };
 
-    window.eliminaDipendente = function(id) {
-      if (confirm("Vuoi rimuovere questo lavoratore dall'anagrafica?")) {
+    window.apriModificaDipendente = function(id) {
+      editDipendenteId = id;
+      const d = dipendentiData[id];
+      document.getElementById("modalTitolo").textContent = `Modifica ${d.nome}`;
+      document.getElementById("form-nome").value = d.nome || "";
+      document.getElementById("form-mansione").value = d.mansione || "";
+      document.getElementById("form-tariffa").value = d.tariffa || 0;
+      document.getElementById("form-bonus").value = d.bonus || 0;
+      document.getElementById("form-telefono").value = d.telefono || "";
+      document.getElementById("modalDipendente").style.display = "flex";
+    };
+
+    window.chiudiModale = function() {
+      document.getElementById("modalDipendente").style.display = "none";
+    };
+
+    window.salvaDipendenteForm = function() {
+      const nome = document.getElementById("form-nome").value.trim();
+      const mansione = document.getElementById("form-mansione").value.trim() || "Collaboratore";
+      const tariffa = parseFloat(document.getElementById("form-tariffa").value) || 0;
+      const bonus = parseFloat(document.getElementById("form-bonus").value) || 0;
+      const telefono = document.getElementById("form-telefono").value.trim();
+
+      if (!nome) return alert("Il nome e cognome sono obbligatori!");
+
+      const payload = { nome, mansione, tariffa, bonus, telefono };
+
+      if (editDipendenteId) {
+        // Aggiorna esistente
+        update(ref(db, `dipendenti/${editDipendenteId}`), payload).then(() => chiudiModale());
+      } else {
+        // Crea nuovo con ID timestamp
+        const newId = Date.now().toString();
+        set(ref(db, `dipendenti/${newId}`), payload).then(() => chiudiModale());
+      }
+    };
+
+    window.eliminaDipendente = function(id, nome) {
+      if (confirm(`Sei sicuro di voler eliminare definitivamente "${nome}" dall'anagrafica?`)) {
         remove(ref(db, `dipendenti/${id}`));
       }
     };
 
-    // Stampa PDF Professionale Mirisa
-    window.esportaPDFConsulente = function() {
-      const calc = window.currentCalculations;
-      if (!calc) return;
+    // GESTIONE RETTIFICA RAPIDA PRESENZE (AMMINISTRATORE)
+    window.salvaRettificaRapida = function() {
+      const data = document.getElementById("manual-date").value;
+      const dipendente = document.getElementById("manual-dipendente").value;
+      const stato = document.getElementById("manual-stato").value;
+
+      if (!data || !dipendente) return alert("Seleziona data e lavoratore");
+
+      // Chiave normalizzata per evitare sovrascritture sporche
+      const safeKey = dipendente.replace(/[^a-zA-Z0-9]/g, "_");
+      set(ref(db, `presenze/${data}/${safeKey}`), {
+        dipendente: dipendente,
+        data: data,
+        stato: stato,
+        orarioRegistrazione: new Date().toISOString(),
+        modificatoDa: "Amministratore"
+      }).then(() => {
+        alert("Presenza aggiornata con successo nel registro!");
+      });
+    };
+
+    window.eliminaSingolaPresenza = function(data, idRecord) {
+      if (confirm(`Vuoi cancellare questa timbratura del ${data}?`)) {
+        remove(ref(db, `presenze/${data}/${idRecord}`));
+      }
+    };
+
+    // GENERATORE PDF EXECUTIVE MIRISA CERAMICHE
+    window.stampaReportPDF = function() {
+      const summary = window.cachedSummary;
+      if (!summary) return alert("Nessun dato da stampare");
 
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
-      // Filigrana Diagonale Sfondo
-      doc.saveGraphicsState();
-      doc.setFontSize(54);
-      doc.setTextColor(220, 225, 235);
-      doc.setFont("helvetica", "bold");
-      doc.text("MIRISA CERAMICHE", 28, 170, { angle: 45 });
-      doc.restoreGraphicsState();
+      const meseFormat = summary.mese; // Formato YYYY-MM
 
-      // Intestazione Ufficiale
-      doc.setFontSize(18);
-      doc.setTextColor(21, 34, 67);
-      doc.setFont("helvetica", "bold");
-      doc.text("MIRISA CERAMICHE S.R.L.", 14, 20);
+      // Disegno Filigrana Diagonale Elegante su ogni pagina
+      const totalPagesExp = "{total_pages_count_string}";
       
-      doc.setFontSize(10);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(100, 116, 139);
-      doc.text("Prospetto Presenze Dipendenti per Elaborazione Buste Paga", 14, 26);
-      doc.text(`Mese di Competenza: ${calc.mese}`, 14, 31);
-      doc.line(14, 35, 196, 35);
-
-      // Dati Tabella
       const tableRows = [];
-      Object.keys(calc.stats).forEach(id => {
-        const item = calc.stats[id];
+      Object.keys(summary.stats).forEach(id => {
+        const item = summary.stats[id];
         const ggEq = item.intere + (item.mezze * 0.5);
-        const comp = (ggEq * item.tariffa) + item.bonus;
+        const compenso = (ggEq * item.tariffa) + item.bonus;
         tableRows.push([
           item.nome,
+          item.mansione,
           item.intere,
           item.mezze,
           item.assenze,
-          `${ggEq} gg`,
+          item.ferie,
+          `${ggEq.toFixed(1)} gg`,
           `€ ${item.tariffa.toFixed(2)}`,
           `€ ${item.bonus.toFixed(2)}`,
-          `€ ${comp.toFixed(2)}`
+          `€ ${compenso.toFixed(2)}`
         ]);
       });
 
       doc.autoTable({
-        startY: 42,
-        head: [["Dipendente", "Giornate", "Mezze", "Assenze", "Tot. Giorni", "Tariffa Base", "Bonus/Str.", "Totale Matura"]],
+        startY: 54,
+        head: [["Collaboratore", "Ruolo", "Int.", "Mezze", "Ass.", "Ferie", "Totale", "Tariffa", "Extra", "Netto Stimato"]],
         body: tableRows,
         theme: "striped",
-        headStyles: { fillColor: [21, 34, 67], textColor: 255, fontStyle: "bold" },
-        styles: { fontSize: 9, cellPadding: 3.5 },
-        foot: [["TOTALE GENERALE", "", "", "", "", "", "", `€ ${calc.totale.toFixed(2)}`]],
-        footStyles: { fillColor: [240, 243, 248], textColor: [21, 34, 67], fontStyle: "bold" }
+        headStyles: { fillColor: [17, 27, 46], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
+        styles: { fontSize: 8, cellPadding: 3, textColor: [30, 41, 59] },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        foot: [["TOTALE GENERALE", "", "", "", "", "", "", "", "", `€ ${summary.totaleGlobale.toFixed(2)}`]],
+        footStyles: { fillColor: [226, 232, 240], textColor: [15, 23, 42], fontStyle: "bold", fontSize: 9 },
+        didDrawPage: function(data) {
+          // Filigrana
+          doc.saveGraphicsState();
+          doc.setFontSize(55);
+          doc.setTextColor(230, 235, 245);
+          doc.setFont("helvetica", "bold");
+          doc.text("MIRISA CERAMICHE", 22, 175, { angle: 45 });
+          doc.restoreGraphicsState();
+
+          // Header Ufficiale
+          doc.setFontSize(18);
+          doc.setTextColor(15, 23, 42);
+          doc.setFont("helvetica", "bold");
+          doc.text("MIRISA CERAMICHE S.R.L.", 14, 22);
+
+          doc.setFontSize(9);
+          doc.setTextColor(100, 116, 139);
+          doc.setFont("helvetica", "normal");
+          doc.text("Prospetto Presenze, Straordinari e Compensi Mensili", 14, 28);
+          doc.text(`Periodo di Competenza: ${meseFormat}`, 14, 33);
+          doc.text("Documento Ufficiale riservato allo Studio di Consulenza del Lavoro", 14, 38);
+
+          doc.setDrawColor(203, 213, 225);
+          doc.line(14, 43, 196, 43);
+
+          // Footer Pagina
+          const pageStr = `Pagina ${doc.internal.getNumberOfPages()}`;
+          doc.setFontSize(8);
+          doc.setTextColor(148, 163, 184);
+          doc.text(pageStr, 196, 288, { align: "right" });
+          doc.text("Mirisa Ceramiche S.r.l. - Dati elaborati con crittografia cloud", 14, 288);
+        }
       });
 
-      const finalY = doc.lastAutoTable.finalY + 25;
-      doc.setFontSize(10);
-      doc.setTextColor(50, 50, 50);
-      doc.text("Firma Amministrazione: ___________________________", 14, finalY);
-      doc.text("Trasmesso a Consulente del Lavoro", 120, finalY);
+      // Sezione Firma e Accettazione in Calce
+      const finalY = doc.lastAutoTable.finalY + 20;
+      if (finalY < 260) {
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(71, 85, 105);
+        doc.text("Note per lo Studio Paghe: ____________________________________________________", 14, finalY);
+        doc.text("Firma Legale Rappresentante: ___________________________", 14, finalY + 14);
+        doc.text("Timbro Studio Consulenza: ___________________________", 115, finalY + 14);
+      }
 
-      doc.save(`Mirisa_Presenze_${calc.mese}.pdf`);
+      doc.save(`Prospetto_Mirisa_${meseFormat}.pdf`);
     };
   </script>
 </head>
@@ -261,76 +450,160 @@
   <div class="container">
     <header>
       <div class="brand">
-        <h1>MIRISA CERAMICHE - AMMINISTRAZIONE</h1>
-        <p>Pannello di controllo presenze, tariffe orarie e certificazione buste paga</p>
+        <h1><i class="fa-solid fa-layer-group" style="color:var(--accent);"></i> MIRISA <span>CERAMICHE</span></h1>
+        <p>Direzione Generale &bull; Controllo Presenze & Liquidazione Compensi</p>
       </div>
-      <div class="header-actions">
+      <div class="top-actions">
         <input type="month" id="meseSelezionato">
-        <button onclick="esportaPDFConsulente()">
-          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          Genera PDF Consulente
+        <button class="btn btn-primary" onclick="apriModaleNuovo()">
+          <i class="fa-solid fa-user-plus"></i> Nuovo Dipendente
+        </button>
+        <button class="btn btn-success" onclick="stampaReportPDF()">
+          <i class="fa-solid fa-file-pdf"></i> Scarica Prospetto Consulente
         </button>
       </div>
     </header>
 
-    <!-- Statistiche Mese -->
+    <!-- KPI Globali del Mese -->
     <div class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-label">Giornate Intere</div>
-        <div class="kpi-val" id="stat-intere" style="color:var(--success);">0</div>
+        <div class="kpi-title">Giornate Piene <i class="fa-solid fa-check" style="color:var(--success);"></i></div>
+        <div class="kpi-value" id="kpi-intere" style="color:var(--success);">0</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Mezze Giornate</div>
-        <div class="kpi-val" id="stat-mezze" style="color:var(--warning);">0</div>
+        <div class="kpi-title">Mezze Giornate <i class="fa-solid fa-clock-rotate-left" style="color:var(--warning);"></i></div>
+        <div class="kpi-value" id="kpi-mezze" style="color:var(--warning);">0</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Assenze Registrate</div>
-        <div class="kpi-val" id="stat-assenze" style="color:var(--danger);">0</div>
+        <div class="kpi-title">Assenze Segnate <i class="fa-solid fa-ban" style="color:var(--danger);"></i></div>
+        <div class="kpi-value" id="kpi-assenze" style="color:var(--danger);">0</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label">Totale Compensi Mese</div>
-        <div class="kpi-val" id="stat-totale" style="color:var(--accent);">€ 0,00</div>
+        <div class="kpi-title">Ferie & Malattia <i class="fa-solid fa-umbrella-beach" style="color:var(--purple);"></i></div>
+        <div class="kpi-value" id="kpi-ferie" style="color:var(--purple);">0</div>
+      </div>
+      <div class="kpi-card" style="border-color: rgba(56, 189, 248, 0.4);">
+        <div class="kpi-title">Budget Stimato Mese <i class="fa-solid fa-euro-sign" style="color:var(--accent);"></i></div>
+        <div class="kpi-value" id="kpi-totale" style="color:var(--accent);">€ 0,00</div>
       </div>
     </div>
 
-    <!-- Tabella Presenze & Compensi -->
-    <div class="section-box">
-      <h2 class="section-title">Riepilogo Dipendenti & Buste Paga</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Lavoratore</th>
-            <th>Intere</th>
-            <th>Mezze</th>
-            <th>Assenze</th>
-            <th>Totale Lavorato</th>
-            <th>Tariffa Giornaliera</th>
-            <th>Bonus / Extra</th>
-            <th>Totale Lordo</th>
-            <th>Azioni</th>
-          </tr>
-        </thead>
-        <tbody id="tabellaBody"></tbody>
-      </table>
+    <!-- Modulo Sovrascrittura / Registrazione Rapida Presenze da Admin -->
+    <div class="card" style="margin-bottom: 24px;">
+      <div class="card-header">
+        <h2 class="card-title"><i class="fa-solid fa-pencil" style="color:var(--accent);"></i> Rettifica Manuale Presenza / Controllo Direzionale</h2>
+        <span style="font-size:12px; color:var(--text-muted);">Usa questa sezione se Giacomo dimentica o sbaglia un inserimento</span>
+      </div>
+      <div class="inline-editor">
+        <div>
+          <label style="display:block; font-size:11px; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px;">Data Riferimento</label>
+          <input type="date" id="manual-date" style="width:100%;">
+        </div>
+        <div>
+          <label style="display:block; font-size:11px; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px;">Lavoratore</label>
+          <select id="manual-dipendente" style="width:100%;"></select>
+        </div>
+        <div>
+          <label style="display:block; font-size:11px; text-transform:uppercase; color:var(--text-muted); margin-bottom:4px;">Stato Presenza</label>
+          <select id="manual-stato" style="width:100%;">
+            <option value="Intera">Intera (1.0 gg)</option>
+            <option value="Mattina">Mezza Mattina (0.5 gg)</option>
+            <option value="Pomeriggio">Mezza Pomeriggio (0.5 gg)</option>
+            <option value="Ferie">Ferie / Permesso</option>
+            <option value="Malattia">Malattia</option>
+            <option value="Assente">Assente (0.0 gg)</option>
+          </select>
+        </div>
+        <div>
+          <button class="btn btn-primary" onclick="salvaRettificaRapida()" style="height:42px;">
+            <i class="fa-solid fa-floppy-disk"></i> Registra / Rettifica
+          </button>
+        </div>
+      </div>
     </div>
 
-    <!-- Gestione Dipendenti Mirisa -->
-    <div class="section-box">
-      <h2 class="section-title">Aggiungi Nuovo Dipendente</h2>
-      <div class="add-form">
-        <div>
-          <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;">Nome e Cognome</label>
-          <input type="text" id="nuovoNome" placeholder="Es. Mario Rossi" style="width:100%;">
+    <div class="main-grid">
+      <!-- Tabella Dipendenti & Calcoli -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><i class="fa-solid fa-users" style="color:var(--accent);"></i> Registro Dipendenti & Spettanze Mensili</h2>
         </div>
-        <div>
-          <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;">Tariffa Giornaliera (€)</label>
-          <input type="number" id="nuovaTariffa" placeholder="Es. 80" style="width:100%;">
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Lavoratore / Info</th>
+                <th>Intere</th>
+                <th>Mezze</th>
+                <th>Assenze</th>
+                <th>Ferie/Mal.</th>
+                <th>Tot. Giorni</th>
+                <th>Tariffa Base</th>
+                <th>Extra/Bonus</th>
+                <th>Totale Lordo</th>
+                <th style="width:110px;">Azioni</th>
+              </tr>
+            </thead>
+            <tbody id="tabellaBody"></tbody>
+          </table>
         </div>
-        <div>
-          <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;">Telefono</label>
-          <input type="tel" id="nuovoTel" placeholder="Es. 333..." style="width:100%;">
+      </div>
+
+      <!-- Log Ultime Presenze -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><i class="fa-solid fa-clock" style="color:var(--accent);"></i> Ultime 15 Timbrature Registrate da Cantiere</h2>
         </div>
-        <button class="btn-success" onclick="aggiungiDipendente()">+ Aggiungi</button>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Collaboratore</th>
+                <th>Stato Assegnato</th>
+                <th>Ora Invio</th>
+                <th style="width:70px;">Annulla</th>
+              </tr>
+            </thead>
+            <tbody id="logPresenzeBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Aggiungi / Modifica Dipendente -->
+  <div class="modal-backdrop" id="modalDipendente">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitolo">Dettagli Collaboratore</h3>
+        <button onclick="chiudiModale()" style="background:transparent; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="form-group">
+        <label>Nome e Cognome *</label>
+        <input type="text" id="form-nome" placeholder="es. Giuseppe Rossi">
+      </div>
+      <div class="form-group">
+        <label>Mansione / Reparto</label>
+        <input type="text" id="form-mansione" placeholder="es. Posatore, Addetto Magazzino">
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="form-group">
+          <label>Tariffa Giornaliera (€) *</label>
+          <input type="number" step="0.5" id="form-tariffa" placeholder="es. 85.00">
+        </div>
+        <div class="form-group">
+          <label>Bonus / Extra Mese (€)</label>
+          <input type="number" step="1" id="form-bonus" placeholder="es. 50.00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Telefono</label>
+        <input type="tel" id="form-telefono" placeholder="es. 338 1234567">
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="chiudiModale()">Annulla</button>
+        <button class="btn btn-primary" onclick="salvaDipendenteForm()"><i class="fa-solid fa-check"></i> Salva Collaboratore</button>
       </div>
     </div>
   </div>
