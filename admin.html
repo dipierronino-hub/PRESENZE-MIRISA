@@ -3,26 +3,71 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mirisa - Amministrazione Presenze</title>
+  <title>Mirisa Ceramiche - Gestione Presenze & Compensi</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 25px; }
-    .container { max-width: 900px; margin: 0 auto; }
-    header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #334155; padding-bottom: 15px; margin-bottom: 20px; }
-    h1 { margin: 0; color: #38bdf8; font-size: 24px; }
-    .controls { display: flex; gap: 15px; align-items: center; }
-    input[type="month"] { padding: 8px 12px; border-radius: 6px; border: 1px solid #475569; background: #1e293b; color: #fff; }
-    button { background: #0284c7; color: #fff; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: bold; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #1e293b; border-radius: 8px; overflow: hidden; }
-    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #334155; }
-    th { background: #0f172a; color: #94a3b8; text-transform: uppercase; font-size: 13px; }
+    :root {
+      --bg: #0b1329;
+      --card-bg: #152243;
+      --accent: #38bdf8;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #233560;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); margin: 0; padding: 24px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+
+    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); padding-bottom: 20px; margin-bottom: 24px; }
+    .brand h1 { margin: 0; font-size: 24px; color: var(--accent); letter-spacing: 0.5px; }
+    .brand p { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); }
+    .header-actions { display: flex; gap: 12px; align-items: center; }
+
+    input[type="month"], input[type="text"], input[type="number"], input[type="tel"] {
+      padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); background: #0e172f; color: #fff; font-size: 14px; outline: none;
+    }
+
+    button {
+      background: #0284c7; color: #fff; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 14px; display: inline-flex; align-items: center; gap: 8px; transition: background 0.2s;
+    }
+    button:hover { background: #0369a1; }
+    button.btn-success { background: #16a34a; }
+    button.btn-success:hover { background: #15803d; }
+    button.btn-danger { background: #dc2626; padding: 6px 10px; font-size: 12px; }
+
+    /* KPI Cards */
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .kpi-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+    .kpi-label { font-size: 13px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px; }
+    .kpi-val { font-size: 26px; font-weight: 700; color: #fff; }
+
+    /* Tables & Cards */
+    .section-box { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 24px; }
+    .section-title { margin: 0 0 16px; font-size: 18px; color: var(--accent); }
+
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 14px; border-bottom: 1px solid var(--border); }
+    th { font-size: 12px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px; background: rgba(0,0,0,0.15); }
+    td strong { font-size: 15px; }
+
+    .badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: bold; display: inline-block; }
+    .badge-full { background: rgba(34,197,94,0.15); color: var(--success); }
+    .badge-half { background: rgba(245,158,11,0.15); color: var(--warning); }
+    .badge-abs { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+    /* Form Dipendente */
+    .add-form { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) 120px; gap: 12px; align-items: end; }
   </style>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, onValue, set, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
-      databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.firebaseio.com"
+      databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -31,105 +76,263 @@
     const monthInput = document.getElementById("meseSelezionato");
     monthInput.value = new Date().toISOString().slice(0, 7);
 
-    let presenzeMese = {};
+    let dipendentiData = {};
+    let presenzeData = {};
 
-    function caricaDati() {
+    // Sincronizzazione Dipendenti
+    onValue(ref(db, "dipendenti"), (snapshot) => {
+      dipendentiData = snapshot.val() || {};
+      aggiornaDashboard();
+    });
+
+    // Sincronizzazione Presenze
+    onValue(ref(db, "presenze"), (snapshot) => {
+      presenzeData = snapshot.val() || {};
+      aggiornaDashboard();
+    });
+
+    function aggiornaDashboard() {
       const mese = monthInput.value;
-      onValue(ref(db, "presenze"), (snapshot) => {
-        const data = snapshot.val() || {};
-        presenzeMese = {};
+      let totIntere = 0, totMezze = 0, totAssenze = 0, totaleStipendi = 0;
 
-        Object.keys(data).forEach(dataGiorno => {
-          if (dataGiorno.startsWith(mese)) {
-            const dipendentiGiorno = data[dataGiorno];
-            Object.keys(dipendentiGiorno).forEach(nome => {
-              if (!presenzeMese[nome]) presenzeMese[nome] = { intere: 0, mezze: 0, assenze: 0 };
-              const stato = dipendentiGiorno[nome].stato;
-              if (stato === "Intera") presenzeMese[nome].intere++;
-              else if (stato === "Mattina" || stato === "Pomeriggio") presenzeMese[nome].mezze++;
-              else if (stato === "Assente") presenzeMese[nome].assenze++;
-            });
-          }
-        });
-        renderTabella();
+      const statsLavoratori = {};
+      Object.keys(dipendentiData).forEach(id => {
+        statsLavoratori[id] = {
+          nome: dipendentiData[id].nome,
+          tariffa: Number(dipendentiData[id].tariffa || 0),
+          bonus: Number(dipendentiData[id].bonus || 0),
+          intere: 0,
+          mezze: 0,
+          assenze: 0
+        };
       });
-    }
 
-    function renderTabella() {
-      const tbody = document.getElementById("tabellaPresenze");
+      // Calcolo presenze del mese
+      Object.keys(presenzeData).forEach(dataGiorno => {
+        if (dataGiorno.startsWith(mese)) {
+          const registroGiorno = presenzeData[dataGiorno];
+          Object.keys(registroGiorno).forEach(idOgg => {
+            const entry = registroGiorno[idOgg];
+            const targetId = Object.keys(statsLavoratori).find(k => statsLavoratori[k].nome === entry.dipendente) || idOgg;
+            
+            if (!statsLavoratori[targetId]) {
+              statsLavoratori[targetId] = { nome: entry.dipendente || targetId, tariffa: 0, bonus: 0, intere: 0, mezze: 0, assenze: 0 };
+            }
+
+            if (entry.stato === "Intera") { statsLavoratori[targetId].intere++; totIntere++; }
+            else if (entry.stato === "Mattina" || entry.stato === "Pomeriggio") { statsLavoratori[targetId].mezze++; totMezze++; }
+            else if (entry.stato === "Assente") { statsLavoratori[targetId].assenze++; totAssenze++; }
+          });
+        }
+      });
+
+      // Rendering metriche
+      document.getElementById("stat-intere").textContent = totIntere;
+      document.getElementById("stat-mezze").textContent = totMezze;
+      document.getElementById("stat-assenze").textContent = totAssenze;
+
+      // Rendering Tabella
+      const tbody = document.getElementById("tabellaBody");
       tbody.innerHTML = "";
-      Object.keys(presenzeMese).forEach(nome => {
-        const stats = presenzeMese[nome];
+
+      Object.keys(statsLavoratori).forEach(id => {
+        const item = statsLavoratori[id];
+        const giorniEquiv = item.intere + (item.mezze * 0.5);
+        const compenso = (giorniEquiv * item.tariffa) + item.bonus;
+        totaleStipendi += compenso;
+
         const tr = document.createElement("tr");
         tr.innerHTML = `
-          <td><strong>${nome}</strong></td>
-          <td>${stats.intere}</td>
-          <td>${stats.mezze}</td>
-          <td>${stats.assenze}</td>
-          <td>${stats.intere + (stats.mezze * 0.5)} gg</td>
+          <td><strong>${item.nome}</strong></td>
+          <td><span class="badge badge-full">${item.intere}</span></td>
+          <td><span class="badge badge-half">${item.mezze}</span></td>
+          <td><span class="badge badge-abs">${item.assenze}</span></td>
+          <td><strong>${giorniEquiv} gg</strong></td>
+          <td>€ ${item.tariffa.toFixed(2)}</td>
+          <td>€ ${item.bonus.toFixed(2)}</td>
+          <td><strong style="color:var(--accent);">€ ${compenso.toFixed(2)}</strong></td>
+          <td><button class="btn-danger" onclick="eliminaDipendente('${id}')">Rimuovi</button></td>
         `;
         tbody.appendChild(tr);
       });
+
+      document.getElementById("stat-totale").textContent = `€ ${totaleStipendi.toLocaleString('it-IT', { minimumFractionDigits: 2 })}`;
+      window.currentCalculations = { stats: statsLavoratori, mese: mese, totale: totaleStipendi };
     }
 
-    monthInput.addEventListener("change", caricaDati);
-    caricaDati();
+    monthInput.addEventListener("change", aggiornaDashboard);
 
-    window.esportaPDF = function() {
+    // Azione Aggiungi Dipendente
+    window.aggiungiDipendente = function() {
+      const nome = document.getElementById("nuovoNome").value.trim();
+      const tariffa = parseFloat(document.getElementById("nuovaTariffa").value) || 0;
+      const tel = document.getElementById("nuovoTel").value.trim();
+
+      if (!nome) return alert("Inserisci il nome del dipendente");
+
+      const id = Date.now().toString();
+      set(ref(db, `dipendenti/${id}`), {
+        nome: nome,
+        tariffa: tariffa,
+        telefono: tel,
+        bonus: 0
+      }).then(() => {
+        document.getElementById("nuovoNome").value = "";
+        document.getElementById("nuovaTariffa").value = "";
+        document.getElementById("nuovoTel").value = "";
+      });
+    };
+
+    window.eliminaDipendente = function(id) {
+      if (confirm("Vuoi rimuovere questo lavoratore dall'anagrafica?")) {
+        remove(ref(db, `dipendenti/${id}`));
+      }
+    };
+
+    // Stampa PDF Professionale Mirisa
+    window.esportaPDFConsulente = function() {
+      const calc = window.currentCalculations;
+      if (!calc) return;
+
       const { jsPDF } = window.jspdf;
-      const doc = new jsPDF();
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
+      // Filigrana Diagonale Sfondo
+      doc.saveGraphicsState();
+      doc.setFontSize(54);
+      doc.setTextColor(220, 225, 235);
+      doc.setFont("helvetica", "bold");
+      doc.text("MIRISA CERAMICHE", 28, 170, { angle: 45 });
+      doc.restoreGraphicsState();
+
+      // Intestazione Ufficiale
       doc.setFontSize(18);
-      doc.text("MIRISA CERAMICHE - Riepilogo Presenze", 14, 20);
-      doc.setFontSize(12);
-      doc.text(`Periodo: ${monthInput.value}`, 14, 28);
+      doc.setTextColor(21, 34, 67);
+      doc.setFont("helvetica", "bold");
+      doc.text("MIRISA CERAMICHE S.R.L.", 14, 20);
+      
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 116, 139);
+      doc.text("Prospetto Presenze Dipendenti per Elaborazione Buste Paga", 14, 26);
+      doc.text(`Mese di Competenza: ${calc.mese}`, 14, 31);
+      doc.line(14, 35, 196, 35);
 
-      let y = 45;
-      doc.setFontSize(11);
-      doc.text("Dipendente", 14, y);
-      doc.text("Intere", 80, y);
-      doc.text("Mezze", 110, y);
-      doc.text("Assenze", 140, y);
-      doc.text("Tot. Equivalente", 170, y);
-      doc.line(14, y + 2, 196, y + 2);
-
-      y += 10;
-      Object.keys(presenzeMese).forEach(nome => {
-        const s = presenzeMese[nome];
-        doc.text(nome, 14, y);
-        doc.text(String(s.intere), 80, y);
-        doc.text(String(s.mezze), 110, y);
-        doc.text(String(s.assenze), 140, y);
-        doc.text(`${s.intere + (s.mezze * 0.5)} gg`, 170, y);
-        y += 8;
+      // Dati Tabella
+      const tableRows = [];
+      Object.keys(calc.stats).forEach(id => {
+        const item = calc.stats[id];
+        const ggEq = item.intere + (item.mezze * 0.5);
+        const comp = (ggEq * item.tariffa) + item.bonus;
+        tableRows.push([
+          item.nome,
+          item.intere,
+          item.mezze,
+          item.assenze,
+          `${ggEq} gg`,
+          `€ ${item.tariffa.toFixed(2)}`,
+          `€ ${item.bonus.toFixed(2)}`,
+          `€ ${comp.toFixed(2)}`
+        ]);
       });
 
-      doc.save(`Presenze_Mirisa_${monthInput.value}.pdf`);
+      doc.autoTable({
+        startY: 42,
+        head: [["Dipendente", "Giornate", "Mezze", "Assenze", "Tot. Giorni", "Tariffa Base", "Bonus/Str.", "Totale Matura"]],
+        body: tableRows,
+        theme: "striped",
+        headStyles: { fillColor: [21, 34, 67], textColor: 255, fontStyle: "bold" },
+        styles: { fontSize: 9, cellPadding: 3.5 },
+        foot: [["TOTALE GENERALE", "", "", "", "", "", "", `€ ${calc.totale.toFixed(2)}`]],
+        footStyles: { fillColor: [240, 243, 248], textColor: [21, 34, 67], fontStyle: "bold" }
+      });
+
+      const finalY = doc.lastAutoTable.finalY + 25;
+      doc.setFontSize(10);
+      doc.setTextColor(50, 50, 50);
+      doc.text("Firma Amministrazione: ___________________________", 14, finalY);
+      doc.text("Trasmesso a Consulente del Lavoro", 120, finalY);
+
+      doc.save(`Mirisa_Presenze_${calc.mese}.pdf`);
     };
   </script>
 </head>
 <body>
   <div class="container">
     <header>
-      <h1>Pannello Amministrazione - Presenze</h1>
-      <div class="controls">
+      <div class="brand">
+        <h1>MIRISA CERAMICHE - AMMINISTRAZIONE</h1>
+        <p>Pannello di controllo presenze, tariffe orarie e certificazione buste paga</p>
+      </div>
+      <div class="header-actions">
         <input type="month" id="meseSelezionato">
-        <button onclick="esportaPDF()">Scarica PDF per Consulente</button>
+        <button onclick="esportaPDFConsulente()">
+          <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          Genera PDF Consulente
+        </button>
       </div>
     </header>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Lavoratore</th>
-          <th>Giornate Intere</th>
-          <th>Mezze Giornate</th>
-          <th>Assenze</th>
-          <th>Totale Lavorato</th>
-        </tr>
-      </thead>
-      <tbody id="tabellaPresenze"></tbody>
-    </table>
+    <!-- Statistiche Mese -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Giornate Intere</div>
+        <div class="kpi-val" id="stat-intere" style="color:var(--success);">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Mezze Giornate</div>
+        <div class="kpi-val" id="stat-mezze" style="color:var(--warning);">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Assenze Registrate</div>
+        <div class="kpi-val" id="stat-assenze" style="color:var(--danger);">0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Totale Compensi Mese</div>
+        <div class="kpi-val" id="stat-totale" style="color:var(--accent);">€ 0,00</div>
+      </div>
+    </div>
+
+    <!-- Tabella Presenze & Compensi -->
+    <div class="section-box">
+      <h2 class="section-title">Riepilogo Dipendenti & Buste Paga</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Lavoratore</th>
+            <th>Intere</th>
+            <th>Mezze</th>
+            <th>Assenze</th>
+            <th>Totale Lavorato</th>
+            <th>Tariffa Giornaliera</th>
+            <th>Bonus / Extra</th>
+            <th>Totale Lordo</th>
+            <th>Azioni</th>
+          </tr>
+        </thead>
+        <tbody id="tabellaBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Gestione Dipendenti Mirisa -->
+    <div class="section-box">
+      <h2 class="section-title">Aggiungi Nuovo Dipendente</h2>
+      <div class="add-form">
+        <div>
+          <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;">Nome e Cognome</label>
+          <input type="text" id="nuovoNome" placeholder="Es. Mario Rossi" style="width:100%;">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;">Tariffa Giornaliera (€)</label>
+          <input type="number" id="nuovaTariffa" placeholder="Es. 80" style="width:100%;">
+        </div>
+        <div>
+          <label style="display:block;font-size:12px;color:var(--text-muted);margin-bottom:4px;">Telefono</label>
+          <input type="tel" id="nuovoTel" placeholder="Es. 333..." style="width:100%;">
+        </div>
+        <button class="btn-success" onclick="aggiungiDipendente()">+ Aggiungi</button>
+      </div>
+    </div>
   </div>
 </body>
 </html>
