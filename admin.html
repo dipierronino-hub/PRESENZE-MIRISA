@@ -3,21 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mirisa Ceramiche S.r.l. - Portale Amministrazione Presenze</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <title>Mirisa Ceramiche - Cruscotto Direzionale Presenze & Buste Paga</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Librerie Elaborazione PDF e Creazione ZIP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
   <style>
     :root {
       --bg: #070d19;
       --surface: #0f1b33;
       --surface-border: #1a2c4e;
-      --surface-hover: #162646;
-      --primary: #0284c7;
-      --primary-hover: #0369a1;
       --accent: #38bdf8;
-      --whatsapp: #25D366;
-      --whatsapp-hover: #1ebd5a;
+      --accent-hover: #0284c7;
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --success: #10b981;
@@ -26,1114 +27,519 @@
       --purple: #8b5cf6;
       --radius: 12px;
     }
+
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; min-height: 100vh; }
     
-    #auth-overlay {
-      position: fixed; inset: 0; background: #070d19; z-index: 9999;
-      display: flex; justify-content: center; align-items: center; padding: 20px;
-    }
-    .auth-box {
+    header {
+      display: flex; justify-content: space-between; align-items: center;
       background: var(--surface); border: 1px solid var(--surface-border);
-      border-radius: 16px; padding: 32px 24px; width: 100%; max-width: 360px;
-      text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+      border-radius: var(--radius); padding: 16px 24px; margin-bottom: 24px;
     }
-    .auth-icon {
-      width: 56px; height: 56px; background: rgba(2, 132, 199, 0.15);
-      border: 1px solid rgba(56, 189, 248, 0.3); color: var(--accent);
-      border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
-      font-size: 22px; margin-bottom: 12px;
-    }
-    .auth-input {
-      width: 100%; background: #081120; border: 1px solid var(--surface-border);
-      color: #fff; padding: 12px; border-radius: 10px; margin-bottom: 12px; outline: none; font-size: 14px;
-    }
-    .auth-input:focus { border-color: var(--accent); }
-    .pin-display {
-      letter-spacing: 14px; font-size: 28px; font-weight: 800; text-align: center;
-      width: 100%; background: #081120; border: 1px solid var(--surface-border);
-      color: #fff; padding: 10px; border-radius: 10px; margin: 12px 0; outline: none;
-    }
-    .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-    .pin-btn {
-      background: #081120; border: 1px solid var(--surface-border); color: #fff;
-      font-size: 20px; font-weight: 700; padding: 12px 0; border-radius: 10px; cursor: pointer;
-    }
-    .pin-btn:active { background: #0284c7; }
-    .pin-btn-bio { background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.3); color: var(--accent); }
-    .auth-error { color: var(--danger); font-size: 13px; font-weight: 700; margin-top: 10px; display: none; }
-
-    .container { max-width: 1600px; margin: 0 auto; display: none; }
-
-    header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 20px; border-bottom: 1px solid var(--surface-border); margin-bottom: 20px; }
-    .brand h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #fff; display: flex; align-items: center; gap: 12px; }
+    .brand h1 { margin: 0; font-size: 22px; font-weight: 800; }
     .brand h1 span { color: var(--accent); }
     .brand p { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); }
-    .top-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
-    .view-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-    .view-tab-btn { padding: 12px 18px; border-radius: var(--radius); border: 1px solid var(--surface-border); background: var(--surface); color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
-    .view-tab-btn.active { background: #0284c7; color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(2,132,199,0.3); }
-
-    .view-content { display: none; }
-    .view-content.active { display: block; }
-
-    input, select {
-      background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px 14px; border-radius: var(--radius); font-size: 14px; outline: none; transition: all 0.2s;
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 20px; }
+    .nav-btn {
+      background: var(--surface); border: 1px solid var(--surface-border); color: var(--text-muted);
+      padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer;
+      display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;
     }
-    input:focus, select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.15); }
-    
-    .btn {
-      padding: 10px 16px; border-radius: var(--radius); font-size: 13px; font-weight: 600; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    }
-    .btn:active { transform: scale(0.98); }
-    .btn-primary { background: var(--primary); color: #fff; }
-    .btn-primary:hover { background: var(--primary-hover); }
-    .btn-whatsapp { background: var(--whatsapp); color: #fff; }
-    .btn-whatsapp:hover { background: var(--whatsapp-hover); box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3); }
-    .btn-pdf { background: #e11d48; color: #fff; }
-    .btn-pdf:hover { background: #be123c; }
-    .btn-danger { background: rgba(239, 68, 68, 0.15); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.3); }
-    .btn-danger:hover { background: var(--danger); color: #fff; }
-    .btn-secondary { background: var(--surface-border); color: #fff; }
-    .btn-secondary:hover { background: #263c66; }
-    .btn-icon { padding: 8px 12px; font-size: 13px; }
+    .nav-btn.active { background: var(--accent); color: #04101e; border-color: var(--accent); }
 
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px; }
-    .kpi-card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 18px; position: relative; overflow: hidden; }
-    .kpi-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
-    .kpi-card.kpi-green::before { background: var(--success); }
-    .kpi-card.kpi-orange::before { background: var(--warning); }
-    .kpi-card.kpi-red::before { background: var(--danger); }
-    .kpi-card.kpi-purple::before { background: var(--purple); }
-    .kpi-card.kpi-blue::before { background: var(--accent); }
-    .kpi-title { font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 6px; letter-spacing: 0.5px; display: flex; justify-content: space-between; }
-    .kpi-value { font-size: 26px; font-weight: 800; }
-
-    .card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.25); }
-    .card-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
-    .card-title { margin: 0; font-size: 17px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
-
-    .table-responsive { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    table { width: 100%; border-collapse: collapse; text-align: left; }
-    th { background: rgba(0,0,0,0.3); color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; padding: 12px 14px; border-bottom: 1px solid var(--surface-border); white-space: nowrap; }
-    td { padding: 14px; border-bottom: 1px solid var(--surface-border); font-size: 13px; vertical-align: middle; }
-    tr:hover td { background: var(--surface-hover); }
-
-    .badge { padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; display: inline-block; }
-    .badge-full { background: rgba(16, 185, 129, 0.15); color: var(--success); }
-    .badge-half { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
-    .badge-abs { background: rgba(239, 68, 68, 0.15); color: var(--danger); }
-    .badge-leave { background: rgba(139, 92, 246, 0.15); color: var(--purple); }
-
-    .inline-editor { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) auto auto; gap: 10px; align-items: end; background: #081120; padding: 16px; border-radius: var(--radius); border: 1px solid var(--surface-border); }
-
-    .planning-nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
-    .planning-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--surface-border); border-radius: 8px; background: #081120; }
-    table.plan-table { border-collapse: separate; border-spacing: 0; table-layout: fixed; width: max-content; min-width: 100%; background: #081120; }
-    
-    table.plan-table th.name-col,
-    table.plan-table td.name-col { 
-      position: sticky !important; left: 0 !important; z-index: 10 !important;
-      width: 200px !important; min-width: 200px !important; max-width: 200px !important;
-      background: #0d1a33 !important; border-right: 3px solid #0284c7 !important; border-bottom: 1px solid var(--surface-border) !important;
-      padding: 10px 12px !important; text-align: left !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
-      color: #ffffff !important; font-weight: 700 !important; font-size: 13px !important; box-shadow: 4px 0 10px rgba(0,0,0,0.5);
-    }
-    table.plan-table th.day-col { 
-      background: #0b1528; color: var(--text-muted); font-size: 10.5px; text-transform: uppercase; text-align: center;
-      padding: 8px 0; border-bottom: 1px solid var(--surface-border); border-right: 1px solid rgba(255,255,255,0.06);
-      width: 40px !important; min-width: 40px !important; max-width: 40px !important;
-    }
-    table.plan-table td.day-cell { 
-      text-align: center; padding: 6px 0; border-bottom: 1px solid var(--surface-border); border-right: 1px solid rgba(255,255,255,0.06);
-      width: 40px !important; min-width: 40px !important; max-width: 40px !important;
+    .card {
+      background: var(--surface); border: 1px solid var(--surface-border);
+      border-radius: var(--radius); padding: 20px; margin-bottom: 20px;
     }
 
-    .plan-cell-interactive { cursor: pointer; transition: background 0.15s; user-select: none; }
-    .plan-cell-interactive:hover { background: rgba(56, 189, 248, 0.15) !important; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; }
+    .toolbar select, .toolbar input {
+      background: #081120; border: 1px solid var(--surface-border); color: #fff;
+      padding: 8px 12px; border-radius: 6px; font-size: 14px; outline: none;
+    }
 
-    .cell-badge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; font-size: 11px; font-weight: 800; }
-    .cell-I { background: rgba(16, 185, 129, 0.25); color: var(--success); border: 1px solid rgba(16,185,129,0.4); }
-    .cell-M, .cell-P { background: rgba(245, 158, 11, 0.25); color: var(--warning); border: 1px solid rgba(245,158,11,0.4); }
-    .cell-A { background: rgba(239, 68, 68, 0.25); color: var(--danger); border: 1px solid rgba(239,68,68,0.4); }
-    .cell-F { background: rgba(139, 92, 246, 0.25); color: var(--purple); border: 1px solid rgba(139,92,246,0.4); }
-    .cell-MAL { background: rgba(100, 116, 139, 0.25); color: #94a3b8; border: 1px solid rgba(100,116,139,0.4); }
-    .cell-empty { color: #334155; font-size: 16px; line-height: 28px; }
+    /* Tabella Planning */
+    .table-container { overflow-x: auto; max-width: 100%; border-radius: 8px; border: 1px solid var(--surface-border); }
+    table { width: 100%; border-collapse: collapse; text-align: center; font-size: 12px; }
+    th, td { padding: 8px 6px; border: 1px solid var(--surface-border); }
+    th { background: #0b1528; color: var(--text-muted); font-weight: 700; }
+    th.dip-header { text-align: left; padding-left: 12px; min-width: 160px; position: sticky; left: 0; background: #0b1528; z-index: 10; }
+    td.dip-cell { text-align: left; padding-left: 12px; font-weight: 700; position: sticky; left: 0; background: var(--surface); z-index: 5; }
 
-    .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(6px); }
-    .modal { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); width: 100%; max-width: 500px; padding: 24px; box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.6); }
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
-    .modal-header h3 { margin: 0; font-size: 18px; color: #fff; }
-    .form-group { margin-bottom: 14px; }
-    .form-group label { display: block; font-size: 12px; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; text-transform: uppercase; }
-    .form-group input, .form-group select { width: 100%; }
-    .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    .day-cell { cursor: pointer; transition: background 0.2s; font-weight: 700; font-size: 11px; }
+    .day-cell:hover { background: rgba(56, 189, 248, 0.1); }
+    .st-intera { background: rgba(16, 185, 129, 0.25); color: var(--success); }
+    .st-assente { background: rgba(239, 68, 68, 0.25); color: var(--danger); }
+    .st-mattina { background: rgba(245, 158, 11, 0.25); color: var(--warning); }
+    .st-pomeriggio { background: rgba(245, 158, 11, 0.25); color: var(--warning); }
+    .st-ferie { background: rgba(139, 92, 246, 0.25); color: var(--purple); }
 
-    .quick-status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
-    .btn-quick-status { padding: 12px; border-radius: 8px; border: 1px solid var(--surface-border); font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; color: #fff; background: #081120; transition: transform 0.1s; }
-    .btn-quick-status:active { transform: scale(0.96); }
+    /* Area Buste Paga */
+    .dropzone {
+      border: 2px dashed var(--accent); background: rgba(56, 189, 248, 0.04);
+      border-radius: var(--radius); padding: 30px; text-align: center; transition: all 0.2s;
+    }
+    .dropzone.dragover { background: rgba(56, 189, 248, 0.15); border-color: #fff; }
+    .btn-action {
+      background: var(--accent); color: #04101e; border: none; padding: 10px 20px;
+      border-radius: 8px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-action:hover { background: var(--accent-hover); }
 
-    #toast { position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: #fff; padding: 14px 20px; border-radius: 10px; border-left: 4px solid var(--accent); display: none; align-items: center; gap: 10px; z-index: 200; font-size: 14px; }
+    .cedolini-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; margin-top: 20px;
+    }
+    .cedolino-card {
+      background: #081120; border: 1px solid var(--surface-border); border-radius: 8px; padding: 14px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+
+    #toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: #fff; padding: 12px 20px; border-radius: 8px; border-left: 4px solid var(--success); display: none; z-index: 1000; }
   </style>
 </head>
 <body>
 
-  <!-- SCHERMATA LOGIN & SBLOCCO -->
-  <div id="auth-overlay">
-    <div class="auth-box" id="view-login-form">
-      <div class="auth-icon"><i class="fa-solid fa-lock"></i></div>
-      <h2 style="margin:0 0 6px; font-size:20px; font-weight:800; color:#fff;">Accesso Amministrazione</h2>
-      <p style="font-size:13px; color:var(--text-muted); margin-bottom:18px;">Autenticati con le tue credenziali Firebase</p>
-      
-      <input type="email" id="login-email" class="auth-input" placeholder="dipierro.nino@gmail.com" value="dipierro.nino@gmail.com">
-      <input type="password" id="login-password" class="auth-input" placeholder="Password account">
-      
-      <button class="btn btn-primary" id="btn-login-action" style="width:100%; justify-content:center; padding:12px; font-size:14px; font-weight:700;">
-        <i class="fa-solid fa-arrow-right-to-bracket"></i> Accedi al Portale
-      </button>
-
-      <div id="login-error" class="auth-error"></div>
+  <header>
+    <div class="brand">
+      <h1>MIRISA <span>CERAMICHE</span></h1>
+      <p>Cruscotto Presenze, Spettanze & Buste Paga</p>
     </div>
-
-    <div class="auth-box" id="view-quick-unlock" style="display: none;">
-      <div class="auth-icon"><i class="fa-solid fa-fingerprint"></i></div>
-      <h2 style="margin:0 0 6px; font-size:20px; font-weight:800; color:#fff;">Sblocco Rapido</h2>
-      <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">Tocca l'impronta o digita il PIN</p>
-
-      <input type="password" id="quickPinInput" class="pin-display" readonly placeholder="----">
-
-      <div class="pin-keypad">
-        <button class="pin-btn" onclick="digitaQuickPin('1')">1</button>
-        <button class="pin-btn" onclick="digitaQuickPin('2')">2</button>
-        <button class="pin-btn" onclick="digitaQuickPin('3')">3</button>
-        <button class="pin-btn" onclick="digitaQuickPin('4')">4</button>
-        <button class="pin-btn" onclick="digitaQuickPin('5')">5</button>
-        <button class="pin-btn" onclick="digitaQuickPin('6')">6</button>
-        <button class="pin-btn" onclick="digitaQuickPin('7')">7</button>
-        <button class="pin-btn" onclick="digitaQuickPin('8')">8</button>
-        <button class="pin-btn" onclick="digitaQuickPin('9')">9</button>
-        <button class="pin-btn" style="color:var(--danger);" onclick="cancellaQuickPin()"><i class="fa-solid fa-delete-left"></i></button>
-        <button class="pin-btn" onclick="digitaQuickPin('0')">0</button>
-        <button class="pin-btn pin-btn-bio" onclick="avviaBiometria()"><i class="fa-solid fa-fingerprint"></i></button>
-      </div>
-
-      <div id="quick-pin-error" class="auth-error"></div>
-      
-      <div style="margin-top:16px;">
-        <button onclick="disconnettiAccount()" style="background:transparent; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; text-decoration:underline;">
-          Cambia account o disconnetti
-        </button>
-      </div>
+    <div style="font-size: 13px; color: var(--text-muted);">
+      <i class="fa-solid fa-cloud-check" style="color: var(--success);"></i> Database Firebase Connesso
     </div>
+  </header>
+
+  <div class="nav-tabs">
+    <button class="nav-btn active" onclick="mostraTab('planning')"><i class="fa-solid fa-calendar-days"></i> Planning Presenze</button>
+    <button class="nav-btn" onclick="mostraTab('buste')"><i class="fa-solid fa-file-invoice-dollar"></i> Divisione Buste Paga</button>
+    <button class="nav-btn" onclick="mostraTab('anagrafica')"><i class="fa-solid fa-users"></i> Gestione Dipendenti</button>
   </div>
 
-  <div class="container" id="main-container">
-    <header>
-      <div class="brand">
-        <h1><i class="fa-solid fa-layer-group" style="color:var(--accent);"></i> MIRISA <span>CERAMICHE</span></h1>
-        <p>Direzione Generale &bull; Controllo Presenze, Planning & Liquidazione Compensi</p>
-      </div>
-      <div class="top-actions">
-        <input type="month" id="meseSelezionato">
-        <button class="btn btn-primary" onclick="apriModaleNuovo()">
-          <i class="fa-solid fa-user-plus"></i> Nuovo Dipendente
-        </button>
-        <button class="btn btn-pdf" onclick="stampaReportPDF()">
-          <i class="fa-solid fa-file-pdf"></i> Scarica PDF
-        </button>
-        <button class="btn btn-whatsapp" onclick="condividiWhatsApp()">
-          <i class="fa-brands fa-whatsapp" style="font-size:18px;"></i> Invia WhatsApp
-        </button>
-        <button class="btn btn-danger btn-icon" onclick="disconnettiAccount()" title="Disconnetti Sessione">
-          <i class="fa-solid fa-power-off"></i>
-        </button>
-      </div>
-    </header>
-
-    <div class="kpi-grid">
-      <div class="kpi-card kpi-green">
-        <div class="kpi-title">Giornate Piene <i class="fa-solid fa-check" style="color:var(--success);"></i></div>
-        <div class="kpi-value" id="kpi-intere" style="color:var(--success);">0</div>
-      </div>
-      <div class="kpi-card kpi-orange">
-        <div class="kpi-title">Mezze Giornate <i class="fa-solid fa-clock-rotate-left" style="color:var(--warning);"></i></div>
-        <div class="kpi-value" id="kpi-mezze" style="color:var(--warning);">0</div>
-      </div>
-      <div class="kpi-card kpi-red">
-        <div class="kpi-title">Assenze Registrate <i class="fa-solid fa-ban" style="color:var(--danger);"></i></div>
-        <div class="kpi-value" id="kpi-assenze" style="color:var(--danger);">0</div>
-      </div>
-      <div class="kpi-card kpi-purple">
-        <div class="kpi-title">Ferie & Malattie <i class="fa-solid fa-umbrella-beach" style="color:var(--purple);"></i></div>
-        <div class="kpi-value" id="kpi-ferie" style="color:var(--purple);">0</div>
-      </div>
-      <div class="kpi-card kpi-blue">
-        <div class="kpi-title">Spettanze Totali Mese <i class="fa-solid fa-euro-sign" style="color:var(--accent);"></i></div>
-        <div class="kpi-value" id="kpi-totale" style="color:var(--accent);">€ 0,00</div>
-      </div>
-    </div>
-
-    <div class="view-tabs">
-      <button class="view-tab-btn active" onclick="switchMainTab('view-registro', this)">
-        <i class="fa-solid fa-file-invoice-dollar"></i> Registro Compensi & Buste Paga
-      </button>
-      <button class="view-tab-btn" onclick="switchMainTab('view-planning', this)">
-        <i class="fa-solid fa-calendar-days"></i> Planning Presenze Calendario
-      </button>
-    </div>
-
-    <div id="view-registro" class="view-content active">
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title"><i class="fa-solid fa-pencil" style="color:var(--accent);"></i> Registrazione / Rettifica Presenze</h2>
-          <span style="font-size:12px; color:var(--text-muted);">Registra per un singolo collaboratore o applica all'intera squadra</span>
-        </div>
-        <div class="inline-editor">
-          <div>
-            <label style="display:block; font-size:11px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">Data</label>
-            <input type="date" id="manual-date" style="width:100%;">
-          </div>
-          <div>
-            <label style="display:block; font-size:11px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">Lavoratore Singolo</label>
-            <select id="manual-dipendente" style="width:100%;"></select>
-          </div>
-          <div>
-            <label style="display:block; font-size:11px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">Stato Presenza</label>
-            <select id="manual-stato" style="width:100%;">
-              <option value="Intera">Intera (1.0 gg)</option>
-              <option value="Mattina">Mezza Mattina (0.5 gg)</option>
-              <option value="Pomeriggio">Mezza Pomeriggio (0.5 gg)</option>
-              <option value="Ferie">Ferie / Chiusura</option>
-              <option value="Malattia">Malattia</option>
-              <option value="Assente">Assente (0.0 gg)</option>
-            </select>
-          </div>
-          <div>
-            <button class="btn btn-secondary" onclick="salvaRettificaRapida()" style="height:44px; width:100%;">
-              <i class="fa-solid fa-floppy-disk"></i> Salva Singolo
-            </button>
-          </div>
-          <div>
-            <button class="btn btn-primary" onclick="applicaATuttiAdmin()" style="height:44px; width:100%;">
-              <i class="fa-solid fa-users-gear"></i> Applica a TUTTI
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title"><i class="fa-solid fa-users" style="color:var(--accent);"></i> Prospetto Collaboratori & Spettanze Mensili</h2>
-          <div style="width:260px;">
-            <input type="text" id="searchInput" placeholder="Cerca collaboratore o mansione..." style="width:100%;">
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table>
-            <thead>
-              <tr>
-                <th>Collaboratore</th>
-                <th>Intere</th>
-                <th>Mezze</th>
-                <th>Assenze</th>
-                <th>Ferie/Mal.</th>
-                <th>Tot. Giorni</th>
-                <th>Tariffa Base</th>
-                <th>Extra/Bonus</th>
-                <th>Netto Stimato</th>
-                <th style="width:110px;">Azioni</th>
-              </tr>
-            </thead>
-            <tbody id="tabellaBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div id="view-planning" class="view-content">
-      <div class="card" style="padding: 16px;">
-        <div class="planning-nav">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <button onclick="navAdminPlanning(-1)" style="background:#081120; border:1px solid var(--surface-border); color:#fff; padding:8px 14px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-chevron-left"></i></button>
-            <span id="admin-planning-title" style="font-weight:800; font-size:15px; color:#fff; min-width:200px; text-align:center;"></span>
-            <button onclick="navAdminPlanning(1)" style="background:#081120; border:1px solid var(--surface-border); color:#fff; padding:8px 14px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-chevron-right"></i></button>
-          </div>
-          <div style="display:flex; gap:8px;">
-            <button class="btn btn-secondary btn-plan-toggle active" id="btn-plan-month" onclick="setAdminPlanningMode('month')" style="padding:8px 14px; font-size:13px;">Mese Intero</button>
-            <button class="btn btn-secondary btn-plan-toggle" id="btn-plan-week" onclick="setAdminPlanningMode('week')" style="padding:8px 14px; font-size:13px;">Vista Settimana</button>
-          </div>
-        </div>
-
-        <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; padding:10px; background:#081120; border-radius:8px; border:1px solid var(--surface-border);">
-          <div style="display:flex; gap:12px; flex-wrap:wrap;">
-            <span><b style="color:var(--success)">I</b> = Intera</span>
-            <span><b style="color:var(--warning)">M</b> = Mattina</span>
-            <span><b style="color:var(--warning)">P</b> = Pomeriggio</span>
-            <span><b style="color:var(--danger)">A</b> = Assente</span>
-            <span><b style="color:var(--purple)">F</b> = Ferie</span>
-            <span><b style="color:#94a3b8">MAL</b> = Malattia</span>
-          </div>
-          <span style="color:var(--accent); font-weight:600;"><i class="fa-solid fa-hand-pointer"></i> Clicca su qualsiasi casella per modificare</span>
-        </div>
-
-        <div class="planning-container">
-          <table class="plan-table">
-            <thead id="admin-planning-head"></thead>
-            <tbody id="admin-planning-body"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="modalQuickEdit">
-    <div class="modal" style="max-width: 420px;">
-      <div class="modal-header">
+  <!-- TAB 1: PLANNING PRESENZE -->
+  <div id="tab-planning" class="tab-content">
+    <div class="card">
+      <div class="toolbar">
         <div>
-          <h3 id="quick-nome" style="color:var(--accent); font-size:18px;"></h3>
-          <p id="quick-data" style="margin:2px 0 0; font-size:13px; color:var(--text-muted); text-transform:capitalize;"></p>
+          <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Seleziona Mese:</label>
+          <select id="select-mese" onchange="caricaTabellaPlanning()">
+            <option value="0">Gennaio</option><option value="1">Febbraio</option><option value="2">Marzo</option>
+            <option value="3">Aprile</option><option value="4">Maggio</option><option value="5">Giugno</option>
+            <option value="6">Luglio</option><option value="7">Agosto</option><option value="8" selected>Settembre</option>
+            <option value="9">Ottobre</option><option value="10">Novembre</option><option value="11">Dicembre</option>
+          </select>
+          <select id="select-anno" onchange="caricaTabellaPlanning()">
+            <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+          </select>
         </div>
-        <button onclick="chiudiQuickEdit()" style="background:transparent; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+        <div style="font-size: 12px; color: var(--text-muted); display: flex; gap: 14px;">
+          <span><span style="color: var(--success); font-weight: 800;">P</span> Intera</span>
+          <span><span style="color: var(--warning); font-weight: 800;">½</span> Mezza (M/P)</span>
+          <span><span style="color: var(--danger); font-weight: 800;">A</span> Assente</span>
+          <span><span style="color: var(--purple); font-weight: 800;">F</span> Ferie</span>
+        </div>
       </div>
-      <p style="font-size:12px; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:8px;">Seleziona Nuovo Stato:</p>
-      <div class="quick-status-grid">
-        <button class="btn-quick-status" onclick="applicaQuickStato('Intera')" style="border-color:var(--success);">
-          <i class="fa-solid fa-circle-check" style="color:var(--success);"></i> Intera (1.0)
-        </button>
-        <button class="btn-quick-status" onclick="applicaQuickStato('Mattina')" style="border-color:var(--warning);">
-          <i class="fa-solid fa-sun" style="color:var(--warning);"></i> Mattina (0.5)
-        </button>
-        <button class="btn-quick-status" onclick="applicaQuickStato('Pomeriggio')" style="border-color:var(--warning);">
-          <i class="fa-solid fa-moon" style="color:var(--warning);"></i> Pomeriggio (0.5)
-        </button>
-        <button class="btn-quick-status" onclick="applicaQuickStato('Assente')" style="border-color:var(--danger);">
-          <i class="fa-solid fa-ban" style="color:var(--danger);"></i> Assente (0.0)
-        </button>
-        <button class="btn-quick-status" onclick="applicaQuickStato('Ferie')" style="border-color:var(--purple);">
-          <i class="fa-solid fa-umbrella-beach" style="color:var(--purple);"></i> Ferie
-        </button>
-        <button class="btn-quick-status" onclick="applicaQuickStato('Malattia')" style="border-color:#64748b;">
-          <i class="fa-solid fa-notes-medical" style="color:#64748b;"></i> Malattia
-        </button>
-      </div>
-      <div style="margin-top:16px; border-top:1px solid var(--surface-border); padding-top:12px; display:flex; justify-content:space-between;">
-        <button class="btn btn-danger" onclick="applicaQuickStato('DELETE')" style="font-size:12px; padding:8px 12px;">
-          <i class="fa-solid fa-trash"></i> Elimina Giornata
-        </button>
-        <button class="btn btn-secondary" onclick="chiudiQuickEdit()" style="font-size:12px; padding:8px 12px;">Chiudi</button>
+
+      <div class="table-container">
+        <table id="tabella-planning">
+          <!-- Generata dinamicamente -->
+        </table>
       </div>
     </div>
   </div>
 
-  <div class="modal-backdrop" id="modalDipendente">
-    <div class="modal">
-      <div class="modal-header">
-        <h3 id="modalTitolo">Dettagli Collaboratore</h3>
-        <button onclick="chiudiModale()" style="background:transparent; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+  <!-- TAB 2: DIVISIONE BUSTE PAGA PDF -->
+  <div id="tab-buste" class="tab-content" style="display: none;">
+    <div class="card">
+      <div class="dropzone" id="drop-zone">
+        <i class="fa-solid fa-file-pdf" style="font-size: 44px; color: var(--accent); margin-bottom: 12px;"></i>
+        <h2 style="margin: 0 0 6px; font-size: 18px;">Caricamento Cedolone Buste Paga del Consulente</h2>
+        <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-muted);">
+          Trascina qui il file PDF unico inviato dallo studio paghe oppure selezionalo dal computer.<br>
+          Il sistema legge i Codici Fiscali e crea i singoli PDF (anche per cedolini su 2 pagine).
+        </p>
+
+        <input type="file" id="input-pdf-buste" accept="application/pdf" style="display: none;" onchange="gestisciFileSelezionato(event)">
+        <button class="btn-action" onclick="document.getElementById('input-pdf-buste').click()">
+          <i class="fa-solid fa-folder-open"></i> Seleziona PDF Cedolone
+        </button>
+
+        <div id="box-stato-pdf" style="display: none; margin-top: 16px; font-weight: 700; font-size: 14px;"></div>
       </div>
-      <div class="form-group">
-        <label>Nome e Cognome *</label>
-        <input type="text" id="form-nome" placeholder="es. Mario Rossi">
+
+      <!-- Barra azioni post-elaborazione -->
+      <div id="barra-download-tutti" style="display: none; margin-top: 20px; justify-content: space-between; align-items: center; background: #081120; border: 1px solid var(--surface-border); border-radius: 8px; padding: 12px 18px;">
+        <span id="totale-estratti-label" style="font-weight: 700; font-size: 14px; color: var(--accent);"></span>
+        <button class="btn-action" onclick="scaricaTuttoInZip()">
+          <i class="fa-solid fa-file-zipper"></i> Scarica Tutti in Cartella ZIP
+        </button>
       </div>
-      <div class="form-group">
-        <label>Mansione / Reparto</label>
-        <input type="text" id="form-mansione" placeholder="es. Posatore, Magazziniere">
+
+      <!-- Elenco card buste paga suddivise -->
+      <div id="griglia-cedolini" class="cedolini-grid"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3: GESTIONE ANAGRAFICA DIPENDENTI -->
+  <div id="tab-anagrafica" class="tab-content" style="display: none;">
+    <div class="card">
+      <h3 style="margin-top: 0; font-size: 16px; color: var(--accent);"><i class="fa-solid fa-user-plus"></i> Aggiungi o Modifica Collaboratore</h3>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+        <input type="text" id="nuovo-nome" placeholder="Cognome e Nome (es. Ressa Vito)" style="flex: 2; min-width: 200px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
+        <input type="text" id="nuovo-cf" placeholder="Codice Fiscale (16 caratteri)" maxlength="16" style="flex: 1.5; min-width: 180px; text-transform: uppercase; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
+        <button class="btn-action" onclick="salvaNuovoDipendente()"><i class="fa-solid fa-check"></i> Salva</button>
       </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-        <div class="form-group">
-          <label>Tariffa Giornaliera (€) *</label>
-          <input type="number" step="0.5" id="form-tariffa" placeholder="es. 80.00">
-        </div>
-        <div class="form-group">
-          <label>Bonus / Extra Mese (€)</label>
-          <input type="number" step="1" id="form-bonus" placeholder="es. 50.00">
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Telefono</label>
-        <input type="tel" id="form-telefono" placeholder="es. 338 1234567">
-      </div>
-      <div class="form-group" style="background:#081120; padding:12px; border-radius:8px; border:1px solid var(--surface-border); display:flex; align-items:center; gap:10px;">
-        <input type="checkbox" id="form-escludi-pdf" style="width:18px; height:18px; accent-color:var(--accent); cursor:pointer;">
-        <label for="form-escludi-pdf" style="margin:0; font-size:13px; color:#fff; cursor:pointer; text-transform:none;">
-          <strong>Escludi dal PDF Consulente del Lavoro</strong>
-          <span style="display:block; font-size:11px; color:var(--text-muted);">Registra le presenze regolarmente, ma non compare nel prospetto contabile.</span>
-        </label>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="chiudiModale()">Annulla</button>
-        <button class="btn btn-primary" onclick="salvaDipendenteForm()"><i class="fa-solid fa-check"></i> Salva</button>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: left; padding-left: 14px;">Nominativo</th>
+              <th>Codice Fiscale</th>
+              <th>Azioni</th>
+            </tr>
+          </thead>
+          <tbody id="lista-anagrafica-body"></tbody>
+        </table>
       </div>
     </div>
   </div>
 
-  <div id="toast">
-    <i class="fa-solid fa-circle-check" style="color:var(--success);"></i>
-    <span id="toast-text">Operazione completata</span>
-  </div>
+  <div id="toast"></div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getDatabase, ref, onValue, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAb6M5iEzafntiQbr7fj76XrZYNjmz17tE",
       authDomain: "presenze-dipendenti-e377b.firebaseapp.com",
       databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "presenze-dipendenti-e377b",
-      storageBucket: "presenze-dipendenti-e377b.firebasestorage.app",
-      messagingSenderId: "895033614696",
-      appId: "1:895033614696:web:329b34765347320024b6dd"
+      projectId: "presenze-dipendenti-e377b"
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getDatabase(app);
 
-    let quickPin = "";
+    // Configurazione worker PDF.js
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-    function padZero(n) { return String(n).padStart(2, '0'); }
-    function toLocalISO(d) {
-      return `${d.getFullYear()}-${padZero(d.getMonth() + 1)}-${padZero(d.getDate())}`;
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    let dipendenti = [];
+    let presenzeMese = {};
+    let cedoliniElaborati = [];
+
+    // Navigazione Tab
+    window.mostraTab = function(tabId) {
+      document.querySelectorAll(".tab-content").forEach(el => el.style.display = "none");
+      document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
+      document.getElementById(`tab-${tabId}`).style.display = "block";
+      event.currentTarget.classList.add("active");
+    };
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      setTimeout(() => t.style.display = "none", 3000);
     }
 
-    document.getElementById("btn-login-action").addEventListener("click", () => {
-      const email = document.getElementById("login-email").value.trim();
-      const pass = document.getElementById("login-password").value;
-      const errEl = document.getElementById("login-error");
-
-      if (!email || !pass) {
-        errEl.textContent = "Inserisci email e password.";
-        errEl.style.display = "block";
-        return;
-      }
-
-      signInWithEmailAndPassword(auth, email, pass)
-        .then(() => {
-          errEl.style.display = "none";
-        })
-        .catch((error) => {
-          console.error(error);
-          errEl.textContent = "Credenziali errate o account non trovato.";
-          errEl.style.display = "block";
-        });
-    });
-
-    onAuthStateChanged(auth, (user) => {
-      const overlay = document.getElementById("auth-overlay");
-      const loginView = document.getElementById("view-login-form");
-      const quickView = document.getElementById("view-quick-unlock");
-
-      if (user) {
-        const savedQuickPin = localStorage.getItem("admin_quick_pin");
-        if (savedQuickPin) {
-          loginView.style.display = "none";
-          quickView.style.display = "block";
-          if (localStorage.getItem("admin_bio_active") === "true") {
-            setTimeout(avviaBiometria, 300);
-          }
+    // Caricamento Anagrafica Dipendenti
+    onValue(ref(db, "dipendenti"), (snap) => {
+      const data = snap.val() || {};
+      dipendenti = [];
+      Object.keys(data).forEach(id => {
+        const item = data[id];
+        if (typeof item === "string") {
+          dipendenti.push({ id, nome: item, cf: "" });
         } else {
-          const pinChoice = prompt("Accesso autorizzato! Imposta un PIN rapido a 4 cifre per i prossimi accessi:");
-          if (pinChoice && pinChoice.length === 4) {
-            localStorage.setItem("admin_quick_pin", pinChoice);
-            proponiBiometria();
-          }
-          sbloccaDashboard();
+          dipendenti.push({ id, nome: item.nome || id, cf: item.cf || "" });
         }
-      } else {
-        loginView.style.display = "block";
-        quickView.style.display = "none";
-        overlay.style.display = "flex";
-        document.getElementById("main-container").style.display = "none";
-      }
+      });
+
+      renderizzaAnagrafica();
+      caricaTabellaPlanning();
     });
 
-    window.digitaQuickPin = function(cifra) {
-      const savedPin = localStorage.getItem("admin_quick_pin");
-      if (quickPin.length < 4) {
-        quickPin += cifra;
-        document.getElementById("quickPinInput").value = "*".repeat(quickPin.length);
-      }
-      if (quickPin.length === 4) {
-        setTimeout(() => {
-          if (quickPin === savedPin) {
-            sbloccaDashboard();
-          } else {
-            const err = document.getElementById("quick-pin-error");
-            err.textContent = "PIN rapido errato";
-            err.style.display = "block";
-            quickPin = "";
-            document.getElementById("quickPinInput").value = "";
-          }
-        }, 100);
-      }
-    };
+    // Ascolto Presenze
+    onValue(ref(db, "presenze"), (snap) => {
+      presenzeMese = snap.val() || {};
+      renderizzaPlanning();
+    });
 
-    window.cancellaQuickPin = function() {
-      quickPin = quickPin.slice(0, -1);
-      document.getElementById("quickPinInput").value = "*".repeat(quickPin.length);
-      document.getElementById("quick-pin-error").style.display = "none";
-    };
+    window.salvaNuovoDipendente = function() {
+      const nomeInput = document.getElementById("nuovo-nome");
+      const cfInput = document.getElementById("nuovo-cf");
+      const nome = nomeInput.value.trim();
+      const cf = cfInput.value.trim().toUpperCase();
 
-    async function proponiBiometria() {
-      if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-        const ok = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-        if (ok && confirm("Vuoi abilitare lo sblocco con Impronta / Viso per accedere all'istante?")) {
-          try {
-            await registraBiometria();
-            localStorage.setItem("admin_bio_active", "true");
-          } catch(e) { console.log(e); }
-        }
-      }
-    }
+      if (!nome) return alert("Inserisci il nome del dipendente!");
+      const safeId = nome.replace(/[^a-zA-Z0-9]/g, "_");
 
-    async function registraBiometria() {
-      const challenge = new Uint8Array(32);
-      window.crypto.getRandomValues(challenge);
-      await navigator.credentials.create({
-        publicKey: {
-          challenge: challenge,
-          rp: { name: "Mirisa Ceramiche" },
-          user: { id: new Uint8Array(16), name: "dipierro.nino@gmail.com", displayName: "Nino - Mirisa" },
-          pubKeyCredParams: [{ type: "public-key", alg: -7 }],
-          authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
-          timeout: 60000
-        }
-      });
-    }
-
-    window.avviaBiometria = async function() {
-      if (!window.PublicKeyCredential) return;
-      try {
-        const challenge = new Uint8Array(32);
-        window.crypto.getRandomValues(challenge);
-        const assertion = await navigator.credentials.get({
-          publicKey: { challenge: challenge, timeout: 60000, userVerification: "required" }
+      set(ref(db, `dipendenti/${safeId}`), { nome, cf })
+        .then(() => {
+          showToast(`Dipendente ${nome} salvato con successo!`);
+          nomeInput.value = "";
+          cfInput.value = "";
         });
-        if (assertion) sbloccaDashboard();
-      } catch(e) { console.log("Biometria non riuscita:", e); }
     };
 
-    window.disconnettiAccount = function() {
-      if (confirm("Vuoi davvero disconnettere l'account da questo dispositivo?")) {
-        localStorage.removeItem("admin_quick_pin");
-        localStorage.removeItem("admin_bio_active");
-        signOut(auth).then(() => location.reload());
+    window.eliminaDipendente = function(id) {
+      if (confirm("Vuoi davvero eliminare questo collaboratore?")) {
+        remove(ref(db, `dipendenti/${id}`));
       }
     };
 
-    function sbloccaDashboard() {
-      document.getElementById("auth-overlay").style.display = "none";
-      document.getElementById("main-container").style.display = "block";
-      avviaAscoltoDati();
-    }
-
-    let dipendentiData = {};
-    let presenzeData = {};
-    let editDipendenteId = null;
-
-    const monthInput = document.getElementById("meseSelezionato");
-    const dNow = new Date();
-    monthInput.value = `${dNow.getFullYear()}-${padZero(dNow.getMonth() + 1)}`;
-
-    const oggiStr = toLocalISO(new Date());
-    document.getElementById("manual-date").value = oggiStr;
-
-    let adminPlanningMode = "month";
-    let adminDateCursor = new Date();
-    let activeQuickEdit = { dipendente: null, data: null };
-
-    function avviaAscoltoDati() {
-      onValue(ref(db, "dipendenti"), (snapshot) => {
-        dipendentiData = snapshot.val() || {};
-        verificaPresenzaRessaVito(dipendentiData);
-        popolaTendineDipendenti();
-        aggiornaDashboard();
-        renderAdminPlanning();
-      });
-
-      onValue(ref(db, "presenze"), (snapshot) => {
-        presenzeData = snapshot.val() || {};
-        aggiornaDashboard();
-        renderAdminPlanning();
-      });
-    }
-
-    function showToast(msg, isSuccess = true) {
-      const toast = document.getElementById("toast");
-      toast.style.borderLeftColor = isSuccess ? "var(--success)" : "var(--danger)";
-      document.getElementById("toast-text").textContent = msg;
-      toast.style.display = "flex";
-      setTimeout(() => { toast.style.display = "none"; }, 3500);
-    }
-
-    function verificaPresenzaRessaVito(data) {
-      const esiste = Object.values(data).some(d => (d.nome || "").toLowerCase().includes("ressa vito"));
-      if (!esiste) {
-        const newId = "ressa_vito_" + Date.now();
-        set(ref(db, `dipendenti/${newId}`), {
-          nome: "Ressa Vito",
-          mansione: "Responsabile Magazzino",
-          tariffa: 0,
-          bonus: 0,
-          telefono: "-",
-          escludiPdf: true
-        });
-      }
-    }
-
-    function popolaTendineDipendenti() {
-      const selectManual = document.getElementById("manual-dipendente");
-      selectManual.innerHTML = "";
-      Object.keys(dipendentiData).forEach(id => {
-        const d = dipendentiData[id];
-        const opt = document.createElement("option");
-        opt.value = d.nome;
-        opt.textContent = `${d.nome} (${d.mansione || 'Dipendente'})`;
-        selectManual.appendChild(opt);
-      });
-    }
-
-    window.switchMainTab = function(tabId, btn) {
-      document.querySelectorAll(".view-tab-btn").forEach(b => b.classList.remove("active"));
-      document.querySelectorAll(".view-content").forEach(c => c.classList.remove("active"));
-      btn.classList.add("active");
-      document.getElementById(tabId).classList.add("active");
-      if (tabId === "view-planning") renderAdminPlanning();
-    };
-
-    function aggiornaDashboard() {
-      const mese = monthInput.value;
-      const searchFilter = document.getElementById("searchInput").value.toLowerCase();
-      let totIntere = 0, totMezze = 0, totAssenze = 0, totFerie = 0, totaleMeseStipendi = 0;
-
-      const stats = {};
-      Object.keys(dipendentiData).forEach(id => {
-        stats[id] = {
-          id: id,
-          nome: dipendentiData[id].nome,
-          mansione: dipendentiData[id].mansione || "Lavoratore",
-          telefono: dipendentiData[id].telefono || "-",
-          tariffa: parseFloat(dipendentiData[id].tariffa || 0),
-          bonus: parseFloat(dipendentiData[id].bonus || 0),
-          escludiPdf: !!dipendentiData[id].escludiPdf,
-          intere: 0, mezze: 0, assenze: 0, ferie: 0
-        };
-      });
-
-      Object.keys(presenzeData).forEach(dataGiorno => {
-        if (dataGiorno.startsWith(mese)) {
-          const registro = presenzeData[dataGiorno];
-          Object.keys(registro).forEach(k => {
-            const entry = registro[k];
-            const targetId = Object.keys(stats).find(id => stats[id].nome.toLowerCase() === (entry.dipendente || "").toLowerCase());
-            
-            if (targetId) {
-              if (entry.stato === "Intera") { stats[targetId].intere++; totIntere++; }
-              else if (entry.stato === "Mattina" || entry.stato === "Pomeriggio") { stats[targetId].mezze++; totMezze++; }
-              else if (entry.stato === "Assente") { stats[targetId].assenze++; totAssenze++; }
-              else if (entry.stato === "Ferie" || entry.stato === "Malattia") { stats[targetId].ferie++; totFerie++; }
-            }
-          });
-        }
-      });
-
-      document.getElementById("kpi-intere").textContent = totIntere;
-      document.getElementById("kpi-mezze").textContent = totMezze;
-      document.getElementById("kpi-assenze").textContent = totAssenze;
-      document.getElementById("kpi-ferie").textContent = totFerie;
-
-      const tbody = document.getElementById("tabellaBody");
-      tbody.innerHTML = "";
-
-      Object.keys(stats).forEach(id => {
-        const item = stats[id];
-        const matchSearch = item.nome.toLowerCase().includes(searchFilter) || item.mansione.toLowerCase().includes(searchFilter);
-        const giorniEquiv = item.intere + (item.mezze * 0.5);
-        const compensoLordo = (giorniEquiv * item.tariffa) + item.bonus;
-        totaleMeseStipendi += compensoLordo;
-
-        if (!matchSearch) return;
-
+    function renderizzaAnagrafica() {
+      const body = document.getElementById("lista-anagrafica-body");
+      body.innerHTML = "";
+      dipendenti.forEach(dip => {
         const tr = document.createElement("tr");
         tr.innerHTML = `
+          <td style="text-align: left; padding-left: 14px; font-weight: 700;">${dip.nome}</td>
+          <td style="font-family: monospace; color: var(--accent);">${dip.cf || "<em>Non registrato</em>"}</td>
           <td>
-            <div style="font-weight:700; color:#fff; font-size:14px;">
-              ${item.nome}
-              ${item.escludiPdf ? '<span style="font-size:10px; background:#475569; color:#f1f5f9; padding:2px 6px; border-radius:6px; margin-left:6px;"><i class="fa-solid fa-eye-slash"></i> NO PDF</span>' : ''}
-            </div>
-            <div style="font-size:12px; color:var(--text-muted);">${item.mansione} &bull; ${item.telefono}</div>
-          </td>
-          <td><span class="badge badge-full">${item.intere}</span></td>
-          <td><span class="badge badge-half">${item.mezze}</span></td>
-          <td><span class="badge badge-abs">${item.assenze}</span></td>
-          <td><span class="badge badge-leave">${item.ferie}</span></td>
-          <td><strong style="color:#fff;">${giorniEquiv.toFixed(1)} gg</strong></td>
-          <td>€ ${item.tariffa.toFixed(2)}</td>
-          <td><span style="color:${item.bonus >= 0 ? 'var(--accent)' : 'var(--danger)'};">€ ${item.bonus.toFixed(2)}</span></td>
-          <td><strong style="color:var(--success); font-size:14px;">€ ${compensoLordo.toFixed(2)}</strong></td>
-          <td>
-            <div style="display:flex; gap:6px;">
-              <button class="btn btn-secondary btn-icon" onclick="apriModificaDipendente('${id}')" title="Modifica"><i class="fa-solid fa-pen"></i></button>
-              <button class="btn btn-danger btn-icon" onclick="eliminaDipendente('${id}', '${item.nome}')" title="Rimuovi"><i class="fa-solid fa-trash"></i></button>
-            </div>
+            <button onclick="eliminaDipendente('${dip.id}')" style="background: rgba(239, 68, 68, 0.2); color: var(--danger); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer;">
+              <i class="fa-solid fa-trash"></i>
+            </button>
           </td>
         `;
-        tbody.appendChild(tr);
+        body.appendChild(tr);
       });
-
-      document.getElementById("kpi-totale").textContent = `€ ${totaleMeseStipendi.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      window.cachedSummary = { stats: stats, mese: mese, totaleGlobale: totaleMeseStipendi };
     }
 
-    monthInput.addEventListener("change", () => {
-      aggiornaDashboard();
-      const [y, m] = monthInput.value.split("-");
-      adminDateCursor = new Date(y, m - 1, 1, 12, 0, 0);
-      renderAdminPlanning();
-    });
+    // Costruzione Tabella Planning Calendario
+    window.caricaTabellaPlanning = function() {
+      const mese = parseInt(document.getElementById("select-mese").value, 10);
+      const anno = parseInt(document.getElementById("select-anno").value, 10);
+      const numGiorni = new Date(anno, mese + 1, 0).getDate();
 
-    document.getElementById("searchInput").addEventListener("input", aggiornaDashboard);
+      const table = document.getElementById("tabella-planning");
+      table.innerHTML = "";
 
-    window.setAdminPlanningMode = function(mode) {
-      adminPlanningMode = mode;
-      document.querySelectorAll(".btn-plan-toggle").forEach(b => b.classList.remove("active"));
-      document.getElementById(`btn-plan-${mode}`).classList.add("active");
-      renderAdminPlanning();
-    };
+      // Riga Intestazione
+      const thead = document.createElement("thead");
+      const rigaHeader = document.createElement("tr");
+      rigaHeader.innerHTML = `<th class="dip-header">Collaboratore</th>`;
 
-    window.navAdminPlanning = function(direction) {
-      if (adminPlanningMode === "week") {
-        adminDateCursor.setDate(adminDateCursor.getDate() + (direction * 7));
-      } else {
-        adminDateCursor.setMonth(adminDateCursor.getMonth() + direction);
+      const giorniSettimana = ["DOM", "LUN", "MAR", "MER", "GIO", "VEN", "SAB"];
+      for (let g = 1; g <= numGiorni; g++) {
+        const dataObj = new Date(anno, mese, g);
+        const nomeGiorno = giorniSettimana[dataObj.getDay()];
+        const isWeekend = (dataObj.getDay() === 0 || dataObj.getDay() === 6);
+        rigaHeader.innerHTML += `
+          <th style="${isWeekend ? 'background: #13223f; color: #64748b;' : ''}">
+            <div style="font-size: 10px;">${nomeGiorno}</div>
+            <div>${pad(g)}</div>
+          </th>
+        `;
       }
-      renderAdminPlanning();
+      thead.appendChild(rigaHeader);
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+      tbody.id = "planning-tbody";
+      table.appendChild(tbody);
+
+      renderizzaPlanning();
     };
 
-    function renderAdminPlanning() {
-      const thead = document.getElementById("admin-planning-head");
-      const tbody = document.getElementById("admin-planning-body");
-      const titleSpan = document.getElementById("admin-planning-title");
-      thead.innerHTML = "";
+    function renderizzaPlanning() {
+      const tbody = document.getElementById("planning-tbody");
+      if (!tbody) return;
       tbody.innerHTML = "";
 
-      const days = [];
-      const giorniNomi = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+      const mese = parseInt(document.getElementById("select-mese").value, 10);
+      const anno = parseInt(document.getElementById("select-anno").value, 10);
+      const numGiorni = new Date(anno, mese + 1, 0).getDate();
 
-      if (adminPlanningMode === "week") {
-        const curr = new Date(adminDateCursor);
-        const dayOfWeek = curr.getDay();
-        const diffToMonday = curr.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-        const monday = new Date(curr.getFullYear(), curr.getMonth(), diffToMonday, 12, 0, 0);
+      dipendenti.forEach(dip => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td class="dip-cell">${dip.nome}</td>`;
 
-        for (let i = 0; i < 7; i++) {
-          const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i, 12, 0, 0);
-          days.push(d);
+        for (let g = 1; g <= numGiorni; g++) {
+          const chiaveGiorno = `${anno}-${pad(mese + 1)}-${pad(g)}`;
+          const safeKey = dip.nome.replace(/[^a-zA-Z0-9]/g, "_");
+
+          const recordGiorno = presenzeMese[chiaveGiorno] || {};
+          const statoDip = recordGiorno[safeKey]?.stato || "";
+
+          let classeStato = "";
+          let sigla = "";
+
+          if (statoDip === "Intera") { classeStato = "st-intera"; sigla = "P"; }
+          else if (statoDip === "Assente") { classeStato = "st-assente"; sigla = "A"; }
+          else if (statoDip === "Mattina") { classeStato = "st-mattina"; sigla = "½M"; }
+          else if (statoDip === "Pomeriggio") { classeStato = "st-pomeriggio"; sigla = "½P"; }
+          else if (statoDip === "Ferie") { classeStato = "st-ferie"; sigla = "F"; }
+
+          tr.innerHTML += `
+            <td class="day-cell ${classeStato}" onclick="cambiaStatoPlanningRapido('${chiaveGiorno}', '${safeKey}', '${dip.nome}', '${statoDip}')">
+              ${sigla}
+            </td>
+          `;
         }
-        titleSpan.textContent = `Settimana ${days[0].toLocaleDateString('it-IT', {day:'2-digit', month:'short'})} - ${days[6].toLocaleDateString('it-IT', {day:'2-digit', month:'short', year:'numeric'})}`;
-      } else {
-        const year = adminDateCursor.getFullYear();
-        const month = adminDateCursor.getMonth();
-        const totalDays = new Date(year, month + 1, 0).getDate();
-        for (let i = 1; i <= totalDays; i++) {
-          days.push(new Date(year, month, i, 12, 0, 0));
-        }
-        titleSpan.textContent = adminDateCursor.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }).toUpperCase();
-      }
-
-      let headHtml = `<tr><th class="name-col">Collaboratore</th>`;
-      days.forEach(d => {
-        const iso = toLocalISO(d);
-        const isToday = iso === oggiStr;
-        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-        headHtml += `<th class="day-col" style="${isToday ? 'border-bottom:2px solid var(--accent); color:var(--accent); background:rgba(56,189,248,0.12);' : ''} ${isWeekend ? 'color:#64748b;' : ''}">
-          <span style="font-size:9px;">${giorniNomi[d.getDay()]}</span><br><strong style="font-size:12px;">${d.getDate()}</strong>
-        </th>`;
-      });
-      headHtml += `</tr>`;
-      thead.innerHTML = headHtml;
-
-      Object.keys(dipendentiData).forEach(id => {
-        const nome = dipendentiData[id].nome;
-        let rowHtml = `<tr><td class="name-col" title="${nome}"><i class="fa-solid fa-user" style="font-size:11px; margin-right:6px; color:var(--accent);"></i>${nome}</td>`;
-
-        days.forEach(d => {
-          const iso = toLocalISO(d);
-          const regGiorno = presenzeData[iso] || {};
-          
-          let stato = null;
-          Object.keys(regGiorno).forEach(k => {
-            if (regGiorno[k].dipendente && regGiorno[k].dipendente.toLowerCase() === nome.toLowerCase()) {
-              stato = regGiorno[k].stato;
-            }
-          });
-
-          if (!stato) {
-            rowHtml += `<td class="day-cell plan-cell-interactive" onclick="apriQuickEdit('${nome}', '${iso}', null)">
-              <span class="cell-empty">&bull;</span>
-            </td>`;
-          } else {
-            let sigla = "I";
-            let cClass = "cell-I";
-            if (stato === "Mattina") { sigla = "M"; cClass = "cell-M"; }
-            else if (stato === "Pomeriggio") { sigla = "P"; cClass = "cell-P"; }
-            else if (stato === "Assente") { sigla = "A"; cClass = "cell-A"; }
-            else if (stato === "Ferie") { sigla = "F"; cClass = "cell-F"; }
-            else if (stato === "Malattia") { sigla = "MAL"; cClass = "cell-MAL"; }
-            rowHtml += `<td class="day-cell plan-cell-interactive" onclick="apriQuickEdit('${nome}', '${iso}', '${stato}')">
-              <span class="cell-badge ${cClass}" title="${stato} (${iso})">${sigla}</span>
-            </td>`;
-          }
-        });
-
-        rowHtml += `</tr>`;
-        tbody.innerHTML += rowHtml;
+        tbody.appendChild(tr);
       });
     }
 
-    window.apriQuickEdit = function(dipendente, dataIso, statoAttuale) {
-      activeQuickEdit = { dipendente, data: dataIso };
-      document.getElementById("quick-nome").textContent = dipendente;
-      const [y, m, g] = dataIso.split("-");
-      const dVisual = new Date(y, m - 1, g, 12, 0, 0);
-      document.getElementById("quick-data").textContent = dVisual.toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
-      document.getElementById("modalQuickEdit").style.display = "flex";
-    };
+    window.cambiaStatoPlanningRapido = function(dataIso, safeKey, nome, statoAttuale) {
+      const sequenza = ["", "Intera", "Mattina", "Pomeriggio", "Assente", "Ferie"];
+      const prossimoStato = sequenza[(sequenza.indexOf(statoAttuale) + 1) % sequenza.length];
 
-    window.chiudiQuickEdit = function() {
-      document.getElementById("modalQuickEdit").style.display = "none";
-    };
-
-    window.applicaQuickStato = function(stato) {
-      if (!activeQuickEdit.dipendente || !activeQuickEdit.data) return;
-      const safeKey = activeQuickEdit.dipendente.replace(/[^a-zA-Z0-9]/g, "_");
-      
-      if (stato === "DELETE") {
-        remove(ref(db, `presenze/${activeQuickEdit.data}/${safeKey}`)).then(() => {
-          chiudiQuickEdit();
-          showToast(`Presenza rimossa per ${activeQuickEdit.dipendente}`);
-        });
+      if (!prossimoStato) {
+        remove(ref(db, `presenze/${dataIso}/${safeKey}`));
       } else {
-        set(ref(db, `presenze/${activeQuickEdit.data}/${safeKey}`), {
-          dipendente: activeQuickEdit.dipendente,
-          data: activeQuickEdit.data,
-          stato: stato,
+        set(ref(db, `presenze/${dataIso}/${safeKey}`), {
+          dipendente: nome,
+          data: dataIso,
+          stato: prossimoStato,
           orarioRegistrazione: new Date().toISOString(),
-          modificatoDa: "Admin (Planning)"
-        }).then(() => {
-          chiudiQuickEdit();
-          showToast(`${activeQuickEdit.dipendente}: ${stato}`);
+          modificatoDa: "Admin Planning Click"
         });
       }
     };
 
-    window.apriModaleNuovo = function() {
-      editDipendenteId = null;
-      document.getElementById("modalTitolo").textContent = "Nuovo Dipendente";
-      document.getElementById("form-nome").value = "";
-      document.getElementById("form-mansione").value = "";
-      document.getElementById("form-tariffa").value = "";
-      document.getElementById("form-bonus").value = "0";
-      document.getElementById("form-telefono").value = "";
-      document.getElementById("form-escludi-pdf").checked = false;
-      document.getElementById("modalDipendente").style.display = "flex";
+    // ==========================================
+    // MOTORE SPLIT INTELLIGENTE BUSTE PAGA
+    // ==========================================
+    const dropZone = document.getElementById("drop-zone");
+    dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("dragover");
+      if (e.dataTransfer.files.length > 0) elaboraFilePdf(e.dataTransfer.files[0]);
+    });
+
+    window.gestisciFileSelezionato = function(e) {
+      if (e.target.files.length > 0) elaboraFilePdf(e.target.files[0]);
     };
 
-    window.apriModificaDipendente = function(id) {
-      editDipendenteId = id;
-      const d = dipendentiData[id];
-      document.getElementById("modalTitolo").textContent = `Modifica ${d.nome}`;
-      document.getElementById("form-nome").value = d.nome || "";
-      document.getElementById("form-mansione").value = d.mansione || "";
-      document.getElementById("form-tariffa").value = d.tariffa || 0;
-      document.getElementById("form-bonus").value = d.bonus || 0;
-      document.getElementById("form-telefono").value = d.telefono || "";
-      document.getElementById("form-escludi-pdf").checked = !!d.escludiPdf;
-      document.getElementById("modalDipendente").style.display = "flex";
-    };
+    const REGEX_CF = /[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]/;
 
-    window.chiudiModale = function() {
-      document.getElementById("modalDipendente").style.display = "none";
-    };
+    async function elaboraFilePdf(file) {
+      if (!file || file.type !== "application/pdf") return alert("Carica un file PDF valido.");
 
-    window.salvaDipendenteForm = function() {
-      const nome = document.getElementById("form-nome").value.trim();
-      const mansione = document.getElementById("form-mansione").value.trim() || "Collaboratore";
-      const tariffa = parseFloat(document.getElementById("form-tariffa").value) || 0;
-      const bonus = parseFloat(document.getElementById("form-bonus").value) || 0;
-      const telefono = document.getElementById("form-telefono").value.trim();
-      const escludiPdf = document.getElementById("form-escludi-pdf").checked;
+      const boxStato = document.getElementById("box-stato-pdf");
+      const griglia = document.getElementById("griglia-cedolini");
+      const barraDownload = document.getElementById("barra-download-tutti");
 
-      if (!nome) return alert("Inserisci il nome e cognome");
-      const payload = { nome, mansione, tariffa, bonus, telefono, escludiPdf };
+      boxStato.style.display = "block";
+      boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-spinner fa-spin"></i> Lettura e analisi del documento in corso...</span>`;
+      griglia.innerHTML = "";
+      barraDownload.style.display = "none";
+      cedoliniElaborati = [];
 
-      if (editDipendenteId) {
-        update(ref(db, `dipendenti/${editDipendenteId}`), payload).then(() => {
-          chiudiModale();
-          showToast("Dipendente aggiornato!");
-        });
-      } else {
-        const newId = Date.now().toString();
-        set(ref(db, `dipendenti/${newId}`), payload).then(() => {
-          chiudiModale();
-          showToast("Nuovo collaboratore salvato!");
-        });
-      }
-    };
+      try {
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfPerTesto = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        const pdfOriginale = await PDFLib.PDFDocument.load(arrayBuffer);
+        const totalePagine = pdfPerTesto.numPages;
 
-    window.eliminaDipendente = function(id, nome) {
-      if (confirm(`Confermi l'eliminazione definitiva di ${nome}?`)) {
-        remove(ref(db, `dipendenti/${id}`)).then(() => showToast("Collaboratore rimosso."));
-      }
-    };
+        let gruppiCedolini = [];
+        let cedolinoCorrente = null;
 
-    window.salvaRettificaRapida = function() {
-      const data = document.getElementById("manual-date").value;
-      const dipendente = document.getElementById("manual-dipendente").value;
-      const stato = document.getElementById("manual-stato").value;
+        // Scansione e raggruppamento per dipendente/CF
+        for (let i = 1; i <= totalePagine; i++) {
+          boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-spinner fa-spin"></i> Analisi pagina ${i} di ${totalePagine}...</span>`;
+          
+          const page = await pdfPerTesto.getPage(i);
+          const content = await page.getTextContent();
+          const testoPagina = content.items.map(it => it.str).join(" ");
+          const testoUpper = testoPagina.toUpperCase();
 
-      if (!data || !dipendente) return alert("Compila data e collaboratore");
+          const matchCf = testoUpper.match(REGEX_CF);
+          const cfTrovato = matchCf ? matchCf[0] : null;
 
-      const safeKey = dipendente.replace(/[^a-zA-Z0-9]/g, "_");
-      set(ref(db, `presenze/${data}/${safeKey}`), {
-        dipendente: dipendente, data: data, stato: stato,
-        orarioRegistrazione: new Date().toISOString(), modificatoDa: "Admin"
-      }).then(() => showToast("Presenza registrata con successo!"));
-    };
+          // Associazione con il catalogo dipendenti
+          let dipendenteTrovato = null;
+          if (cfTrovato) {
+            dipendenteTrovato = dipendenti.find(d => d.cf && d.cf.toUpperCase() === cfTrovato);
+          }
+          if (!dipendenteTrovato) {
+            dipendenteTrovato = dipendenti.find(d => {
+              const paroleNome = d.nome.toUpperCase().split(/\s+/).filter(w => w.length >= 3);
+              return paroleNome.every(p => testoUpper.includes(p));
+            });
+          }
 
-    window.applicaATuttiAdmin = function() {
-      const data = document.getElementById("manual-date").value;
-      const stato = document.getElementById("manual-stato").value;
-      const dipendenti = Object.values(dipendentiData).map(d => d.nome);
+          const identificativo = cfTrovato || (dipendenteTrovato ? dipendenteTrovato.nome : `Sconosciuto_Pag_${i}`);
+          const nomeVisualizzato = dipendenteTrovato ? dipendenteTrovato.nome : (cfTrovato ? `CF: ${cfTrovato}` : `Pagina ${i}`);
 
-      if (!data) return alert("Inserisci una data valida!");
-      if (dipendenti.length === 0) return alert("Nessun dipendente presente nell'anagrafica!");
-
-      if (confirm(`Vuoi registrare la presenza "${stato}" per TUTTI i ${dipendenti.length} collaboratori in data ${data}?`)) {
-        const promises = dipendenti.map(nome => {
-          const safeKey = nome.replace(/[^a-zA-Z0-9]/g, "_");
-          return set(ref(db, `presenze/${data}/${safeKey}`), {
-            dipendente: nome, data: data, stato: stato,
-            orarioRegistrazione: new Date().toISOString(), modificatoDa: "Admin (Squadra)"
-          });
-        });
-
-        Promise.all(promises).then(() => showToast(`Registrato "${stato}" per l'intera squadra!`));
-      }
-    };
-
-    function creaDocumentoPDF() {
-      const summary = window.cachedSummary;
-      if (!summary) return null;
-
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const meseFormat = summary.mese;
-
-      const tableRows = [];
-      let totaleConsulente = 0;
-
-      Object.keys(summary.stats).forEach(id => {
-        const item = summary.stats[id];
-        if (item.escludiPdf) return;
-
-        const ggEq = item.intere + (item.mezze * 0.5);
-        const compenso = (ggEq * item.tariffa) + item.bonus;
-        totaleConsulente += compenso;
-
-        tableRows.push([
-          item.nome, item.mansione, item.intere, item.mezze, item.assenze, item.ferie,
-          `${ggEq.toFixed(1)} gg`, `€ ${item.tariffa.toFixed(2)}`, `€ ${item.bonus.toFixed(2)}`, `€ ${compenso.toFixed(2)}`
-        ]);
-      });
-
-      doc.autoTable({
-        startY: 54,
-        head: [["Collaboratore", "Mansione", "Int.", "Mezze", "Ass.", "Ferie", "Totale", "Tariffa", "Extra", "Netto Stim."]],
-        body: tableRows,
-        theme: "striped",
-        headStyles: { fillColor: [15, 27, 51], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
-        styles: { fontSize: 8, cellPadding: 3.5, textColor: [15, 23, 42] },
-        alternateRowStyles: { fillColor: [248, 250, 252] },
-        foot: [["TOTALE GENERALE", "", "", "", "", "", "", "", "", `€ ${totaleConsulente.toFixed(2)}`]],
-        footStyles: { fillColor: [226, 232, 240], textColor: [15, 23, 42], fontStyle: "bold", fontSize: 9 },
-        willDrawPage: function() {
-          doc.saveGraphicsState();
-          doc.setFontSize(48);
-          doc.setTextColor(240, 244, 248);
-          doc.setFont("helvetica", "bold");
-          doc.text("MIRISA CERAMICHE", 28, 175, { angle: 45 });
-          doc.restoreGraphicsState();
-        },
-        didDrawPage: function() {
-          doc.setFontSize(18);
-          doc.setTextColor(15, 23, 42);
-          doc.setFont("helvetica", "bold");
-          doc.text("MIRISA CERAMICHE S.R.L.", 14, 22);
-
-          doc.setFontSize(9);
-          doc.setTextColor(100, 116, 139);
-          doc.setFont("helvetica", "normal");
-          doc.text("Prospetto Presenze, Straordinari e Spettanze Mensili", 14, 28);
-          doc.text(`Periodo di Competenza: ${meseFormat}`, 14, 33);
-          doc.text("Documento Ufficiale per lo Studio del Consulente del Lavoro", 14, 38);
-
-          doc.setDrawColor(203, 213, 225);
-          doc.line(14, 43, 196, 43);
-
-          const pageStr = `Pagina ${doc.internal.getNumberOfPages()}`;
-          doc.setFontSize(8);
-          doc.setTextColor(148, 163, 184);
-          doc.text(pageStr, 196, 288, { align: "right" });
-          doc.text("Mirisa Ceramiche S.r.l. - Dati verificati da Direzione Generale", 14, 288);
+          // Raggruppamento: se la pagina successiva appartiene allo stesso dipendente/CF, viene unita
+          if (cedolinoCorrente && cedolinoCorrente.id === identificativo) {
+            cedolinoCorrente.pagine.push(i - 1);
+          } else {
+            if (cedolinoCorrente) gruppiCedolini.push(cedolinoCorrente);
+            cedolinoCorrente = {
+              id: identificativo,
+              nome: nomeVisualizzato,
+              pagine: [i - 1]
+            };
+          }
         }
-      });
+        if (cedolinoCorrente) gruppiCedolini.push(cedolinoCorrente);
 
-      const finalY = doc.lastAutoTable.finalY + 20;
-      if (finalY < 260) {
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(71, 85, 105);
-        doc.text("Note per lo Studio Paghe: ____________________________________________________", 14, finalY);
-        doc.text("Firma Amministrazione: ___________________________", 14, finalY + 14);
-        doc.text("Ricevuto Consulente: ___________________________", 115, finalY + 14);
+        boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-gear fa-spin"></i> Generazione singoli file PDF in corso...</span>`;
+
+        // Creazione file PDF separati
+        for (const gruppo of gruppiCedolini) {
+          const nuovoPdf = await PDFLib.PDFDocument.create();
+          const pagineCopiate = await nuovoPdf.copyPages(pdfOriginale, gruppo.pagine);
+          pagineCopiate.forEach(p => nuovoPdf.addPage(p));
+
+          const pdfBytes = await nuovoPdf.save();
+          const blob = new Blob([pdfBytes], { type: "application/pdf" });
+          const url = URL.createObjectURL(blob);
+          const nomeFile = `BustaPaga_${gruppo.nome.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
+
+          cedoliniElaborati.push({
+            nome: gruppo.nome,
+            numPagine: gruppo.pagine.length,
+            blob: blob,
+            url: url,
+            nomeFile: nomeFile
+          });
+        }
+
+        boxStato.innerHTML = `<span style="color: var(--success);"><i class="fa-solid fa-circle-check"></i> Operazione completata! ${cedoliniElaborati.length} cedolini separati con successo.</span>`;
+        document.getElementById("totale-estratti-label").textContent = `${cedoliniElaborati.length} Cedolini Pronti per l'Archiviazione`;
+        barraDownload.style.display = "flex";
+
+        // Render card
+        cedoliniElaborati.forEach(item => {
+          const card = document.createElement("div");
+          card.className = "cedolino-card";
+          card.innerHTML = `
+            <div>
+              <div style="font-weight: 800; font-size: 13px; color: #fff;">${item.nome}</div>
+              <div style="font-size: 11px; color: var(--text-muted);">${item.numPagine} pag. &bull; PDF Singolo</div>
+            </div>
+            <a href="${item.url}" download="${item.nomeFile}" class="btn-action" style="padding: 6px 12px; font-size: 12px; text-decoration: none;">
+              <i class="fa-solid fa-download"></i> Scarica
+            </a>
+          `;
+          griglia.appendChild(card);
+        });
+
+      } catch (err) {
+        boxStato.innerHTML = `<span style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Errore elaborazione: ${err.message}</span>`;
       }
-
-      return { doc, filename: `Prospetto_Mirisa_${meseFormat}.pdf`, mese: meseFormat, totale: totaleConsulente };
     }
 
-    window.stampaReportPDF = function() {
-      const res = creaDocumentoPDF();
-      if (!res) return alert("Nessun dato disponibile");
-      res.doc.save(res.filename);
-      showToast("Download del PDF completato!");
-    };
+    // Download cumulativo in file ZIP compresso
+    window.scaricaTuttoInZip = async function() {
+      if (cedoliniElaborati.length === 0) return;
+      const zip = new JSZip();
+      cedoliniElaborati.forEach(item => {
+        zip.file(item.nomeFile, item.blob);
+      });
 
-    window.condividiWhatsApp = async function() {
-      const res = creaDocumentoPDF();
-      if (!res) return alert("Nessun dato disponibile");
-
-      const blob = res.doc.output("blob");
-      const file = new File([blob], res.filename, { type: "application/pdf" });
-      const messaggio = `*MIRISA CERAMICHE S.R.L.*\nSi trasmette il prospetto riepilogativo delle presenze per il mese di *${res.mese}* per l'elaborazione dei cedolini paga.\n\nTotale lordo stimato: *€ ${res.totale.toFixed(2)}*`;
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({ files: [file], title: `Presenze Mirisa ${res.mese}`, text: messaggio });
-          showToast("Inviato su WhatsApp!");
-          return;
-        } catch (err) {
-          if (err.name !== "AbortError") console.error(err);
-        }
-      }
-
-      res.doc.save(res.filename);
-      const encodedMsg = encodeURIComponent(`${messaggio}\n\n(Il file ${res.filename} è stato scaricato nei tuoi download, allegalo a questa chat)`);
-      window.open(`https://api.whatsapp.com/send?text=${encodedMsg}`, "_blank");
-      showToast("PDF scaricato. Invia su WhatsApp!", true);
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      saveAs(zipBlob, `Buste_Paga_Mirisa_${new Date().toISOString().split("T")[0]}.zip`);
+      showToast("Download ZIP avviato!");
     };
   </script>
 </body>
