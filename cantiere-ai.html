@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mirisa - Assistente Vocale Presenze AI</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root {
+      --bg: #070d19;
+      --surface: #0f1b33;
+      --surface-border: #1a2c4e;
+      --accent: #38bdf8;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #8b5cf6;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg); color: var(--text); margin: 0; padding: 16px; min-height: 100vh; }
+    
+    .container { max-width: 600px; margin: 0 auto; }
+    .brand { text-align: center; margin-bottom: 20px; }
+    .brand h1 { margin: 0; font-size: 22px; font-weight: 800; color: #fff; }
+    .brand h1 span { color: var(--accent); }
+    .brand p { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); }
+    .ai-badge { display: inline-block; background: linear-gradient(135deg, #0284c7, #8b5cf6); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px; }
+
+    .card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+
+    .voice-box { text-align: center; padding: 24px 10px; }
+    .mic-button {
+      width: 90px; height: 90px; border-radius: 50%; border: none;
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      color: #fff; font-size: 34px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      box-shadow: 0 10px 25px rgba(2, 132, 199, 0.4);
+      transition: all 0.2s;
+    }
+    .mic-button.recording {
+      background: linear-gradient(135deg, #ef4444, #f43f5e);
+      animation: pulse 1.2s infinite;
+      box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+    .voice-hint { margin-top: 14px; font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+    .speech-transcript {
+      background: #081120; border: 1px solid var(--surface-border);
+      border-radius: 10px; padding: 12px; margin-top: 16px;
+      font-size: 13px; color: #fff; min-height: 48px; text-align: left; font-style: italic;
+    }
+
+    #ai-preview-box { display: none; }
+    .preview-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 14px;
+    }
+    .preview-item:last-child { border-bottom: none; }
+    .badge-preview {
+      font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px;
+    }
+    .badge-intera { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .badge-mezza { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    .badge-assente { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    .badge-ferie { background: rgba(139, 92, 246, 0.2); color: var(--purple); }
+
+    .btn-confirm {
+      width: 100%; margin-top: 16px; padding: 14px; border-radius: 10px;
+      border: none; background: var(--success); color: #fff; font-size: 15px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-confirm:active { transform: scale(0.98); }
+
+    #toast { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #1e293b; color: #fff; padding: 12px 18px; border-radius: 10px; border-left: 4px solid var(--success); display: none; text-align: center; font-size: 14px; font-weight: 600; z-index: 200; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="brand">
+      <div class="ai-badge"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Edition</div>
+      <h1>MIRISA <span>CERAMICHE</span></h1>
+      <p>Registrazione Presenze Vocale Intelligente</p>
+    </div>
+
+    <div class="card">
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data da registrare</label>
+        <input type="date" id="selected-date" style="width: 100%; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 14px; outline: none;">
+      </div>
+
+      <div class="voice-box">
+        <button id="btn-mic" class="mic-button" onclick="toggleVoiceRecording()">
+          <i class="fa-solid fa-microphone"></i>
+        </button>
+        <div id="mic-status" class="voice-hint">Tocca il microfono e parla in modo naturale</div>
+        <div id="transcript" class="speech-transcript">In attesa della tua voce...</div>
+      </div>
+      
+      <div style="text-align: right; margin-top: 10px;">
+        <button onclick="cambiaApiKeyAI()" style="background: transparent; border: none; color: var(--text-muted); font-size: 11px; cursor: pointer; text-decoration: underline;">
+          <i class="fa-solid fa-key"></i> Gestisci chiave AI
+        </button>
+      </div>
+    </div>
+
+    <div class="card" id="ai-preview-box">
+      <h3 style="margin: 0 0 12px; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-list-check"></i> Presenze Rilevate dall'AI:
+      </h3>
+      <div id="ai-preview-list"></div>
+      
+      <button class="btn-confirm" onclick="confermaSalvataggioAI()">
+        <i class="fa-solid fa-cloud-arrow-up"></i> Conferma e Salva su Database
+      </button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAb6M5iEzafntiQbr7fj76XrZYNjmz17tE",
+      authDomain: "presenze-dipendenti-e377b.firebaseapp.com",
+      databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "presenze-dipendenti-e377b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const oggi = new Date().toISOString().split("T")[0];
+    document.getElementById("selected-date").value = oggi;
+
+    let dipendentiNomi = [];
+    let presenzeProposte = [];
+
+    onValue(ref(db, "dipendenti"), (snap) => {
+      const data = snap.val() || {};
+      dipendentiNomi = Object.values(data).map(d => d.nome);
+    });
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      setTimeout(() => t.style.display = "none", 3000);
+    }
+
+    window.cambiaApiKeyAI = function() {
+      const key = prompt("Inserisci la tua chiave Gemini API Key:", localStorage.getItem("gemini_key") || "");
+      if (key) {
+        localStorage.setItem("gemini_key", key.trim());
+        showToast("Chiave salvata nel browser!");
+      }
+    };
+
+    function recuperaApiKeyAI() {
+      let key = localStorage.getItem("gemini_key");
+      if (!key) {
+        key = prompt("Inserisci la tua chiave Gemini API Key (la salveremo solo sul tuo dispositivo):");
+        if (key) {
+          localStorage.setItem("gemini_key", key.trim());
+        }
+      }
+      return key ? key.trim() : null;
+    }
+
+    let recognition = null;
+    let isRecording = false;
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.lang = 'it-IT';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        isRecording = true;
+        document.getElementById("btn-mic").classList.add("recording");
+        document.getElementById("mic-status").textContent = "Ti sto ascoltando... Parla ora!";
+      };
+
+      recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        document.getElementById("transcript").textContent = `"${text}"`;
+        analizzaFraseConAI(text);
+      };
+
+      recognition.onerror = () => {
+        isRecording = false;
+        document.getElementById("btn-mic").classList.remove("recording");
+        document.getElementById("mic-status").textContent = "Errore nel microfono. Riprova.";
+      };
+
+      recognition.onend = () => {
+        isRecording = false;
+        document.getElementById("btn-mic").classList.remove("recording");
+        document.getElementById("mic-status").textContent = "Elaborazione della tua voce in corso...";
+      };
+    }
+
+    window.toggleVoiceRecording = function() {
+      if (!recognition) return alert("Riconoscimento vocale non supportato su questo browser. Usa Google Chrome o Safari.");
+      
+      const key = recuperaApiKeyAI();
+      if (!key) return alert("Inserisci una chiave API per usare la funzionalità vocale.");
+
+      if (isRecording) {
+        recognition.stop();
+      } else {
+        recognition.start();
+      }
+    };
+
+    async function analizzaFraseConAI(frase) {
+      const GEMINI_API_KEY = recuperaApiKeyAI();
+      if (!GEMINI_API_KEY) return;
+
+      document.getElementById("mic-status").textContent = "Gemini AI sta analizzando la squadra...";
+      
+      const elencoDipendenti = dipendentiNomi.join(", ");
+      
+      const prompt = `
+Sei il coordinatore presenze di Mirisa Ceramiche.
+L'elenco completo dei collaboratori è: [${elencoDipendenti}].
+
+Frase pronunciata: "${frase}".
+
+Regole di interpretazione:
+1. Gli stati validi sono solo: "Intera", "Mattina", "Pomeriggio", "Assente", "Ferie", "Malattia".
+2. Se viene detto "tutta la squadra intera tranne...", assegna "Intera" a tutti i collaboratori della lista, eccetto le eccezioni citate.
+3. Riconosci i nomi anche se pronunciati solo per nome di battesimo o con lievi variazioni.
+
+Rispondi ESCLUSIVAMENTE con un JSON valido nel seguente formato:
+[
+  {"nome": "Nome Cognome", "stato": "Intera"},
+  {"nome": "Nome Cognome", "stato": "Ferie"}
+]
+`;
+
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        });
+
+        const data = await res.json();
+        const rawText = data.candidates[0].content.parts[0].text;
+        const cleanJson = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+        presenzeProposte = JSON.parse(cleanJson);
+
+        mostraAnteprimaAI(presenzeProposte);
+        document.getElementById("mic-status").textContent = "Analisi completata con successo!";
+      } catch (e) {
+        console.error(e);
+        document.getElementById("mic-status").textContent = "Non sono riuscito a interpretare. Riprova parlando chiaramente.";
+      }
+    }
+
+    function mostraAnteprimaAI(elenco) {
+      const box = document.getElementById("ai-preview-box");
+      const list = document.getElementById("ai-preview-list");
+      list.innerHTML = "";
+
+      elenco.forEach(item => {
+        let badgeClass = "badge-intera";
+        if (item.stato === "Mattina" || item.stato === "Pomeriggio") badgeClass = "badge-mezza";
+        if (item.stato === "Assente" || item.stato === "Malattia") badgeClass = "badge-assente";
+        if (item.stato === "Ferie") badgeClass = "badge-ferie";
+
+        const div = document.createElement("div");
+        div.className = "preview-item";
+        div.innerHTML = `
+          <span><strong>${item.nome}</strong></span>
+          <span class="badge-preview ${badgeClass}">${item.stato}</span>
+        `;
+        list.appendChild(div);
+      });
+
+      box.style.display = "block";
+    }
+
+    window.confermaSalvataggioAI = function() {
+      const dataSel = document.getElementById("selected-date").value;
+      if (!dataSel || presenzeProposte.length === 0) return;
+
+      const promises = presenzeProposte.map(item => {
+        const safeKey = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
+        return set(ref(db, `presenze/${dataSel}/${safeKey}`), {
+          dipendente: item.nome,
+          data: dataSel,
+          stato: item.stato,
+          orarioRegistrazione: new Date().toISOString(),
+          inseritoDa: "Assistente Vocale AI"
+        });
+      });
+
+      Promise.all(promises).then(() => {
+        showToast(`Salvate ${presenzeProposte.length} presenze con l'AI per il ${dataSel}!`);
+        document.getElementById("ai-preview-box").style.display = "none";
+        document.getElementById("transcript").textContent = "In attesa della tua voce...";
+        presenzeProposte = [];
+      });
+    };
+  </script>
+</body>
+</html>
