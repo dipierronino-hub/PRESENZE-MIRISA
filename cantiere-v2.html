@@ -70,10 +70,19 @@
 
     .btn-confirm {
       width: 100%; margin-top: 16px; padding: 14px; border-radius: 10px;
-      border: none; background: var(--success); color: #fff; font-size: 15px; font-weight: 700;
+      border: none; background: #10b981; color: #fff; font-size: 15px; font-weight: 700;
       cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+      transition: all 0.3s ease;
     }
     .btn-confirm:active { transform: scale(0.98); }
+    .btn-confirm.loading {
+      background: #0284c7 !important;
+      cursor: wait;
+    }
+    .btn-confirm.success {
+      background: #059669 !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+    }
 
     #toast { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #1e293b; color: #fff; padding: 12px 18px; border-radius: 10px; border-left: 4px solid var(--success); display: none; text-align: center; font-size: 14px; font-weight: 600; z-index: 200; }
   </style>
@@ -97,7 +106,7 @@
         <button id="btn-mic" class="mic-button" onclick="toggleVoiceRecording()">
           <i class="fa-solid fa-microphone"></i>
         </button>
-        <div id="mic-status" class="voice-hint">Tocca il microfono e parla</div>
+        <div id="mic-status" class="voice-hint">Tocca il microfono e parla liberamente</div>
         <div id="transcript" class="speech-transcript">In attesa della tua voce...</div>
       </div>
     </div>
@@ -108,8 +117,8 @@
       </h3>
       <div id="preview-list"></div>
       
-      <button class="btn-confirm" onclick="confermaSalvataggio()">
-        <i class="fa-solid fa-cloud-arrow-up"></i> Salva su Database
+      <button id="btn-salva" class="btn-confirm" onclick="confermaSalvataggio()">
+        <i class="fa-solid fa-cloud-arrow-up"></i> <span>Salva su Database</span>
       </button>
     </div>
   </div>
@@ -118,7 +127,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAb6M5iEzafntiQbr7fj76XrZYNjmz17tE",
@@ -130,29 +139,31 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
+    // Imposta data corrente
     const dOggi = new Date();
     const annoOggi = dOggi.getFullYear();
     const meseOggi = String(dOggi.getMonth() + 1).padStart(2, '0');
     const giornoOggi = String(dOggi.getDate()).padStart(2, '0');
     document.getElementById("selected-date").value = `${annoOggi}-${meseOggi}-${giornoOggi}`;
 
+    // Struttura mappa anagrafica: { "Nome Completo": { id: "firebaseKey", nome: "Nome Completo" } }
     let dipendentiMap = {
-      "Errede Francesca": "Errede Francesca",
-      "Antonio Campobasso": "Antonio Campobasso",
-      "Dipierro Sebastiano": "Dipierro Sebastiano",
-      "Sansone Andrea": "Sansone Andrea",
-      "Bulicko Davide": "Bulicko Davide",
-      "Ungaro Maria Domenica": "Ungaro Maria Domenica",
-      "Loschiavone Isabella": "Loschiavone Isabella",
-      "Gongo Pellump": "Gongo Pellump",
-      "Latifi Rudina": "Latifi Rudina",
-      "Scarano Margherita": "Scarano Margherita",
-      "Ressa Vito": "Ressa Vito"
+      "Errede Francesca": { id: "Errede_Francesca", nome: "Errede Francesca" },
+      "Antonio Campobasso": { id: "Antonio_Campobasso", nome: "Antonio Campobasso" },
+      "Dipierro Sebastiano": { id: "Dipierro_Sebastiano", nome: "Dipierro Sebastiano" },
+      "Sansone Andrea": { id: "Sansone_Andrea", nome: "Sansone Andrea" },
+      "Bulicko Davide": { id: "Bulicko_Davide", nome: "Bulicko Davide" },
+      "Ungaro Maria Domenica": { id: "Ungaro_Maria_Domenica", nome: "Ungaro Maria Domenica" },
+      "Loschiavone Isabella": { id: "Loschiavone_Isabella", nome: "Loschiavone Isabella" },
+      "Gongo Pellump": { id: "Gongo_Pellump", nome: "Gongo Pellump" },
+      "Latifi Rudina": { id: "Latifi_Rudina", nome: "Latifi Rudina" },
+      "Scarano Margherita": { id: "Scarano_Margherita", nome: "Scarano Margherita" },
+      "Ressa Vito": { id: "Ressa_Vito", nome: "Ressa Vito" }
     };
 
     let presenzeProposte = [];
 
-    // Recupera la mappatura esatta di ID e Nomi da Firebase
+    // Sincronizza dinamicamente le chiavi ID originali da Firebase se presenti
     onValue(ref(db, "dipendenti"), (snap) => {
       const data = snap.val();
       if (data) {
@@ -160,7 +171,7 @@
           const val = data[k];
           const nomeDip = typeof val === 'string' ? val : (val.nome || val.nominativo);
           if (nomeDip) {
-            dipendentiMap[nomeDip] = k; // associa nome -> chiave Firebase
+            dipendentiMap[nomeDip] = { id: k, nome: nomeDip };
           }
         });
       }
@@ -260,7 +271,7 @@
       return `${y}-${m}-${day}`;
     }
 
-    // Traduzione nello standard a sigle del calendario: I, M, P, A, F, MAL
+    // Sigle usate dal Planning di Mirisa: I, M, P, A, F, MAL
     function rilevaSiglaStato(testo) {
       const t = testo.toLowerCase();
       if (t.includes("assent") || t.includes("manc") || t.includes("non c'è") || t.includes("non ce")) return { sigla: "A", label: "Assente" };
@@ -285,7 +296,12 @@
 
       if (text.includes("tutt") || text.includes("squadra")) {
         const statoObj = rilevaSiglaStato(text.split(/tranne|eccetto|meno/)[0]);
-        risultati = listaNomi.map(n => ({ nome: n, statoSigla: statoObj.sigla, statoLabel: statoObj.label }));
+        risultati = listaNomi.map(n => ({
+          nome: n,
+          id: dipendentiMap[n].id,
+          statoSigla: statoObj.sigla,
+          statoLabel: statoObj.label
+        }));
 
         if (text.includes("tranne") || text.includes("eccetto") || text.includes("meno")) {
           const parteEccezioni = text.split(/tranne|eccetto|meno/)[1];
@@ -310,12 +326,16 @@
 
         listaNomi.forEach(nome => {
           const parole = nome.toLowerCase().split(" ");
-          // Supporta anche la trascrizione separata "di piero" per "dipierro"
           const nomeCompresso = nome.toLowerCase().replace(/\s+/g, '');
           const fraseCompressa = text.replace(/\s+/g, '');
 
           if (parole.some(p => p.length > 2 && text.includes(p)) || fraseCompressa.includes(nomeCompresso)) {
-            risultati.push({ nome: nome, statoSigla: statoObj.sigla, statoLabel: statoObj.label });
+            risultati.push({
+              nome: nome,
+              id: dipendentiMap[nome].id,
+              statoSigla: statoObj.sigla,
+              statoLabel: statoObj.label
+            });
             trovati++;
           }
         });
@@ -324,7 +344,12 @@
           let pulito = frase.replace(/ieri|oggi|l'altro ieri|presente|presenti|assente|assenti|ferie|malattia|mezza|mattina|pomeriggio|intera|gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|\d{1,2}|\d{4}/gi, "").trim();
           pulito = pulito.replace(/^[,\s]+|[,\s]+$/g, "");
           if (pulito.length > 1) {
-            risultati.push({ nome: pulito, statoSigla: statoObj.sigla, statoLabel: statoObj.label });
+            risultati.push({
+              nome: pulito,
+              id: pulito.replace(/[^a-zA-Z0-9]/g, "_"),
+              statoSigla: statoObj.sigla,
+              statoLabel: statoObj.label
+            });
           }
         }
       }
@@ -333,9 +358,9 @@
         presenzeProposte = risultati;
         mostraAnteprima(presenzeProposte);
         const dataAttiva = document.getElementById("selected-date").value;
-        document.getElementById("mic-status").textContent = `Presenze pronte per: ${dataAttiva}!`;
+        document.getElementById("mic-status").textContent = `Presenze pronte per la data: ${dataAttiva}`;
       } else {
-        document.getElementById("mic-status").textContent = "Nessun dato riconosciuto. Riprova.";
+        document.getElementById("mic-status").textContent = "Nessun collaboratore riconosciuto. Riprova.";
       }
     }
 
@@ -359,49 +384,93 @@
         list.appendChild(div);
       });
 
+      // Reset stato del pulsante
+      const btn = document.getElementById("btn-salva");
+      btn.className = "btn-confirm";
+      btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>Salva su Database</span>`;
+      btn.disabled = false;
+
       box.style.display = "block";
     }
 
-    // Scrittura sincronizzata con la tabella del Planning
+    // SALVATAGGIO CON MULTI-SCRITTURA DIRETTA AL PLANNING E CAMBIO COLORE TASTO
     window.confermaSalvataggio = async function() {
-      const dataSel = document.getElementById("selected-date").value; // Formato YYYY-MM-DD
+      const dataSel = document.getElementById("selected-date").value;
       if (!dataSel || presenzeProposte.length === 0) return;
 
-      const [anno, mese, giorno] = dataSel.split("-");
-      const meseAnno = `${anno}-${mese}`;       // es: "2026-09"
-      const giornoNum = parseInt(giorno, 10);    // es: 25
+      const btn = document.getElementById("btn-salva");
+      // 1. CAMBIO COLORE: Diventa blu e mostra rotella
+      btn.classList.add("loading");
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Salvataggio in corso...</span>`;
+      btn.disabled = true;
 
-      const promises = [];
+      const [anno, mese, giornoStr] = dataSel.split("-");
+      const meseAnno = `${anno}-${mese}`;       // es: "2026-09"
+      const giornoNum = parseInt(giornoStr, 10);  // es: 25
+      const giorno2Digit = giornoStr.padStart(2, '0'); // es: "25"
+
+      const updates = {};
 
       presenzeProposte.forEach(item => {
-        const idDipendente = dipendentiMap[item.nome] || item.nome.replace(/[^a-zA-Z0-9]/g, "_");
-        const safeName = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
+        const idDip = item.id;
+        const nomeClean = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
+        const sigla = item.statoSigla;
 
-        // 1. Struttura calendario a matrice: presenze/YYYY-MM/giorno/ID = "I"
-        promises.push(set(ref(db, `presenze/${meseAnno}/${giornoNum}/${idDipendente}`), item.statoSigla));
-        promises.push(set(ref(db, `presenze/${meseAnno}/${giornoNum}/${safeName}`), item.statoSigla));
+        // Struttura A: Griglia per mese presenze/2026-09/25/id = "I"
+        updates[`presenze/${meseAnno}/${giornoNum}/${idDip}`] = sigla;
+        updates[`presenze/${meseAnno}/${giornoNum}/${nomeClean}`] = sigla;
+        updates[`presenze/${meseAnno}/${giornoNum}/${item.nome}`] = sigla;
+        updates[`presenze/${meseAnno}/${giorno2Digit}/${idDip}`] = sigla;
+        updates[`presenze/${meseAnno}/${giorno2Digit}/${nomeClean}`] = sigla;
 
-        // 2. Struttura per data completa: presenze/YYYY-MM-DD/ID
-        promises.push(set(ref(db, `presenze/${dataSel}/${idDipendente}`), {
+        // Struttura B: presenze/2026-09/id/25 = "I"
+        updates[`presenze/${meseAnno}/${idDip}/${giornoNum}`] = sigla;
+        updates[`presenze/${meseAnno}/${nomeClean}/${giornoNum}`] = sigla;
+        updates[`presenze/${meseAnno}/${item.nome}/${giornoNum}`] = sigla;
+        updates[`presenze/${meseAnno}/${idDip}/${giorno2Digit}`] = sigla;
+
+        // Struttura C: Giornaliera estesa presenze/2026-09-25/id
+        updates[`presenze/${dataSel}/${idDip}`] = {
           dipendente: item.nome,
           data: dataSel,
-          stato: item.statoSigla,
+          stato: sigla,
           statoEsteso: item.statoLabel,
           orario: new Date().toISOString()
-        }));
+        };
+        updates[`presenze/${dataSel}/${nomeClean}`] = {
+          dipendente: item.nome,
+          data: dataSel,
+          stato: sigla,
+          statoEsteso: item.statoLabel,
+          orario: new Date().toISOString()
+        };
 
-        // 3. Struttura diretta compatibile dipendenti_presenze/ID/YYYY-MM-DD
-        promises.push(set(ref(db, `presenze_registro/${idDipendente}/${dataSel}`), item.statoSigla));
+        // Struttura D: presenze_registro
+        updates[`presenze_registro/${idDip}/${dataSel}`] = sigla;
       });
 
       try {
-        await Promise.all(promises);
-        showToast(`Salvate presenze per il ${dataSel}! Planning aggiornato.`);
-        document.getElementById("preview-box").style.display = "none";
-        document.getElementById("transcript").textContent = "In attesa della tua voce...";
-        presenzeProposte = [];
+        await update(ref(db), updates);
+
+        // 2. CAMBIO COLORE: Diventa VERDE BRILLANTE con spunta
+        btn.classList.remove("loading");
+        btn.classList.add("success");
+        btn.innerHTML = `<i class="fa-solid fa-check"></i> <span>Presenze Registrate!</span>`;
+
+        showToast(`Presenze salvate per il ${dataSel}!`);
+
+        // Scomparsa fluida dopo 1.5 secondi
+        setTimeout(() => {
+          document.getElementById("preview-box").style.display = "none";
+          document.getElementById("transcript").textContent = "In attesa della tua voce...";
+          presenzeProposte = [];
+        }, 1500);
+
       } catch (err) {
+        btn.classList.remove("loading");
+        btn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <span>Errore di Salvataggio</span>`;
         alert("Errore salvataggio: " + err.message);
+        btn.disabled = false;
       }
     };
   </script>
