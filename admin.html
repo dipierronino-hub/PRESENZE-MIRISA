@@ -111,9 +111,9 @@
   </header>
 
   <div class="nav-tabs">
-    <button class="nav-btn active" onclick="mostraTab('planning')"><i class="fa-solid fa-calendar-days"></i> Planning Presenze</button>
-    <button class="nav-btn" onclick="mostraTab('buste')"><i class="fa-solid fa-file-invoice-dollar"></i> Divisione Buste Paga</button>
-    <button class="nav-btn" onclick="mostraTab('anagrafica')"><i class="fa-solid fa-users"></i> Gestione Dipendenti & CF</button>
+    <button class="nav-btn active" onclick="mostraTab('planning', event)"><i class="fa-solid fa-calendar-days"></i> Planning Presenze</button>
+    <button class="nav-btn" onclick="mostraTab('buste', event)"><i class="fa-solid fa-file-invoice-dollar"></i> Divisione Buste Paga</button>
+    <button class="nav-btn" onclick="mostraTab('anagrafica', event)"><i class="fa-solid fa-users"></i> Gestione Dipendenti & CF</button>
   </div>
 
   <!-- TAB 1: PLANNING PRESENZE -->
@@ -122,13 +122,13 @@
       <div class="toolbar">
         <div>
           <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Seleziona Mese:</label>
-          <select id="select-mese" onchange="caricaTabellaPlanning()">
+          <select id="select-mese" onchange="window.caricaTabellaPlanning()">
             <option value="0">Gennaio</option><option value="1">Febbraio</option><option value="2">Marzo</option>
             <option value="3">Aprile</option><option value="4">Maggio</option><option value="5">Giugno</option>
             <option value="6">Luglio</option><option value="7">Agosto</option><option value="8" selected>Settembre</option>
             <option value="9">Ottobre</option><option value="10">Novembre</option><option value="11">Dicembre</option>
           </select>
-          <select id="select-anno" onchange="caricaTabellaPlanning()">
+          <select id="select-anno" onchange="window.caricaTabellaPlanning()">
             <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
           </select>
         </div>
@@ -159,7 +159,7 @@
           Il sistema legge i Codici Fiscali e crea i singoli PDF (anche per cedolini su 2 pagine).
         </p>
 
-        <input type="file" id="input-pdf-buste" accept="application/pdf" style="display: none;" onchange="gestisciFileSelezionato(event)">
+        <input type="file" id="input-pdf-buste" accept="application/pdf" style="display: none;" onchange="window.gestisciFileSelezionato(event)">
         <button class="btn-action" onclick="document.getElementById('input-pdf-buste').click()">
           <i class="fa-solid fa-folder-open"></i> Seleziona PDF Cedolone
         </button>
@@ -169,7 +169,7 @@
 
       <div id="barra-download-tutti" style="display: none; margin-top: 20px; justify-content: space-between; align-items: center; background: #081120; border: 1px solid var(--surface-border); border-radius: 8px; padding: 12px 18px;">
         <span id="totale-estratti-label" style="font-weight: 700; font-size: 14px; color: var(--accent);"></span>
-        <button class="btn-action" onclick="scaricaTuttoInZip()">
+        <button class="btn-action" onclick="window.scaricaTuttoInZip()">
           <i class="fa-solid fa-file-zipper"></i> Scarica Tutti in Cartella ZIP
         </button>
       </div>
@@ -182,7 +182,7 @@
   <div id="tab-anagrafica" class="tab-content" style="display: none;">
     <div class="card">
       <h3 id="form-titolo" style="margin-top: 0; font-size: 16px; color: var(--accent);">
-        <i class="fa-solid fa-user-plus"></i> Inserisci / Modifica Dipendente
+        <i class="fa-solid fa-user-plus"></i> Inserisci Nuovo Collaboratore o Modifica Esistente
       </h3>
       
       <input type="hidden" id="edit-dip-id" value="">
@@ -191,10 +191,10 @@
         <input type="text" id="nuovo-nome" placeholder="Cognome e Nome (es. Ressa Vito)" style="flex: 2; min-width: 200px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
         <input type="text" id="nuovo-cf" placeholder="Codice Fiscale (16 caratteri)" maxlength="16" style="flex: 1.5; min-width: 180px; text-transform: uppercase; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
         
-        <button id="btn-salva-dip" class="btn-action" onclick="salvaNuovoDipendente()">
-          <i class="fa-solid fa-check"></i> <span id="btn-salva-testo">Salva</span>
+        <button id="btn-salva-dip" class="btn-action" onclick="window.salvaDipendente()">
+          <i class="fa-solid fa-floppy-disk"></i> <span id="btn-salva-testo">Salva</span>
         </button>
-        <button id="btn-annulla-edit" style="display: none; background: #1e293b; color: #fff; border: 1px solid var(--surface-border); padding: 10px 14px; border-radius: 8px; cursor: pointer;" onclick="annullaModifica()">
+        <button id="btn-annulla-edit" style="display: none; background: #1e293b; color: #fff; border: 1px solid var(--surface-border); padding: 10px 14px; border-radius: 8px; cursor: pointer;" onclick="window.annullaModifica()">
           Annulla
         </button>
       </div>
@@ -205,7 +205,7 @@
             <tr>
               <th style="text-align: left; padding-left: 14px;">Nominativo</th>
               <th>Codice Fiscale</th>
-              <th style="width: 140px;">Azioni</th>
+              <th style="width: 160px;">Azioni</th>
             </tr>
           </thead>
           <tbody id="lista-anagrafica-body"></tbody>
@@ -218,7 +218,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAb6M5iEzafntiQbr7fj76XrZYNjmz17tE",
@@ -238,11 +238,11 @@
     let presenzeMese = {};
     let cedoliniElaborati = [];
 
-    window.mostraTab = function(tabId) {
+    window.mostraTab = function(tabId, evt) {
       document.querySelectorAll(".tab-content").forEach(el => el.style.display = "none");
       document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
       document.getElementById(`tab-${tabId}`).style.display = "block";
-      event.currentTarget.classList.add("active");
+      if (evt && evt.currentTarget) evt.currentTarget.classList.add("active");
     };
 
     function showToast(msg) {
@@ -252,6 +252,7 @@
       setTimeout(() => t.style.display = "none", 3000);
     }
 
+    // Caricamento in tempo reale dipendenti da Firebase
     onValue(ref(db, "dipendenti"), (snap) => {
       const data = snap.val() || {};
       dipendenti = [];
@@ -265,7 +266,7 @@
       });
 
       renderizzaAnagrafica();
-      caricaTabellaPlanning();
+      window.caricaTabellaPlanning();
     });
 
     onValue(ref(db, "presenze"), (snap) => {
@@ -273,14 +274,14 @@
       renderizzaPlanning();
     });
 
-    // Funzione Modifica Dipendente Esistente
+    // Modifica rapida: popola i campi in alto
     window.avviaModificaDipendente = function(id, nome, cf) {
       document.getElementById("edit-dip-id").value = id;
       document.getElementById("nuovo-nome").value = nome;
       document.getElementById("nuovo-cf").value = cf;
       
-      document.getElementById("form-titolo").innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Modifica: <strong>${nome}</strong>`;
-      document.getElementById("btn-salva-testo").textContent = "Aggiorna Codice Fiscale";
+      document.getElementById("form-titolo").innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Modifica: <span style="color:#fff;">${nome}</span>`;
+      document.getElementById("btn-salva-testo").textContent = "Salva Modifiche";
       document.getElementById("btn-salva-dip").style.background = "var(--success)";
       document.getElementById("btn-annulla-edit").style.display = "inline-block";
       
@@ -292,50 +293,82 @@
       document.getElementById("nuovo-nome").value = "";
       document.getElementById("nuovo-cf").value = "";
       
-      document.getElementById("form-titolo").innerHTML = `<i class="fa-solid fa-user-plus"></i> Inserisci / Modifica Dipendente`;
+      document.getElementById("form-titolo").innerHTML = `<i class="fa-solid fa-user-plus"></i> Inserisci Nuovo Collaboratore o Modifica Esistente`;
       document.getElementById("btn-salva-testo").textContent = "Salva";
       document.getElementById("btn-salva-dip").style.background = "var(--accent)";
       document.getElementById("btn-annulla-edit").style.display = "none";
     };
 
-    window.salvaNuovoDipendente = function() {
+    // Salvataggio sicuro su Firebase (sia nuovo che aggiornamento)
+    window.salvaDipendente = async function() {
       const editId = document.getElementById("edit-dip-id").value;
       const nomeInput = document.getElementById("nuovo-nome");
       const cfInput = document.getElementById("nuovo-cf");
       const nome = nomeInput.value.trim();
       const cf = cfInput.value.trim().toUpperCase();
 
-      if (!nome) return alert("Inserisci il nome del dipendente!");
-      const safeId = editId || nome.replace(/[^a-zA-Z0-9]/g, "_");
+      if (!nome) return alert("Inserisci il nome del collaboratore!");
 
-      set(ref(db, `dipendenti/${safeId}`), { nome, cf })
-        .then(() => {
-          showToast(`Dipendente ${nome} aggiornato con successo!`);
-          annullaModifica();
+      const targetId = editId || nome.replace(/[^a-zA-Z0-9]/g, "_");
+
+      try {
+        await set(ref(db, `dipendenti/${targetId}`), {
+          nome: nome,
+          cf: cf
         });
+
+        showToast(`Dati di ${nome} salvati correttamente!`);
+        window.annullaModifica();
+      } catch (err) {
+        alert("Errore salvataggio Firebase: " + err.message);
+      }
+    };
+
+    // Modifica istantanea direttamente con prompt
+    window.modificaCfRapido = async function(id, nomeAttuale, cfAttuale) {
+      const nuovoCf = prompt(`Inserisci il Codice Fiscale per ${nomeAttuale}:`, cfAttuale || "");
+      if (nuovoCf === null) return; // annullato
+      
+      const cfPulito = nuovoCf.trim().toUpperCase();
+      try {
+        await update(ref(db, `dipendenti/${id}`), {
+          nome: nomeAttuale,
+          cf: cfPulito
+        });
+        showToast(`Codice Fiscale per ${nomeAttuale} aggiornato!`);
+      } catch (err) {
+        alert("Errore aggiornamento rapido: " + err.message);
+      }
     };
 
     window.eliminaDipendente = function(id) {
-      if (confirm("Vuoi davvero eliminare questo collaboratore?")) {
+      if (confirm("Vuoi davvero eliminare questo collaboratore dall'anagrafica?")) {
         remove(ref(db, `dipendenti/${id}`));
       }
     };
 
     function renderizzaAnagrafica() {
       const body = document.getElementById("lista-anagrafica-body");
+      if (!body) return;
       body.innerHTML = "";
+
       dipendenti.forEach(dip => {
+        const safeNome = dip.nome.replace(/'/g, "\\'");
+        const safeCf = (dip.cf || "").replace(/'/g, "\\'");
         const tr = document.createElement("tr");
+
         tr.innerHTML = `
           <td style="text-align: left; padding-left: 14px; font-weight: 700;">${dip.nome}</td>
-          <td style="font-family: monospace; color: ${dip.cf ? 'var(--accent)' : 'var(--danger)'}; font-weight: 700;">
-            ${dip.cf || '<span style="font-weight: normal; font-style: italic; opacity: 0.6;">Mancante (Clicca Modifica)</span>'}
+          <td style="font-family: monospace; font-size: 13px; font-weight: 700; color: ${dip.cf ? 'var(--accent)' : 'var(--danger)'}; cursor: pointer;" 
+              onclick="window.modificaCfRapido('${dip.id}', '${safeNome}', '${safeCf}')" 
+              title="Clicca per modificare rapidamente il CF">
+            ${dip.cf ? dip.cf : '<span style="font-weight: normal; font-style: italic; opacity: 0.6;"><i class="fa-solid fa-plus"></i> Inserisci CF</span>'}
           </td>
           <td>
-            <button onclick="avviaModificaDipendente('${dip.id}', '${dip.nome.replace(/'/g, "\\'")}', '${dip.cf}')" title="Modifica Codice Fiscale" style="background: rgba(56, 189, 248, 0.2); color: var(--accent); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; margin-right: 6px;">
+            <button onclick="window.avviaModificaDipendente('${dip.id}', '${safeNome}', '${safeCf}')" title="Modifica" style="background: rgba(56, 189, 248, 0.2); color: var(--accent); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; margin-right: 6px; font-weight: 600;">
               <i class="fa-solid fa-pen"></i> Modifica
             </button>
-            <button onclick="eliminaDipendente('${dip.id}')" title="Elimina" style="background: rgba(239, 68, 68, 0.2); color: var(--danger); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer;">
+            <button onclick="window.eliminaDipendente('${dip.id}')" title="Elimina" style="background: rgba(239, 68, 68, 0.2); color: var(--danger); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer;">
               <i class="fa-solid fa-trash"></i>
             </button>
           </td>
@@ -344,10 +377,14 @@
       });
     }
 
-    // Costruzione Tabella Planning
+    // Costruzione Planning Calendario
     window.caricaTabellaPlanning = function() {
-      const mese = parseInt(document.getElementById("select-mese").value, 10);
-      const anno = parseInt(document.getElementById("select-anno").value, 10);
+      const elMese = document.getElementById("select-mese");
+      const elAnno = document.getElementById("select-anno");
+      if (!elMese || !elAnno) return;
+
+      const mese = parseInt(elMese.value, 10);
+      const anno = parseInt(elAnno.value, 10);
       const numGiorni = new Date(anno, mese + 1, 0).getDate();
 
       const table = document.getElementById("tabella-planning");
@@ -384,8 +421,12 @@
       if (!tbody) return;
       tbody.innerHTML = "";
 
-      const mese = parseInt(document.getElementById("select-mese").value, 10);
-      const anno = parseInt(document.getElementById("select-anno").value, 10);
+      const elMese = document.getElementById("select-mese");
+      const elAnno = document.getElementById("select-anno");
+      if (!elMese || !elAnno) return;
+
+      const mese = parseInt(elMese.value, 10);
+      const anno = parseInt(elAnno.value, 10);
       const numGiorni = new Date(anno, mese + 1, 0).getDate();
 
       dipendenti.forEach(dip => {
@@ -409,7 +450,7 @@
           else if (statoDip === "Ferie") { classeStato = "st-ferie"; sigla = "F"; }
 
           tr.innerHTML += `
-            <td class="day-cell ${classeStato}" onclick="cambiaStatoPlanningRapido('${chiaveGiorno}', '${safeKey}', '${dip.nome}', '${statoDip}')">
+            <td class="day-cell ${classeStato}" onclick="window.cambiaStatoPlanningRapido('${chiaveGiorno}', '${safeKey}', '${dip.nome.replace(/'/g, "\\'")}', '${statoDip}')">
               ${sigla}
             </td>
           `;
@@ -437,13 +478,15 @@
 
     // Elaborazione Split Buste Paga
     const dropZone = document.getElementById("drop-zone");
-    dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
-    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
-    dropZone.addEventListener("drop", (e) => {
-      e.preventDefault();
-      dropZone.classList.remove("dragover");
-      if (e.dataTransfer.files.length > 0) elaboraFilePdf(e.dataTransfer.files[0]);
-    });
+    if (dropZone) {
+      dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
+      dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+      dropZone.addEventListener("drop", (e) => {
+        e.preventDefault();
+        dropZone.classList.remove("dragover");
+        if (e.dataTransfer.files.length > 0) elaboraFilePdf(e.dataTransfer.files[0]);
+      });
+    }
 
     window.gestisciFileSelezionato = function(e) {
       if (e.target.files.length > 0) elaboraFilePdf(e.target.files[0]);
