@@ -106,7 +106,7 @@
         <button id="btn-mic" class="mic-button" onclick="toggleVoiceRecording()">
           <i class="fa-solid fa-microphone"></i>
         </button>
-        <div id="mic-status" class="voice-hint">Caricamento dipendenti...</div>
+        <div id="mic-status" class="voice-hint">Tocca il microfono e parla</div>
         <div id="transcript" class="speech-transcript">In attesa della tua voce...</div>
       </div>
     </div>
@@ -139,18 +139,21 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Imposta data corrente
-    const dOggi = new Date();
-    const annoOggi = dOggi.getFullYear();
-    const meseOggi = String(dOggi.getMonth() + 1).padStart(2, '0');
-    const giornoOggi = String(dOggi.getDate()).padStart(2, '0');
-    document.getElementById("selected-date").value = `${annoOggi}-${meseOggi}-${giornoOggi}`;
+    // Formattazione data pura senza dipendenza dal fuso orario UTC
+    function formatYMD(year, month, day) {
+      const y = String(year);
+      const m = String(month).padStart(2, '0');
+      const d = String(day).padStart(2, '0');
+      return `${y}-${m}-${d}`;
+    }
 
-    // Lista dipendenti caricata con precisione da Firebase
+    const ora = new Date();
+    document.getElementById("selected-date").value = formatYMD(ora.getFullYear(), ora.getMonth() + 1, ora.getDate());
+
     let catalogoDipendenti = [];
     let presenzeProposte = [];
 
-    // Mappatura sicura ID Firebase -> Nome
+    // Mappatura esatta ID e nomi dal database Firebase
     onValue(ref(db, "dipendenti"), (snap) => {
       const data = snap.val() || {};
       catalogoDipendenti = [];
@@ -166,7 +169,6 @@
           nomeVisual = idChiave;
         }
 
-        // Dividiamo le parole per il confronto vocale
         const parole = nomeVisual.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter(p => p.length >= 3);
 
         catalogoDipendenti.push({
@@ -229,21 +231,21 @@
       }
     };
 
-    // Parser Date Preciso
+    // Parser Date Locale (zero disallineamenti di fuso orario)
     function estraiDataDaTesto(testo) {
       const t = testo.toLowerCase();
-      const refDate = new Date();
+      const oggi = new Date();
 
       if (t.includes("l'altro ieri") || t.includes("l altro ieri") || t.includes("altroieri")) {
-        refDate.setDate(refDate.getDate() - 2);
-        return formattaDataISO(refDate);
+        const d = new Date(oggi.getFullYear(), oggi.getMonth(), oggi.getDate() - 2);
+        return formatYMD(d.getFullYear(), d.getMonth() + 1, d.getDate());
       }
       if (t.includes("ieri")) {
-        refDate.setDate(refDate.getDate() - 1);
-        return formattaDataISO(refDate);
+        const d = new Date(oggi.getFullYear(), oggi.getMonth(), oggi.getDate() - 1);
+        return formatYMD(d.getFullYear(), d.getMonth() + 1, d.getDate());
       }
       if (t.includes("oggi")) {
-        return formattaDataISO(refDate);
+        return formatYMD(oggi.getFullYear(), oggi.getMonth() + 1, oggi.getDate());
       }
 
       const mesi = {
@@ -258,23 +260,14 @@
       if (match) {
         const giorno = parseInt(match[1], 10);
         const mese = mesi[match[2].toLowerCase()];
-        const anno = match[3] ? parseInt(match[3], 10) : refDate.getFullYear();
-        const dataCalcolata = new Date(anno, mese - 1, giorno);
-        if (!isNaN(dataCalcolata.getTime())) {
-          return formattaDataISO(dataCalcolata);
-        }
+        const anno = match[3] ? parseInt(match[3], 10) : oggi.getFullYear();
+        return formatYMD(anno, mese, giorno);
       }
+
       return null;
     }
 
-    function formattaDataISO(d) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    }
-
-    // STATI RIGOROSI: "assente" ha SEMPRE precedenza su "oggi" o altre parole!
+    // STATI RIGIDI: Assenza e Ferie verificate con priorità assoluta
     function rilevaSiglaStato(testo) {
       const t = testo.toLowerCase();
       if (t.includes("assent") || t.includes("manc") || t.includes("non c'è") || t.includes("non ce") || t.includes("assenza")) {
@@ -284,15 +277,12 @@
       if (t.includes("malatt") || t.includes("indispost")) return { sigla: "MAL", label: "Malattia" };
       if (t.includes("pomerigg")) return { sigla: "P", label: "Pomeriggio" };
       if (t.includes("mezz") || t.includes("mattin")) return { sigla: "M", label: "Mattina" };
-      if (t.includes("present") || t.includes("lavorat") || t.includes("intera") || t.includes("giornata")) {
-        return { sigla: "I", label: "Intera" };
-      }
       return { sigla: "I", label: "Intera" };
     }
 
     function elaboraFrase(frase) {
       document.getElementById("mic-status").textContent = "Elaborazione in corso...";
-      
+
       const dataRilevata = estraiDataDaTesto(frase);
       if (dataRilevata) {
         document.getElementById("selected-date").value = dataRilevata;
@@ -301,7 +291,7 @@
       const text = frase.toLowerCase();
       let risultati = [];
 
-      // 1. Comando di squadra collettivo ("tutti", "squadra")
+      // 1. Squadra completa ("tutti", "squadra")
       if (text.includes("tutt") || text.includes("squadra")) {
         const statoObj = rilevaSiglaStato(text.split(/tranne|eccetto|meno/)[0]);
         risultati = catalogoDipendenti.map(d => ({
@@ -318,8 +308,7 @@
           const labelApplicare = siglaApplicare === "A" ? "Assente" : (siglaApplicare === "I" ? "Intera" : eccObj.label);
 
           catalogoDipendenti.forEach(d => {
-            const citato = d.parole.some(p => parteEccezioni.includes(p));
-            if (citato) {
+            if (d.parole.some(p => parteEccezioni.includes(p))) {
               const idx = risultati.findIndex(r => r.id === d.id);
               if (idx !== -1) {
                 risultati[idx].statoSigla = siglaApplicare;
@@ -329,41 +318,39 @@
           });
         }
       } else {
-        // 2. Riconoscimento singolo/multiplo dipendente
+        // 2. Singoli nominativi con punteggio selettivo
         const statoObj = rilevaSiglaStato(text);
-
-        // Algoritmo di corrispondenza esatta per evitare di confondere Isabella con Pellump!
-        let candidatiTrovati = [];
+        let candidati = [];
 
         catalogoDipendenti.forEach(d => {
           let score = 0;
           d.parole.forEach(p => {
-            if (text.includes(p)) score += 2;
+            if (text.includes(p)) score += 3;
           });
 
-          // Casi speciali fonetici
-          if (text.includes("di piero") && d.nome.toLowerCase().includes("dipierro")) score += 3;
-          if (text.includes("isabella") && d.nome.toLowerCase().includes("isabella")) score += 5;
-          if (text.includes("pellump") && d.nome.toLowerCase().includes("pellump")) score += 5;
-          if (text.includes("margherita") && d.nome.toLowerCase().includes("margherita")) score += 5;
-          if (text.includes("ressa") && d.nome.toLowerCase().includes("ressa")) score += 5;
-          if (text.includes("campobasso") && d.nome.toLowerCase().includes("campobasso")) score += 5;
+          // Punteggi dedicati per ciascun cognome
+          if (text.includes("scarano") && d.nome.toLowerCase().includes("scarano")) score += 10;
+          if (text.includes("margherita") && d.nome.toLowerCase().includes("margherita")) score += 10;
+          if (text.includes("loschiavone") && d.nome.toLowerCase().includes("loschiavone")) score += 10;
+          if (text.includes("isabella") && d.nome.toLowerCase().includes("isabella")) score += 10;
+          if (text.includes("pellump") && d.nome.toLowerCase().includes("pellump")) score += 10;
+          if (text.includes("gongo") && d.nome.toLowerCase().includes("gongo")) score += 10;
+          if (text.includes("ressa") && d.nome.toLowerCase().includes("ressa")) score += 10;
+          if (text.includes("vito") && d.nome.toLowerCase().includes("vito")) score += 5;
+          if (text.includes("campobasso") && d.nome.toLowerCase().includes("campobasso")) score += 10;
+          if ((text.includes("dipierro") || text.includes("di piero")) && d.nome.toLowerCase().includes("dipierro")) score += 10;
 
           if (score > 0) {
-            candidatiTrovati.push({ dip: d, score: score });
+            candidati.push({ dip: d, score: score });
           }
         });
 
-        // Se abbiamo trovato candidati, prendiamo solo quelli con punteggio valido
-        if (candidatiTrovati.length > 0) {
-          // Ordina dal più probabile
-          candidatiTrovati.sort((a, b) => b.score - a.score);
-
-          // Se è una frase per una sola persona (non "tutti"), prendi il miglior risultato
-          const topCandidate = candidatiTrovati[0].dip;
+        if (candidati.length > 0) {
+          candidati.sort((a, b) => b.score - a.score);
+          const scelto = candidati[0].dip;
           risultati.push({
-            id: topCandidate.id,
-            nome: topCandidate.nome,
+            id: scelto.id,
+            nome: scelto.nome,
             statoSigla: statoObj.sigla,
             statoLabel: statoObj.label
           });
@@ -408,9 +395,9 @@
       box.style.display = "block";
     }
 
-    // SALVATAGGIO PRECISO ALLINEATO AGLI ID DI ADMIN.HTML
+    // SALVATAGGIO SUL PLANNING (senza slittamenti di data)
     window.confermaSalvataggio = async function() {
-      const dataSel = document.getElementById("selected-date").value;
+      const dataSel = document.getElementById("selected-date").value; // "YYYY-MM-DD" esatto
       if (!dataSel || presenzeProposte.length === 0) return;
 
       const btn = document.getElementById("btn-salva");
@@ -418,9 +405,13 @@
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Salvataggio in corso...</span>`;
       btn.disabled = true;
 
-      const [anno, mese, giornoStr] = dataSel.split("-");
+      // Estrazione pura di stringhe senza conversioni Timezone
+      const parti = dataSel.split("-");
+      const anno = parti[0];
+      const mese = parti[1];
+      const giornoStr = parti[2];
       const meseAnno = `${anno}-${mese}`;       // es: "2026-09"
-      const giornoNum = parseInt(giornoStr, 10);  // es: 23 o 25
+      const giornoNum = parseInt(giornoStr, 10);  // es: 15 (senza zero)
 
       const updates = {};
 
@@ -428,11 +419,10 @@
         const idReale = item.id;
         const sigla = item.statoSigla;
 
-        // Scrittura principale che colora la casella del planning in admin.html:
-        // presenze/2026-09/23/ID = "A"
+        // Scrive esattamente sotto presenze/2026-09/15/ID = "A"
         updates[`presenze/${meseAnno}/${giornoNum}/${idReale}`] = sigla;
 
-        // Scrittura di sicurezza giornaliera
+        // Registro storico giornaliero
         updates[`presenze/${dataSel}/${idReale}`] = {
           dipendente: item.nome,
           data: dataSel,
@@ -449,7 +439,7 @@
         btn.classList.add("success");
         btn.innerHTML = `<i class="fa-solid fa-check"></i> <span>Presenze Registrate!</span>`;
 
-        showToast(`Presenze salvate per il ${dataSel}!`);
+        showToast(`Presenze salvate per il giorno ${giornoNum}/${mese}!`);
 
         setTimeout(() => {
           document.getElementById("preview-box").style.display = "none";
