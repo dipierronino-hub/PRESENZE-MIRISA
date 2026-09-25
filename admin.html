@@ -30,12 +30,14 @@
     body { background-color: var(--bg); color: var(--text); margin: 0; padding: 24px; min-height: 100vh; }
     .container { max-width: 1400px; margin: 0 auto; }
 
+    /* Header */
     header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 24px; border-bottom: 1px solid var(--surface-border); margin-bottom: 24px; }
     .brand h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #fff; display: flex; align-items: center; gap: 12px; }
     .brand h1 span { color: var(--accent); }
     .brand p { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); }
     .top-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 
+    /* Navigazione Viste / Tabs */
     .view-tabs { display: flex; gap: 10px; margin-bottom: 24px; }
     .view-tab-btn { padding: 12px 20px; border-radius: var(--radius); border: 1px solid var(--surface-border); background: var(--surface); color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
     .view-tab-btn.active { background: #0284c7; color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(2,132,199,0.3); }
@@ -43,6 +45,7 @@
     .view-content { display: none; }
     .view-content.active { display: block; }
 
+    /* Input & Pulsanti */
     input, select {
       background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 11px 15px; border-radius: var(--radius); font-size: 14px; outline: none; transition: all 0.2s;
     }
@@ -64,6 +67,7 @@
     .btn-secondary:hover { background: #263c66; }
     .btn-icon { padding: 8px 12px; font-size: 13px; }
 
+    /* KPI Grid */
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
     .kpi-card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 20px; position: relative; overflow: hidden; }
     .kpi-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
@@ -75,6 +79,7 @@
     .kpi-title { font-size: 12px; text-transform: uppercase; font-weight: 700; color: var(--text-muted); margin-bottom: 8px; letter-spacing: 0.5px; display: flex; justify-content: space-between; }
     .kpi-value { font-size: 30px; font-weight: 800; }
 
+    /* Card & Tabelle */
     .card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 24px; margin-bottom: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.25); }
     .card-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 20px; }
     .card-title { margin: 0; font-size: 18px; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
@@ -93,14 +98,13 @@
 
     .inline-editor { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) auto auto; gap: 12px; align-items: end; background: #081120; padding: 18px; border-radius: var(--radius); border: 1px solid var(--surface-border); }
 
-    /* Planning Table & Clic Interattivo */
+    /* Planning Table & Griglia Interattiva */
     .planning-nav { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; }
     table.plan-table { width: 100%; border-collapse: collapse; min-width: 750px; font-size: 13px; text-align: center; }
     table.plan-table th, table.plan-table td { padding: 8px 4px; border: 1px solid var(--surface-border); }
     table.plan-table th { background: #081120; color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
     table.plan-table td.name-col { text-align: left; font-weight: 700; background: #0b1528; position: sticky; left: 0; z-index: 2; padding-left: 14px; min-width: 160px; color: #fff; }
     
-    /* Caselle Cliccabili del Planning */
     .plan-cell-interactive { cursor: pointer; transition: background 0.15s; user-select: none; }
     .plan-cell-interactive:hover { background: rgba(56, 189, 248, 0.15) !important; }
 
@@ -112,7 +116,7 @@
     .cell-MAL { background: rgba(100, 116, 139, 0.25); color: #94a3b8; }
     .cell-empty { color: #334155; font-size: 16px; }
 
-    /* Modal Generali e Popup Rapido */
+    /* Modal & Popup */
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(6px); }
     .modal { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); width: 100%; max-width: 500px; padding: 24px; box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.6); }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
@@ -122,7 +126,6 @@
     .form-group input, .form-group select { width: 100%; }
     .modal-footer { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 
-    /* Griglia Scelta Rapida Presenza nel Popup */
     .quick-status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
     .btn-quick-status { padding: 12px; border-radius: 8px; border: 1px solid var(--surface-border); font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; color: #fff; background: #081120; transition: transform 0.1s; }
     .btn-quick-status:active { transform: scale(0.96); }
@@ -153,8 +156,6 @@
 
     let adminPlanningMode = "month";
     let adminDateCursor = new Date();
-
-    // Dati per popup modifica rapida da planning
     let activeQuickEdit = { dipendente: null, data: null };
 
     function showToast(msg, isSuccess = true) {
@@ -290,9 +291,7 @@
 
     document.getElementById("searchInput").addEventListener("input", aggiornaDashboard);
 
-    // ==========================================
-    // PLANNING INTERATTIVO
-    // ==========================================
+    // Planning Engine
     window.setAdminPlanningMode = function(mode) {
       adminPlanningMode = mode;
       document.querySelectorAll(".btn-plan-toggle").forEach(b => b.classList.remove("active"));
@@ -367,7 +366,6 @@
             }
           });
 
-          // Casella resa interattiva con onClick
           if (!stato) {
             rowHtml += `<td class="plan-cell-interactive" onclick="apriQuickEdit('${nome}', '${iso}', null)">
               <span class="cell-empty">&bull;</span>
@@ -391,9 +389,7 @@
       });
     }
 
-    // ==========================================
-    // POPUP MODIFICA RAPIDA DA PLANNING
-    // ==========================================
+    // Popup Modifica Rapida da Planning
     window.apriQuickEdit = function(dipendente, dataIso, statoAttuale) {
       activeQuickEdit = { dipendente, data: dataIso };
       document.getElementById("quick-nome").textContent = dipendente;
@@ -407,7 +403,6 @@
 
     window.applicaQuickStato = function(stato) {
       if (!activeQuickEdit.dipendente || !activeQuickEdit.data) return;
-
       const safeKey = activeQuickEdit.dipendente.replace(/[^a-zA-Z0-9]/g, "_");
       
       if (stato === "DELETE") {
@@ -529,7 +524,9 @@
       }
     };
 
-    // Esportazione PDF & WhatsApp
+    // ==========================================
+    // PDF OTTIMIZZATO (FILIGRANA SOTTO LA TABELLA)
+    // ==========================================
     function creaDocumentoPDF() {
       const summary = window.cachedSummary;
       if (!summary) return null;
@@ -563,18 +560,21 @@
         body: tableRows,
         theme: "striped",
         headStyles: { fillColor: [15, 27, 51], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
-        styles: { fontSize: 8, cellPadding: 3.5, textColor: [30, 41, 59] },
+        styles: { fontSize: 8, cellPadding: 3.5, textColor: [15, 23, 42] },
         alternateRowStyles: { fillColor: [248, 250, 252] },
         foot: [["TOTALE GENERALE", "", "", "", "", "", "", "", "", `€ ${summary.totaleGlobale.toFixed(2)}`]],
         footStyles: { fillColor: [226, 232, 240], textColor: [15, 23, 42], fontStyle: "bold", fontSize: 9 },
-        didDrawPage: function() {
+        willDrawPage: function() {
+          // Disegnato PRIMA delle righe: rimane rigorosamente sotto la tabella
           doc.saveGraphicsState();
-          doc.setFontSize(55);
-          doc.setTextColor(230, 235, 245);
+          doc.setFontSize(48);
+          doc.setTextColor(240, 244, 248); // Grigio-azzurro chiarissimo in sottofondo
           doc.setFont("helvetica", "bold");
-          doc.text("MIRISA CERAMICHE", 22, 175, { angle: 45 });
+          doc.text("MIRISA CERAMICHE", 28, 175, { angle: 45 });
           doc.restoreGraphicsState();
-
+        },
+        didDrawPage: function() {
+          // Intestazione documento ufficiale
           doc.setFontSize(18);
           doc.setTextColor(15, 23, 42);
           doc.setFont("helvetica", "bold");
@@ -590,6 +590,7 @@
           doc.setDrawColor(203, 213, 225);
           doc.line(14, 43, 196, 43);
 
+          // Piè di pagina
           const pageStr = `Pagina ${doc.internal.getNumberOfPages()}`;
           doc.setFontSize(8);
           doc.setTextColor(148, 163, 184);
@@ -692,7 +693,7 @@
       </div>
     </div>
 
-    <!-- Switch Tabs Viste -->
+    <!-- Selezione Vista -->
     <div class="view-tabs">
       <button class="view-tab-btn active" onclick="switchMainTab('view-registro', this)">
         <i class="fa-solid fa-file-invoice-dollar"></i> Registro Compensi & Buste Paga
@@ -771,7 +772,7 @@
       </div>
     </div>
 
-    <!-- VISTA 2: PLANNING CALENDARIO INTERATTIVO -->
+    <!-- VISTA 2: PLANNING CALENDARIO -->
     <div id="view-planning" class="view-content">
       <div class="card">
         <div class="planning-nav">
@@ -884,6 +885,7 @@
     </div>
   </div>
 
+  <!-- Toast Notifica -->
   <div id="toast">
     <i class="fa-solid fa-circle-check" style="color:var(--success);"></i>
     <span id="toast-text">Operazione completata</span>
