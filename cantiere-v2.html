@@ -106,7 +106,7 @@
         <button id="btn-mic" class="mic-button" onclick="toggleVoiceRecording()">
           <i class="fa-solid fa-microphone"></i>
         </button>
-        <div id="mic-status" class="voice-hint">Caricamento dipendenti da Firebase...</div>
+        <div id="mic-status" class="voice-hint">Caricamento dipendenti...</div>
         <div id="transcript" class="speech-transcript">In attesa della tua voce...</div>
       </div>
     </div>
@@ -127,7 +127,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, update, onValue, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAb6M5iEzafntiQbr7fj76XrZYNjmz17tE",
@@ -139,50 +139,44 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Imposta data corrente del dispositivo
+    // Imposta data corrente
     const dOggi = new Date();
     const annoOggi = dOggi.getFullYear();
     const meseOggi = String(dOggi.getMonth() + 1).padStart(2, '0');
     const giornoOggi = String(dOggi.getDate()).padStart(2, '0');
     document.getElementById("selected-date").value = `${annoOggi}-${meseOggi}-${giornoOggi}`;
 
-    // Array dinamico popolato con gli ID REALI di Firebase
-    let listaDipendentiReali = [];
+    // Lista dipendenti caricata con precisione da Firebase
+    let catalogoDipendenti = [];
     let presenzeProposte = [];
 
-    function normalizzaNome(str) {
-      return (str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
-    }
-
-    // Caricamento e mappatura esatta ID <-> Dipendente
+    // Mappatura sicura ID Firebase -> Nome
     onValue(ref(db, "dipendenti"), (snap) => {
       const data = snap.val() || {};
-      listaDipendentiReali = [];
+      catalogoDipendenti = [];
 
       Object.keys(data).forEach(idChiave => {
         const val = data[idChiave];
-        let nomeVisualizzato = "";
-
+        let nomeVisual = "";
         if (typeof val === "string") {
-          nomeVisualizzato = val;
+          nomeVisual = val;
         } else if (val && typeof val === "object") {
-          nomeVisualizzato = val.nome || val.nominativo || val.nomeCompleto || val.name || idChiave;
+          nomeVisual = val.nome || val.nominativo || (val.nome && val.cognome ? `${val.cognome} ${val.nome}` : "") || idChiave;
         } else {
-          nomeVisualizzato = idChiave;
+          nomeVisual = idChiave;
         }
 
-        listaDipendentiReali.push({
+        // Dividiamo le parole per il confronto vocale
+        const parole = nomeVisual.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter(p => p.length >= 3);
+
+        catalogoDipendenti.push({
           id: idChiave,
-          nome: nomeVisualizzato,
-          normNome: normalizzaNome(nomeVisualizzato),
-          normId: normalizzaNome(idChiave)
+          nome: nomeVisual,
+          parole: parole
         });
       });
 
-      document.getElementById("mic-status").textContent = `Collegato! ${listaDipendentiReali.length} dipendenti pronti. Tocca e parla.`;
-    }, (error) => {
-      console.warn("Errore lettura dipendenti:", error);
-      document.getElementById("mic-status").textContent = "Tocca il microfono e parla liberamente";
+      document.getElementById("mic-status").textContent = `Pronto! ${catalogoDipendenti.length} dipendenti sincronizzati.`;
     });
 
     function showToast(msg) {
@@ -235,6 +229,7 @@
       }
     };
 
+    // Parser Date Preciso
     function estraiDataDaTesto(testo) {
       const t = testo.toLowerCase();
       const refDate = new Date();
@@ -279,13 +274,19 @@
       return `${y}-${m}-${day}`;
     }
 
+    // STATI RIGOROSI: "assente" ha SEMPRE precedenza su "oggi" o altre parole!
     function rilevaSiglaStato(testo) {
       const t = testo.toLowerCase();
-      if (t.includes("assent") || t.includes("manc") || t.includes("non c'è") || t.includes("non ce")) return { sigla: "A", label: "Assente" };
+      if (t.includes("assent") || t.includes("manc") || t.includes("non c'è") || t.includes("non ce") || t.includes("assenza")) {
+        return { sigla: "A", label: "Assente" };
+      }
       if (t.includes("feri")) return { sigla: "F", label: "Ferie" };
       if (t.includes("malatt") || t.includes("indispost")) return { sigla: "MAL", label: "Malattia" };
       if (t.includes("pomerigg")) return { sigla: "P", label: "Pomeriggio" };
       if (t.includes("mezz") || t.includes("mattin")) return { sigla: "M", label: "Mattina" };
+      if (t.includes("present") || t.includes("lavorat") || t.includes("intera") || t.includes("giornata")) {
+        return { sigla: "I", label: "Intera" };
+      }
       return { sigla: "I", label: "Intera" };
     }
 
@@ -298,13 +299,12 @@
       }
 
       const text = frase.toLowerCase();
-      const textNorm = normalizzaNome(frase);
       let risultati = [];
 
-      // 1. Comando di squadra collettivo
+      // 1. Comando di squadra collettivo ("tutti", "squadra")
       if (text.includes("tutt") || text.includes("squadra")) {
         const statoObj = rilevaSiglaStato(text.split(/tranne|eccetto|meno/)[0]);
-        risultati = listaDipendentiReali.map(d => ({
+        risultati = catalogoDipendenti.map(d => ({
           id: d.id,
           nome: d.nome,
           statoSigla: statoObj.sigla,
@@ -313,15 +313,13 @@
 
         if (text.includes("tranne") || text.includes("eccetto") || text.includes("meno")) {
           const parteEccezioni = text.split(/tranne|eccetto|meno/)[1];
-          const parteNorm = normalizzaNome(parteEccezioni);
           const eccObj = rilevaSiglaStato(parteEccezioni);
           const siglaApplicare = eccObj.sigla === statoObj.sigla ? (statoObj.sigla === "I" ? "A" : "I") : eccObj.sigla;
           const labelApplicare = siglaApplicare === "A" ? "Assente" : (siglaApplicare === "I" ? "Intera" : eccObj.label);
 
-          listaDipendentiReali.forEach(d => {
-            const parole = d.nome.toLowerCase().split(" ");
-            const nominato = parole.some(p => p.length > 2 && parteEccezioni.includes(p)) || parteNorm.includes(d.normNome) || parteNorm.includes(d.normId);
-            if (nominato) {
+          catalogoDipendenti.forEach(d => {
+            const citato = d.parole.some(p => parteEccezioni.includes(p));
+            if (citato) {
               const idx = risultati.findIndex(r => r.id === d.id);
               if (idx !== -1) {
                 risultati[idx].statoSigla = siglaApplicare;
@@ -331,37 +329,44 @@
           });
         }
       } else {
-        // 2. Singoli nominativi
+        // 2. Riconoscimento singolo/multiplo dipendente
         const statoObj = rilevaSiglaStato(text);
-        let trovati = 0;
 
-        listaDipendentiReali.forEach(d => {
-          const parole = d.nome.toLowerCase().split(" ");
-          const nominato = parole.some(p => p.length > 2 && text.includes(p)) || textNorm.includes(d.normNome) || textNorm.includes(d.normId);
+        // Algoritmo di corrispondenza esatta per evitare di confondere Isabella con Pellump!
+        let candidatiTrovati = [];
 
-          if (nominato) {
-            risultati.push({
-              id: d.id,
-              nome: d.nome,
-              statoSigla: statoObj.sigla,
-              statoLabel: statoObj.label
-            });
-            trovati++;
+        catalogoDipendenti.forEach(d => {
+          let score = 0;
+          d.parole.forEach(p => {
+            if (text.includes(p)) score += 2;
+          });
+
+          // Casi speciali fonetici
+          if (text.includes("di piero") && d.nome.toLowerCase().includes("dipierro")) score += 3;
+          if (text.includes("isabella") && d.nome.toLowerCase().includes("isabella")) score += 5;
+          if (text.includes("pellump") && d.nome.toLowerCase().includes("pellump")) score += 5;
+          if (text.includes("margherita") && d.nome.toLowerCase().includes("margherita")) score += 5;
+          if (text.includes("ressa") && d.nome.toLowerCase().includes("ressa")) score += 5;
+          if (text.includes("campobasso") && d.nome.toLowerCase().includes("campobasso")) score += 5;
+
+          if (score > 0) {
+            candidatiTrovati.push({ dip: d, score: score });
           }
         });
 
-        // Fallback di sicurezza se la lista dipendenti stava ancora caricando
-        if (trovati === 0) {
-          let pulito = frase.replace(/ieri|oggi|l'altro ieri|presente|presenti|assente|assenti|ferie|malattia|mezza|mattina|pomeriggio|intera|gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|\d{1,2}|\d{4}/gi, "").trim();
-          pulito = pulito.replace(/^[,\s]+|[,\s]+$/g, "");
-          if (pulito.length > 1) {
-            risultati.push({
-              id: pulito.replace(/[^a-zA-Z0-9]/g, "_"),
-              nome: pulito,
-              statoSigla: statoObj.sigla,
-              statoLabel: statoObj.label
-            });
-          }
+        // Se abbiamo trovato candidati, prendiamo solo quelli con punteggio valido
+        if (candidatiTrovati.length > 0) {
+          // Ordina dal più probabile
+          candidatiTrovati.sort((a, b) => b.score - a.score);
+
+          // Se è una frase per una sola persona (non "tutti"), prendi il miglior risultato
+          const topCandidate = candidatiTrovati[0].dip;
+          risultati.push({
+            id: topCandidate.id,
+            nome: topCandidate.nome,
+            statoSigla: statoObj.sigla,
+            statoLabel: statoObj.label
+          });
         }
       }
 
@@ -369,9 +374,9 @@
         presenzeProposte = risultati;
         mostraAnteprima(presenzeProposte);
         const dataAttiva = document.getElementById("selected-date").value;
-        document.getElementById("mic-status").textContent = `Presenze pronte per: ${dataAttiva}!`;
+        document.getElementById("mic-status").textContent = `Presenze pronte per: ${dataAttiva}`;
       } else {
-        document.getElementById("mic-status").textContent = "Nessun collaboratore riconosciuto. Riprova.";
+        document.getElementById("mic-status").textContent = "Nessun collaboratore riconosciuto chiaramente. Riprova.";
       }
     }
 
@@ -403,7 +408,7 @@
       box.style.display = "block";
     }
 
-    // SALVATAGGIO ALLINEATO CON GLI ID ESATTI DI FIREBASE
+    // SALVATAGGIO PRECISO ALLINEATO AGLI ID DI ADMIN.HTML
     window.confermaSalvataggio = async function() {
       const dataSel = document.getElementById("selected-date").value;
       if (!dataSel || presenzeProposte.length === 0) return;
@@ -415,29 +420,19 @@
 
       const [anno, mese, giornoStr] = dataSel.split("-");
       const meseAnno = `${anno}-${mese}`;       // es: "2026-09"
-      const giornoNum = parseInt(giornoStr, 10);  // es: 25 (senza zero iniziale)
-      const giorno2Digit = giornoStr.padStart(2, '0'); // es: "25"
+      const giornoNum = parseInt(giornoStr, 10);  // es: 23 o 25
 
       const updates = {};
 
       presenzeProposte.forEach(item => {
         const idReale = item.id;
-        const nomeClean = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
         const sigla = item.statoSigla;
 
-        // 1. STRUTTURA PRINCIPALE LETTA DAL PLANNING: presenze/YYYY-MM/giorno/ID = "I"
+        // Scrittura principale che colora la casella del planning in admin.html:
+        // presenze/2026-09/23/ID = "A"
         updates[`presenze/${meseAnno}/${giornoNum}/${idReale}`] = sigla;
-        updates[`presenze/${meseAnno}/${giorno2Digit}/${idReale}`] = sigla;
 
-        // Scrittura di sicurezza anche per nome
-        updates[`presenze/${meseAnno}/${giornoNum}/${nomeClean}`] = sigla;
-        updates[`presenze/${meseAnno}/${giornoNum}/${item.nome}`] = sigla;
-
-        // 2. STRUTTURA ALTERNATIVA: presenze/YYYY-MM/ID/giorno = "I"
-        updates[`presenze/${meseAnno}/${idReale}/${giornoNum}`] = sigla;
-        updates[`presenze/${meseAnno}/${idReale}/${giorno2Digit}`] = sigla;
-
-        // 3. REGISTRO GIORNALIERO: presenze/YYYY-MM-DD/ID
+        // Scrittura di sicurezza giornaliera
         updates[`presenze/${dataSel}/${idReale}`] = {
           dipendente: item.nome,
           data: dataSel,
@@ -445,9 +440,6 @@
           statoEsteso: item.statoLabel,
           orario: new Date().toISOString()
         };
-
-        // 4. Registro storico
-        updates[`presenze_registro/${idReale}/${dataSel}`] = sigla;
       });
 
       try {
