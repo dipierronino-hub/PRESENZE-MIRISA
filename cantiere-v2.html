@@ -140,11 +140,6 @@
 
     function pad(n) { return String(n).padStart(2, '0'); }
 
-    // DATA SOLARE DIRETTA 1:1 (senza alcuna sottrazione)
-    function calcolaDataPura(year, month1Based, day) {
-      return `${year}-${pad(month1Based)}-${pad(day)}`;
-    }
-
     const dOggi = new Date();
     document.getElementById("selected-date").value = `${dOggi.getFullYear()}-${pad(dOggi.getMonth() + 1)}-${pad(dOggi.getDate())}`;
 
@@ -218,6 +213,7 @@
       }
     };
 
+    // PARSER DATA BLINDATO: Riconosce con precisione numeri e parole
     function estraiTuttiIGiorni(testo) {
       const t = testo.toLowerCase();
       const refDate = new Date();
@@ -234,24 +230,48 @@
         if (t.includes(mStr)) mese = mesiMap[mStr];
       });
 
-      const mAnno = t.match(/\b(202[4-9])\b/);
-      if (mAnno) anno = parseInt(mAnno[1], 10);
+      // Rimuove l'anno prima di cercare i giorni per evitare falsi positivi
+      let tSenzaAnno = t.replace(/\b202[0-9]\b/g, "");
+
+      // Mappa numeri a parole
+      const numeriParole = {
+        "primo": 1, "uno": 1, "due": 2, "tre": 3, "quattro": 4, "cinque": 5,
+        "sei": 6, "sette": 7, "otto": 8, "nove": 9, "dieci": 10,
+        "undici": 11, "dodici": 12, "tredici": 13, "quattordici": 14, "quindici": 15,
+        "sedici": 16, "diciassette": 17, "diciotto": 18, "diciannove": 19, "venti": 20,
+        "ventuno": 21, "ventidue": 22, "ventitre": 23, "ventitré": 23, "ventiquattro": 24,
+        "venticinque": 25, "ventisei": 26, "ventisette": 27, "ventotto": 28, "ventinove": 29,
+        "trenta": 30, "trentuno": 31
+      };
 
       let giorni = [];
 
-      const matchRange = t.match(/(?:dal|da)\s+(\d{1,2})\s+(?:al|fino\s+al)\s+(\d{1,2})/);
+      // Controllo intervallo "dal ... al ..."
+      const matchRange = tSenzaAnno.match(/(?:dal|da)\s+(\d{1,2})\s+(?:al|fino\s+al)\s+(\d{1,2})/);
       if (matchRange) {
         const start = parseInt(matchRange[1], 10);
         const end = parseInt(matchRange[2], 10);
         for (let g = start; g <= end; g++) giorni.push(g);
       } else {
-        const regexGiorno = /(?:il|del|giorno|\b)\s*(\b\d{1,2}\b)/g;
+        // Cerca cifre numeriche isolate (es. "1 settembre", "il 9")
+        const regexGiorno = /(?:il|del|giorno|\b)\s*(\b[1-9]\b|\b[12][0-9]\b|\b3[01]\b)(?!\s*euro)/g;
         let match;
-        while ((match = regexGiorno.exec(t)) !== null) {
+        while ((match = regexGiorno.exec(tSenzaAnno)) !== null) {
           const val = parseInt(match[1], 10);
           if (val >= 1 && val <= 31 && !giorni.includes(val)) {
             giorni.push(val);
           }
+        }
+
+        // Cerca numeri scritti a parole se non trovati numerici
+        if (giorni.length === 0) {
+          Object.keys(numeriParole).forEach(parola => {
+            const regexP = new RegExp(`\\b${parola}\\b`);
+            if (regexP.test(tSenzaAnno)) {
+              const val = numeriParole[parola];
+              if (!giorni.includes(val)) giorni.push(val);
+            }
+          });
         }
       }
 
@@ -309,17 +329,20 @@
             if (t.includes(tok)) score += 5;
           });
 
-          if (t.includes("ressa") && dip.nome.toLowerCase().includes("ressa")) score += 25;
-          if (t.includes("vito") && dip.nome.toLowerCase().includes("vito")) score += 15;
-          if (t.includes("bulicko") && dip.nome.toLowerCase().includes("bulicko")) score += 25;
-          if (t.includes("davide") && dip.nome.toLowerCase().includes("davide")) score += 15;
-          if (t.includes("scarano") && dip.nome.toLowerCase().includes("scarano")) score += 25;
-          if (t.includes("margherita") && dip.nome.toLowerCase().includes("margherita")) score += 15;
-          if (t.includes("loschiavone") && dip.nome.toLowerCase().includes("loschiavone")) score += 25;
-          if (t.includes("isabella") && dip.nome.toLowerCase().includes("isabella")) score += 15;
-          if (t.includes("pellump") && dip.nome.toLowerCase().includes("pellump")) score += 25;
-          if (t.includes("campobasso") && dip.nome.toLowerCase().includes("campobasso")) score += 25;
-          if ((t.includes("dipierro") || t.includes("di piero")) && dip.nome.toLowerCase().includes("dipierro")) score += 25;
+          // Pesi dedicati per ogni nome
+          if (t.includes("sansone") && dip.nome.toLowerCase().includes("sansone")) score += 30;
+          if (t.includes("andrea") && dip.nome.toLowerCase().includes("andrea")) score += 20;
+          if (t.includes("ressa") && dip.nome.toLowerCase().includes("ressa")) score += 30;
+          if (t.includes("vito") && dip.nome.toLowerCase().includes("vito")) score += 20;
+          if (t.includes("bulicko") && dip.nome.toLowerCase().includes("bulicko")) score += 30;
+          if (t.includes("davide") && dip.nome.toLowerCase().includes("davide")) score += 20;
+          if (t.includes("scarano") && dip.nome.toLowerCase().includes("scarano")) score += 30;
+          if (t.includes("margherita") && dip.nome.toLowerCase().includes("margherita")) score += 20;
+          if (t.includes("loschiavone") && dip.nome.toLowerCase().includes("loschiavone")) score += 30;
+          if (t.includes("isabella") && dip.nome.toLowerCase().includes("isabella")) score += 20;
+          if (t.includes("pellump") && dip.nome.toLowerCase().includes("pellump")) score += 30;
+          if (t.includes("campobasso") && dip.nome.toLowerCase().includes("campobasso")) score += 30;
+          if ((t.includes("dipierro") || t.includes("di piero")) && dip.nome.toLowerCase().includes("dipierro")) score += 30;
 
           if (score > 0) punteggi.push({ nome: dip.nome, score });
         });
@@ -347,13 +370,12 @@
       window.operazioniProposte = [];
       dipendentiCoinvolti.forEach(nomeDip => {
         giorniFinali.forEach(giorno => {
-          const dataIso = calcolaDataPura(annoFinale, meseFinale, giorno);
+          // La colonna Giorno sul tuo admin cerca sempre la chiave corrispondente
           window.operazioniProposte.push({
             nome: nomeDip,
             giorno: giorno,
             mese: meseFinale,
             anno: annoFinale,
-            dataIso: dataIso,
             stato: statoGlobale
           });
         });
@@ -361,9 +383,9 @@
 
       if (window.operazioniProposte.length > 0) {
         renderizzaAnteprima();
-        document.getElementById("mic-status").textContent = `Riconosciute ${window.operazioniProposte.length} presenze per il giorno ${giorniFinali.join(', ')}!`;
+        document.getElementById("mic-status").textContent = `Riconosciuto! Controlla e salva.`;
       } else {
-        document.getElementById("mic-status").textContent = "Nessun collaboratore riconosciuto. Riprova.";
+        document.getElementById("mic-status").textContent = "Nessun collaboratore riconosciuto. Riprova chiaramente.";
       }
     }
 
@@ -404,7 +426,7 @@
       box.style.display = "block";
     }
 
-    // SALVATAGGIO SINGOLO E DIRETTO SULLA DATA SOLARE
+    // SALVATAGGIO CALIBRATO AL MILLIMETRO SUL TUO ADMIN
     window.confermaSalvataggio = async function() {
       if (!window.operazioniProposte || window.operazioniProposte.length === 0) return;
 
@@ -413,15 +435,26 @@
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Salvataggio...</span>`;
       btn.disabled = true;
 
-      const promises = window.operazioniProposte.map(item => {
+      const promises = [];
+
+      window.operazioniProposte.forEach(item => {
         const safeKey = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
-        return set(ref(db, `presenze/${item.dataIso}/${safeKey}`), {
+
+        // Calcoliamo la chiave del planning di admin (giorno solare esatto)
+        const dataSolare = `${item.anno}-${pad(item.mese)}-${pad(item.giorno)}`;
+        
+        // E la chiave calibrata (giorno - 1) che accende la colonna specifica nel file di admin
+        const dMinus = new Date(item.anno, item.mese - 1, item.giorno - 1);
+        const dataPlanningAdmin = `${dMinus.getFullYear()}-${pad(dMinus.getMonth() + 1)}-${pad(dMinus.getDate())}`;
+
+        // Scriviamo esattamente la chiave attesa da admin.html
+        promises.push(set(ref(db, `presenze/${dataPlanningAdmin}/${safeKey}`), {
           dipendente: item.nome,
-          data: item.dataIso,
+          data: dataPlanningAdmin,
           stato: item.stato,
           orarioRegistrazione: new Date().toISOString(),
           modificatoDa: "Voice App"
-        });
+        }));
       });
 
       try {
