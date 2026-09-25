@@ -111,7 +111,6 @@
       </div>
     </div>
 
-    <!-- ANTEPRIMA PROPOSTA ELABORATA DALL'AI -->
     <div class="card" id="ai-preview-box">
       <h3 style="margin: 0 0 12px; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 8px;">
         <i class="fa-solid fa-list-check"></i> Presenze Rilevate dall'AI:
@@ -224,19 +223,36 @@
       }
     };
 
+    // Ricerca automatica del modello supportato dalla chiave
+    async function trovaModelloSupportato(apiKey) {
+      try {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+        const data = await res.json();
+        if (data.models && data.models.length > 0) {
+          const supportati = data.models.filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes("generateContent"));
+          const flash = supportati.find(m => m.name.includes("flash") || m.name.includes("2.5") || m.name.includes("2.0") || m.name.includes("1.5"));
+          if (flash) return flash.name;
+          if (supportati.length > 0) return supportati[0].name;
+        }
+      } catch (err) {
+        console.warn("Impossibile elencare modelli, provo fallback standard", err);
+      }
+      return "models/gemini-2.5-flash";
+    }
+
     async function analizzaFraseConAI(frase) {
       const GEMINI_API_KEY = recuperaApiKeyAI();
       if (!GEMINI_API_KEY) return;
 
-      document.getElementById("mic-status").textContent = "Gemini AI sta analizzando la frase...";
+      document.getElementById("mic-status").textContent = "Collegamento all'intelligenza artificiale...";
       
-      const elencoDipendenti = dipendentiNomi.length > 0 ? dipendentiNomi.join(", ") : "Nessun dipendente ancora registrato";
+      const elencoDipendenti = dipendentiNomi.length > 0 ? dipendentiNomi.join(", ") : "Nessun dipendente";
       
       const prompt = `
 Sei il coordinatore presenze di un'azienda.
 I dipendenti registrati a sistema sono: [${elencoDipendenti}].
 
-Frase pronunciata: "${frase}".
+Frase pronunciata dall'operatore: "${frase}".
 
 Istruzioni:
 1. Gli stati validi sono: "Intera", "Mattina", "Pomeriggio", "Assente", "Ferie", "Malattia".
@@ -249,46 +265,30 @@ Rispondi ESCLUSIVAMENTE con un JSON valido nel seguente formato:
 ]
 `;
 
-      // Endpoint con fallback su versioni e modelli disponibili
-      const endpoints = [
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent",
-        "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent",
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent",
-        "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
-      ];
+      try {
+        const modelloScelto = await trovaModelloSupportato(GEMINI_API_KEY);
+        document.getElementById("mic-status").textContent = `Analisi con ${modelloScelto.replace('models/', '')}...`;
 
-      let lastError = null;
-      let success = false;
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/${modelloScelto}:generateContent?key=${GEMINI_API_KEY}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+          })
+        });
 
-      for (const endpoint of endpoints) {
-        try {
-          const res = await fetch(`${endpoint}?key=${GEMINI_API_KEY}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              contents: [{ parts: [{ text: prompt }] }]
-            })
-          });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
 
-          const data = await res.json();
-          if (data.error) throw new Error(data.error.message);
+        const rawText = data.candidates[0].content.parts[0].text;
+        const cleanJson = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
+        presenzeProposte = JSON.parse(cleanJson);
 
-          const rawText = data.candidates[0].content.parts[0].text;
-          const cleanJson = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
-          presenzeProposte = JSON.parse(cleanJson);
-
-          mostraAnteprimaAI(presenzeProposte);
-          document.getElementById("mic-status").textContent = "Analisi completata con successo!";
-          success = true;
-          break;
-        } catch (e) {
-          lastError = e;
-        }
-      }
-
-      if (!success) {
-        console.error(lastError);
-        document.getElementById("mic-status").textContent = "Errore: " + (lastError?.message || "Impossibile contattare Gemini");
+        mostraAnteprimaAI(presenzeProposte);
+        document.getElementById("mic-status").textContent = "Analisi completata con successo!";
+      } catch (e) {
+        console.error(e);
+        document.getElementById("mic-status").textContent = "Errore: " + (e.message || "Verifica la chiave");
       }
     }
 
