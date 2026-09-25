@@ -84,7 +84,7 @@
     <div class="brand">
       <div class="ai-badge"><i class="fa-solid fa-bolt"></i> Motore Vocale Intelligente</div>
       <h1>MIRISA <span>CERAMICHE</span></h1>
-      <p>Registrazione Presenze Vocale con Riconoscimento Date</p>
+      <p>Registrazione Presenze Vocale Diretta</p>
     </div>
 
     <div class="card">
@@ -97,7 +97,7 @@
         <button id="btn-mic" class="mic-button" onclick="toggleVoiceRecording()">
           <i class="fa-solid fa-microphone"></i>
         </button>
-        <div id="mic-status" class="voice-hint">Tocca il microfono e parla liberamente</div>
+        <div id="mic-status" class="voice-hint">Tocca il microfono e parla</div>
         <div id="transcript" class="speech-transcript">In attesa della tua voce...</div>
       </div>
     </div>
@@ -118,7 +118,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAb6M5iEzafntiQbr7fj76XrZYNjmz17tE",
@@ -130,38 +130,39 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Imposta data iniziale su oggi in formato locale YYYY-MM-DD
     const dOggi = new Date();
     const annoOggi = dOggi.getFullYear();
     const meseOggi = String(dOggi.getMonth() + 1).padStart(2, '0');
     const giornoOggi = String(dOggi.getDate()).padStart(2, '0');
     document.getElementById("selected-date").value = `${annoOggi}-${meseOggi}-${giornoOggi}`;
 
-    // Squadra base predefinita
-    let dipendentiNomi = [
-      "Errede Francesca",
-      "Antonio Campobasso",
-      "Dipierro Sebastiano",
-      "Sansone Andrea",
-      "Bulicko Davide",
-      "Ungaro Maria Domenica",
-      "Loschiavone Isabella",
-      "Gongo Pellump",
-      "Latifi Rudina",
-      "Scarano Margherita",
-      "Ressa Vito"
-    ];
+    let dipendentiMap = {
+      "Errede Francesca": "Errede Francesca",
+      "Antonio Campobasso": "Antonio Campobasso",
+      "Dipierro Sebastiano": "Dipierro Sebastiano",
+      "Sansone Andrea": "Sansone Andrea",
+      "Bulicko Davide": "Bulicko Davide",
+      "Ungaro Maria Domenica": "Ungaro Maria Domenica",
+      "Loschiavone Isabella": "Loschiavone Isabella",
+      "Gongo Pellump": "Gongo Pellump",
+      "Latifi Rudina": "Latifi Rudina",
+      "Scarano Margherita": "Scarano Margherita",
+      "Ressa Vito": "Ressa Vito"
+    };
 
     let presenzeProposte = [];
 
-    // Aggiornamento dinamico continuo da Firebase
+    // Recupera la mappatura esatta di ID e Nomi da Firebase
     onValue(ref(db, "dipendenti"), (snap) => {
       const data = snap.val();
       if (data) {
-        const caricati = Object.values(data).map(d => typeof d === 'string' ? d : (d.nome || d.nominativo)).filter(Boolean);
-        if (caricati.length > 0) {
-          dipendentiNomi = Array.from(new Set([...dipendentiNomi, ...caricati]));
-        }
+        Object.keys(data).forEach(k => {
+          const val = data[k];
+          const nomeDip = typeof val === 'string' ? val : (val.nome || val.nominativo);
+          if (nomeDip) {
+            dipendentiMap[nomeDip] = k; // associa nome -> chiave Firebase
+          }
+        });
       }
     });
 
@@ -215,12 +216,10 @@
       }
     };
 
-    // MOTORE PARSER DATE ITALIANO (Relativo e Assoluto)
     function estraiDataDaTesto(testo) {
       const t = testo.toLowerCase();
       const refDate = new Date();
 
-      // 1. Termini relativi
       if (t.includes("l'altro ieri") || t.includes("l altro ieri") || t.includes("altroieri")) {
         refDate.setDate(refDate.getDate() - 2);
         return formattaDataISO(refDate);
@@ -233,7 +232,6 @@
         return formattaDataISO(refDate);
       }
 
-      // 2. Riconoscimento date espresse a parole (es. "20 settembre 2026" o "20 settembre")
       const mesi = {
         "gennaio": 1, "febbraio": 2, "marzo": 3, "aprile": 4,
         "maggio": 5, "giugno": 6, "luglio": 7, "agosto": 8,
@@ -247,13 +245,11 @@
         const giorno = parseInt(match[1], 10);
         const mese = mesi[match[2].toLowerCase()];
         const anno = match[3] ? parseInt(match[3], 10) : refDate.getFullYear();
-
         const dataCalcolata = new Date(anno, mese - 1, giorno);
         if (!isNaN(dataCalcolata.getTime())) {
           return formattaDataISO(dataCalcolata);
         }
       }
-
       return null;
     }
 
@@ -264,67 +260,71 @@
       return `${y}-${m}-${day}`;
     }
 
-    function rilevaStato(testo) {
+    // Traduzione nello standard a sigle del calendario: I, M, P, A, F, MAL
+    function rilevaSiglaStato(testo) {
       const t = testo.toLowerCase();
-      if (t.includes("assent") || t.includes("manc") || t.includes("non c'è") || t.includes("non ce")) return "Assente";
-      if (t.includes("feri")) return "Ferie";
-      if (t.includes("malatt") || t.includes("indispost")) return "Malattia";
-      if (t.includes("mezz") || t.includes("mattin")) return "Mattina";
-      if (t.includes("pomerigg")) return "Pomeriggio";
-      return "Intera";
+      if (t.includes("assent") || t.includes("manc") || t.includes("non c'è") || t.includes("non ce")) return { sigla: "A", label: "Assente" };
+      if (t.includes("feri")) return { sigla: "F", label: "Ferie" };
+      if (t.includes("malatt") || t.includes("indispost")) return { sigla: "MAL", label: "Malattia" };
+      if (t.includes("pomerigg")) return { sigla: "P", label: "Pomeriggio" };
+      if (t.includes("mezz") || t.includes("mattin")) return { sigla: "M", label: "Mattina" };
+      return { sigla: "I", label: "Intera" };
     }
 
     function elaboraFrase(frase) {
-      document.getElementById("mic-status").textContent = "Elaborazione...";
+      document.getElementById("mic-status").textContent = "Elaborazione in corso...";
       
-      // Controllo se è stata pronunciata una data specifica
       const dataRilevata = estraiDataDaTesto(frase);
       if (dataRilevata) {
         document.getElementById("selected-date").value = dataRilevata;
       }
 
       const text = frase.toLowerCase();
+      const listaNomi = Object.keys(dipendentiMap);
       let risultati = [];
 
-      // 1. Comando di squadra collettivo ("tutti", "squadra")
       if (text.includes("tutt") || text.includes("squadra")) {
-        const statoBase = rilevaStato(text.split(/tranne|eccetto|meno/)[0]);
-        risultati = dipendentiNomi.map(n => ({ nome: n, stato: statoBase }));
+        const statoObj = rilevaSiglaStato(text.split(/tranne|eccetto|meno/)[0]);
+        risultati = listaNomi.map(n => ({ nome: n, statoSigla: statoObj.sigla, statoLabel: statoObj.label }));
 
         if (text.includes("tranne") || text.includes("eccetto") || text.includes("meno")) {
           const parteEccezioni = text.split(/tranne|eccetto|meno/)[1];
-          const statoEccezione = rilevaStato(parteEccezioni);
-          const statoDaApplicare = statoEccezione === statoBase ? (statoBase === "Intera" ? "Assente" : "Intera") : statoEccezione;
+          const eccObj = rilevaSiglaStato(parteEccezioni);
+          const siglaApplicare = eccObj.sigla === statoObj.sigla ? (statoObj.sigla === "I" ? "A" : "I") : eccObj.sigla;
+          const labelApplicare = siglaApplicare === "A" ? "Assente" : (siglaApplicare === "I" ? "Intera" : eccObj.label);
 
-          dipendentiNomi.forEach(nome => {
+          listaNomi.forEach(nome => {
             const parole = nome.toLowerCase().split(" ");
-            const presente = parole.some(p => p.length > 2 && parteEccezioni.includes(p));
-            if (presente) {
+            if (parole.some(p => p.length > 2 && parteEccezioni.includes(p))) {
               const idx = risultati.findIndex(r => r.nome === nome);
-              if (idx !== -1) risultati[idx].stato = statoDaApplicare;
+              if (idx !== -1) {
+                risultati[idx].statoSigla = siglaApplicare;
+                risultati[idx].statoLabel = labelApplicare;
+              }
             }
           });
         }
       } else {
-        // 2. Singoli nominativi
-        const statoGenerale = rilevaStato(text);
+        const statoObj = rilevaSiglaStato(text);
         let trovati = 0;
 
-        dipendentiNomi.forEach(nome => {
+        listaNomi.forEach(nome => {
           const parole = nome.toLowerCase().split(" ");
-          const presente = parole.some(p => p.length > 2 && text.includes(p));
-          if (presente) {
-            risultati.push({ nome: nome, stato: statoGenerale });
+          // Supporta anche la trascrizione separata "di piero" per "dipierro"
+          const nomeCompresso = nome.toLowerCase().replace(/\s+/g, '');
+          const fraseCompressa = text.replace(/\s+/g, '');
+
+          if (parole.some(p => p.length > 2 && text.includes(p)) || fraseCompressa.includes(nomeCompresso)) {
+            risultati.push({ nome: nome, statoSigla: statoObj.sigla, statoLabel: statoObj.label });
             trovati++;
           }
         });
 
-        // 3. Fallback se nome non censito
         if (trovati === 0) {
           let pulito = frase.replace(/ieri|oggi|l'altro ieri|presente|presenti|assente|assenti|ferie|malattia|mezza|mattina|pomeriggio|intera|gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|\d{1,2}|\d{4}/gi, "").trim();
           pulito = pulito.replace(/^[,\s]+|[,\s]+$/g, "");
           if (pulito.length > 1) {
-            risultati.push({ nome: pulito, stato: statoGenerale });
+            risultati.push({ nome: pulito, statoSigla: statoObj.sigla, statoLabel: statoObj.label });
           }
         }
       }
@@ -333,7 +333,7 @@
         presenzeProposte = risultati;
         mostraAnteprima(presenzeProposte);
         const dataAttiva = document.getElementById("selected-date").value;
-        document.getElementById("mic-status").textContent = `Presenze pronte per la data: ${dataAttiva}!`;
+        document.getElementById("mic-status").textContent = `Presenze pronte per: ${dataAttiva}!`;
       } else {
         document.getElementById("mic-status").textContent = "Nessun dato riconosciuto. Riprova.";
       }
@@ -346,15 +346,15 @@
 
       elenco.forEach(item => {
         let badgeClass = "badge-intera";
-        if (item.stato === "Mattina" || item.stato === "Pomeriggio") badgeClass = "badge-mezza";
-        if (item.stato === "Assente" || item.stato === "Malattia") badgeClass = "badge-assente";
-        if (item.stato === "Ferie") badgeClass = "badge-ferie";
+        if (item.statoSigla === "M" || item.statoSigla === "P") badgeClass = "badge-mezza";
+        if (item.statoSigla === "A" || item.statoSigla === "MAL") badgeClass = "badge-assente";
+        if (item.statoSigla === "F") badgeClass = "badge-ferie";
 
         const div = document.createElement("div");
         div.className = "preview-item";
         div.innerHTML = `
           <span><strong>${item.nome}</strong></span>
-          <span class="badge-preview ${badgeClass}">${item.stato}</span>
+          <span class="badge-preview ${badgeClass}">${item.statoLabel} (${item.statoSigla})</span>
         `;
         list.appendChild(div);
       });
@@ -362,27 +362,47 @@
       box.style.display = "block";
     }
 
-    window.confermaSalvataggio = function() {
-      const dataSel = document.getElementById("selected-date").value;
+    // Scrittura sincronizzata con la tabella del Planning
+    window.confermaSalvataggio = async function() {
+      const dataSel = document.getElementById("selected-date").value; // Formato YYYY-MM-DD
       if (!dataSel || presenzeProposte.length === 0) return;
 
-      const promises = presenzeProposte.map(item => {
-        const safeKey = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
-        return set(ref(db, `presenze/${dataSel}/${safeKey}`), {
+      const [anno, mese, giorno] = dataSel.split("-");
+      const meseAnno = `${anno}-${mese}`;       // es: "2026-09"
+      const giornoNum = parseInt(giorno, 10);    // es: 25
+
+      const promises = [];
+
+      presenzeProposte.forEach(item => {
+        const idDipendente = dipendentiMap[item.nome] || item.nome.replace(/[^a-zA-Z0-9]/g, "_");
+        const safeName = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
+
+        // 1. Struttura calendario a matrice: presenze/YYYY-MM/giorno/ID = "I"
+        promises.push(set(ref(db, `presenze/${meseAnno}/${giornoNum}/${idDipendente}`), item.statoSigla));
+        promises.push(set(ref(db, `presenze/${meseAnno}/${giornoNum}/${safeName}`), item.statoSigla));
+
+        // 2. Struttura per data completa: presenze/YYYY-MM-DD/ID
+        promises.push(set(ref(db, `presenze/${dataSel}/${idDipendente}`), {
           dipendente: item.nome,
           data: dataSel,
-          stato: item.stato,
-          orarioRegistrazione: new Date().toISOString(),
-          inseritoDa: "Assistente Vocale"
-        });
+          stato: item.statoSigla,
+          statoEsteso: item.statoLabel,
+          orario: new Date().toISOString()
+        }));
+
+        // 3. Struttura diretta compatibile dipendenti_presenze/ID/YYYY-MM-DD
+        promises.push(set(ref(db, `presenze_registro/${idDipendente}/${dataSel}`), item.statoSigla));
       });
 
-      Promise.all(promises).then(() => {
-        showToast(`Salvate ${presenzeProposte.length} presenze per il ${dataSel}!`);
+      try {
+        await Promise.all(promises);
+        showToast(`Salvate presenze per il ${dataSel}! Planning aggiornato.`);
         document.getElementById("preview-box").style.display = "none";
         document.getElementById("transcript").textContent = "In attesa della tua voce...";
         presenzeProposte = [];
-      });
+      } catch (err) {
+        alert("Errore salvataggio: " + err.message);
+      }
     };
   </script>
 </body>
