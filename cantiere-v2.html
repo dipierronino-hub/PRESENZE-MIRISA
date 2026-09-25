@@ -133,13 +133,32 @@
     const oggi = new Date().toISOString().split("T")[0];
     document.getElementById("selected-date").value = oggi;
 
-    let dipendentiNomi = [];
+    // Squadra base precaricata
+    let dipendentiNomi = [
+      "Errede Francesca",
+      "Antonio Campobasso",
+      "Dipierro Sebastiano",
+      "Sansone Andrea",
+      "Bulicko Davide",
+      "Ungaro Maria Domenica",
+      "Loschiavone Isabella",
+      "Gongo Pellump",
+      "Latifi Rudina",
+      "Scarano Margherita",
+      "Ressa Vito"
+    ];
+
     let presenzeProposte = [];
 
-    // Caricamento continuo anagrafica dipendenti da Firebase
+    // Aggiornamento dinamico da Firebase
     onValue(ref(db, "dipendenti"), (snap) => {
-      const data = snap.val() || {};
-      dipendentiNomi = Object.values(data).map(d => d.nome).filter(Boolean);
+      const data = snap.val();
+      if (data) {
+        const caricati = Object.values(data).map(d => typeof d === 'string' ? d : (d.nome || d.nominativo)).filter(Boolean);
+        if (caricati.length > 0) {
+          dipendentiNomi = Array.from(new Set([...dipendentiNomi, ...caricati]));
+        }
+      }
     });
 
     function showToast(msg) {
@@ -192,62 +211,61 @@
       }
     };
 
-    // Elaborazione semantica locale istantanea
+    function rilevaStato(testo) {
+      const t = testo.toLowerCase();
+      if (t.includes("assent") || t.includes("manc") || t.includes("non c'è") || t.includes("non ce")) return "Assente";
+      if (t.includes("feri")) return "Ferie";
+      if (t.includes("malatt") || t.includes("indispost")) return "Malattia";
+      if (t.includes("mezz") || t.includes("mattin")) return "Mattina";
+      if (t.includes("pomerigg")) return "Pomeriggio";
+      return "Intera";
+    }
+
     function elaboraFrase(frase) {
       document.getElementById("mic-status").textContent = "Elaborazione...";
       const text = frase.toLowerCase();
       let risultati = [];
 
-      // Determinazione dello stato prioritario
-      let stato = "Intera";
-      if (text.includes("assent") || text.includes("manc") || text.includes("non c'è") || text.includes("non ce")) {
-        stato = "Assente";
-      } else if (text.includes("feri")) {
-        stato = "Ferie";
-      } else if (text.includes("malatt") || text.includes("indispost")) {
-        stato = "Malattia";
-      } else if (text.includes("mezz") || text.includes("mattin")) {
-        stato = "Mattina";
-      } else if (text.includes("pomerigg")) {
-        stato = "Pomeriggio";
-      } else if (text.includes("present") || text.includes("lavorat")) {
-        stato = "Intera";
-      }
-
-      // Caso 1: Riferimento alla squadra completa ("tutti", "squadra")
+      // 1. Comando Collettivo ("tutti", "squadra")
       if (text.includes("tutt") || text.includes("squadra")) {
-        const defaultState = (stato === "Assente") ? "Assente" : "Intera";
-        risultati = dipendentiNomi.map(n => ({ nome: n, stato: defaultState }));
+        const statoBase = rilevaStato(text.split(/tranne|eccetto|meno/)[0]);
+        risultati = dipendentiNomi.map(n => ({ nome: n, stato: statoBase }));
 
-        // Gestione eccezioni ("tranne...", "eccetto...")
-        dipendentiNomi.forEach(nome => {
-          const parti = nome.toLowerCase().split(" ");
-          const nominato = parti.some(p => p.length > 2 && text.includes(p));
-          if (nominato && (text.includes("tranne") || text.includes("eccetto") || text.includes("meno"))) {
-            const idx = risultati.findIndex(r => r.nome === nome);
-            if (idx !== -1) {
-              risultati[idx].stato = (defaultState === "Intera") ? "Assente" : "Intera";
+        // Gestione delle eccezioni pronunciate
+        if (text.includes("tranne") || text.includes("eccetto") || text.includes("meno")) {
+          const parteEccezioni = text.split(/tranne|eccetto|meno/)[1];
+          const statoEccezione = rilevaStato(parteEccezioni);
+          const statoDaApplicare = statoEccezione === statoBase ? (statoBase === "Intera" ? "Assente" : "Intera") : statoEccezione;
+
+          dipendentiNomi.forEach(nome => {
+            const parole = nome.toLowerCase().split(" ");
+            const presente = parole.some(p => p.length > 2 && parteEccezioni.includes(p));
+            if (presente) {
+              const idx = risultati.findIndex(r => r.nome === nome);
+              if (idx !== -1) risultati[idx].stato = statoDaApplicare;
             }
-          }
-        });
+          });
+        }
       } else {
-        // Caso 2: Nominativi specifici individuati dall'anagrafica
-        let matched = 0;
+        // 2. Nominativi singoli o multipli
+        const statoGenerale = rilevaStato(text);
+        let trovati = 0;
+
         dipendentiNomi.forEach(nome => {
-          const parti = nome.toLowerCase().split(" ");
-          const nominato = parti.some(p => p.length > 2 && text.includes(p));
-          if (nominato) {
-            risultati.push({ nome: nome, stato: stato });
-            matched++;
+          const parole = nome.toLowerCase().split(" ");
+          const presente = parole.some(p => p.length > 2 && text.includes(p));
+          if (presente) {
+            risultati.push({ nome: nome, stato: statoGenerale });
+            trovati++;
           }
         });
 
-        // Caso 3: Nome libero se non presente in anagrafica
-        if (matched === 0) {
+        // 3. Fallback se il nome non è nell'elenco predefinito
+        if (trovati === 0) {
           let pulito = frase.replace(/oggi|presente|presenti|assente|assenti|ferie|malattia|mezza|mattina|pomeriggio|intera/gi, "").trim();
           pulito = pulito.replace(/^[,\s]+|[,\s]+$/g, "");
           if (pulito.length > 1) {
-            risultati.push({ nome: pulito, stato: stato });
+            risultati.push({ nome: pulito, stato: statoGenerale });
           }
         }
       }
@@ -255,9 +273,9 @@
       if (risultati.length > 0) {
         presenzeProposte = risultati;
         mostraAnteprima(presenzeProposte);
-        document.getElementById("mic-status").textContent = "Presenze elaborate correttamente!";
+        document.getElementById("mic-status").textContent = "Presenze pronte per la registrazione!";
       } else {
-        document.getElementById("mic-status").textContent = "Nessun collaboratore individuato. Riprova.";
+        document.getElementById("mic-status").textContent = "Nessun dato riconosciuto. Riprova.";
       }
     }
 
