@@ -140,16 +140,9 @@
 
     function pad(n) { return String(n).padStart(2, '0'); }
 
-    // DATA CALIBRATA AL 100% SU ADMIN.HTML:
-    // admin.html fa: days.push(new Date(year, month, i)); const iso = d.toISOString().split("T")[0];
-    // In Italia (UTC+2 CEST), per la colonna 'i', iso diventa (i - 1).
-    // Restituiamo sia la chiave attesa dalla colonna del planning (adminPlanningKey),
-    // sia la data solare (actualDateIso) per avere la certezza assoluta!
-    function calcolaChiaviAdmin(year, month1Based, day) {
-      const dPlanning = new Date(year, month1Based - 1, day - 1);
-      const adminPlanningKey = `${dPlanning.getFullYear()}-${pad(dPlanning.getMonth() + 1)}-${pad(dPlanning.getDate())}`;
-      const actualDateIso = `${year}-${pad(month1Based)}-${pad(day)}`;
-      return { adminPlanningKey, actualDateIso };
+    // DATA SOLARE DIRETTA 1:1 (senza alcuna sottrazione)
+    function calcolaDataPura(year, month1Based, day) {
+      return `${year}-${pad(month1Based)}-${pad(day)}`;
     }
 
     const dOggi = new Date();
@@ -354,14 +347,13 @@
       window.operazioniProposte = [];
       dipendentiCoinvolti.forEach(nomeDip => {
         giorniFinali.forEach(giorno => {
-          const { adminPlanningKey, actualDateIso } = calcolaChiaviAdmin(annoFinale, meseFinale, giorno);
+          const dataIso = calcolaDataPura(annoFinale, meseFinale, giorno);
           window.operazioniProposte.push({
             nome: nomeDip,
             giorno: giorno,
             mese: meseFinale,
             anno: annoFinale,
-            adminPlanningKey: adminPlanningKey,
-            actualDateIso: actualDateIso,
+            dataIso: dataIso,
             stato: statoGlobale
           });
         });
@@ -369,7 +361,7 @@
 
       if (window.operazioniProposte.length > 0) {
         renderizzaAnteprima();
-        document.getElementById("mic-status").textContent = `Riconosciute ${window.operazioniProposte.length} registrazioni per il giorno ${giorniFinali.join(', ')}!`;
+        document.getElementById("mic-status").textContent = `Riconosciute ${window.operazioniProposte.length} presenze per il giorno ${giorniFinali.join(', ')}!`;
       } else {
         document.getElementById("mic-status").textContent = "Nessun collaboratore riconosciuto. Riprova.";
       }
@@ -412,7 +404,7 @@
       box.style.display = "block";
     }
 
-    // SALVATAGGIO DOPPIO: accende la colonna del planning E aggiorna il registro solare
+    // SALVATAGGIO SINGOLO E DIRETTO SULLA DATA SOLARE
     window.confermaSalvataggio = async function() {
       if (!window.operazioniProposte || window.operazioniProposte.length === 0) return;
 
@@ -421,28 +413,15 @@
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Salvataggio...</span>`;
       btn.disabled = true;
 
-      const promises = [];
-
-      window.operazioniProposte.forEach(item => {
+      const promises = window.operazioniProposte.map(item => {
         const safeKey = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
-
-        // 1. Scrittura che colora ESATTAMENTE la colonna sul planning del calendario
-        promises.push(set(ref(db, `presenze/${item.adminPlanningKey}/${safeKey}`), {
+        return set(ref(db, `presenze/${item.dataIso}/${safeKey}`), {
           dipendente: item.nome,
-          data: item.adminPlanningKey,
+          data: item.dataIso,
           stato: item.stato,
           orarioRegistrazione: new Date().toISOString(),
           modificatoDa: "Voice App"
-        }));
-
-        // 2. Scrittura sulla data solare effettiva
-        promises.push(set(ref(db, `presenze/${item.actualDateIso}/${safeKey}`), {
-          dipendente: item.nome,
-          data: item.actualDateIso,
-          stato: item.stato,
-          orarioRegistrazione: new Date().toISOString(),
-          modificatoDa: "Voice App"
-        }));
+        });
       });
 
       try {
