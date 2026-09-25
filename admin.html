@@ -29,7 +29,7 @@
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg); color: var(--text); margin: 0; padding: 24px; min-height: 100vh; }
     
-    /* SCHERMATA BLOCCO PIN */
+    /* SCHERMATA BLOCCO BIOMETRICA & PIN */
     #lock-screen {
       position: fixed;
       inset: 0;
@@ -44,9 +44,9 @@
       background: var(--surface);
       border: 1px solid var(--surface-border);
       border-radius: 16px;
-      padding: 32px 24px;
+      padding: 30px 22px;
       width: 100%;
-      max-width: 360px;
+      max-width: 350px;
       text-align: center;
       box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
     }
@@ -61,7 +61,14 @@
       align-items: center;
       justify-content: center;
       font-size: 22px;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
+    }
+    .pin-instruction {
+      font-size: 13px;
+      color: var(--accent);
+      font-weight: 700;
+      margin: 6px 0 12px;
+      min-height: 18px;
     }
     .pin-display {
       letter-spacing: 12px;
@@ -72,9 +79,9 @@
       background: #081120;
       border: 1px solid var(--surface-border);
       color: #fff;
-      padding: 12px;
+      padding: 10px;
       border-radius: 10px;
-      margin: 16px 0 20px;
+      margin-bottom: 14px;
       outline: none;
     }
     .pin-keypad {
@@ -88,7 +95,7 @@
       color: #fff;
       font-size: 20px;
       font-weight: 700;
-      padding: 14px 0;
+      padding: 13px 0;
       border-radius: 10px;
       cursor: pointer;
       transition: all 0.15s;
@@ -97,11 +104,16 @@
       background: #0284c7;
       transform: scale(0.96);
     }
+    .pin-btn-bio {
+      background: rgba(56, 189, 248, 0.15);
+      border-color: rgba(56, 189, 248, 0.3);
+      color: var(--accent);
+    }
     .pin-error {
       color: var(--danger);
       font-size: 13px;
       font-weight: 600;
-      margin-top: 12px;
+      margin-top: 10px;
       display: none;
     }
 
@@ -112,7 +124,7 @@
     .brand h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: #fff; display: flex; align-items: center; gap: 12px; }
     .brand h1 span { color: var(--accent); }
     .brand p { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); }
-    .top-actions { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .top-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
     /* Navigazione Viste / Tabs */
     .view-tabs { display: flex; gap: 10px; margin-bottom: 24px; }
@@ -212,20 +224,37 @@
 
   <script>
     // =========================================================================
-    // IMPOSTAZIONE PIN DI ACCESSO
-    // Sostituisci "0000" con il tuo codice desiderato (es. a 4 o 6 cifre)
+    // MODULO SICUREZZA BIOMETRICA (IMPRONTA / FACE ID) & PIN
     // =========================================================================
-    const PIN_CORRETTO = "0000";
-
     let pinInserito = "";
+    let setupFase = 1;
+    let pinTemporaneo = "";
+
+    function initLockScreen() {
+      const pinSalvato = localStorage.getItem("mirisa_admin_pin");
+      const titleEl = document.getElementById("lockTitle");
+      const instrEl = document.getElementById("pinInstruction");
+
+      if (!pinSalvato) {
+        titleEl.textContent = "Crea PIN Admin";
+        instrEl.textContent = "Scegli un PIN di 4 cifre per l'amministrazione";
+      } else {
+        titleEl.textContent = "Area Riservata Admin";
+        instrEl.textContent = "Inserisci PIN o usa l'impronta";
+        // Prova sblocco biometrico in automatico se disponibile
+        if (localStorage.getItem("mirisa_admin_bio") === "true") {
+          setTimeout(avviaBiometria, 400);
+        }
+      }
+    }
 
     function digitaPin(cifra) {
-      if (pinInserito.length < 8) {
+      if (pinInserito.length < 4) {
         pinInserito += cifra;
         aggiornaPinDisplay();
       }
-      if (pinInserito.length === PIN_CORRETTO.length) {
-        verificaPin();
+      if (pinInserito.length === 4) {
+        setTimeout(processaPin, 100);
       }
     }
 
@@ -236,18 +265,114 @@
     }
 
     function aggiornaPinDisplay() {
-      const display = document.getElementById("pinInput");
-      display.value = "*".repeat(pinInserito.length);
+      document.getElementById("pinInput").value = "*".repeat(pinInserito.length);
     }
 
-    function verificaPin() {
-      if (pinInserito === PIN_CORRETTO) {
-        sessionStorage.setItem("admin_auth", "true");
-        sbloccaDashboard();
+    function processaPin() {
+      const pinSalvato = localStorage.getItem("mirisa_admin_pin");
+      const errEl = document.getElementById("pinError");
+      const instrEl = document.getElementById("pinInstruction");
+
+      if (!pinSalvato) {
+        // Creazione PIN al primo avvio
+        if (setupFase === 1) {
+          pinTemporaneo = pinInserito;
+          pinInserito = "";
+          setupFase = 2;
+          aggiornaPinDisplay();
+          instrEl.textContent = "Ripeti il PIN per conferma";
+          errEl.style.display = "none";
+        } else if (setupFase === 2) {
+          if (pinInserito === pinTemporaneo) {
+            localStorage.setItem("mirisa_admin_pin", pinInserito);
+            sessionStorage.setItem("admin_auth", "true");
+            // Richiesta di attivazione biometria
+            proponiAttivazioneBiometria();
+          } else {
+            errEl.textContent = "I due PIN non coincidono. Riprova.";
+            errEl.style.display = "block";
+            setupFase = 1;
+            pinTemporaneo = "";
+            pinInserito = "";
+            instrEl.textContent = "Scegli un PIN di 4 cifre per l'amministrazione";
+            aggiornaPinDisplay();
+          }
+        }
       } else {
-        document.getElementById("pinError").style.display = "block";
-        pinInserito = "";
-        setTimeout(aggiornaPinDisplay, 400);
+        // Verifica normale
+        if (pinInserito === pinSalvato) {
+          sessionStorage.setItem("admin_auth", "true");
+          sbloccaDashboard();
+        } else {
+          errEl.textContent = "PIN errato. Riprova.";
+          errEl.style.display = "block";
+          pinInserito = "";
+          aggiornaPinDisplay();
+        }
+      }
+    }
+
+    // WEBAUTHN API (Sensore di Impronta Digitale del dispositivo)
+    async function proponiAttivazioneBiometria() {
+      if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+        const disponibile = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        if (disponibile && confirm("Vuoi abilitare l'impronta digitale o il riconoscimento biometrico per gli accessi futuri?")) {
+          try {
+            await registraBiometria();
+            localStorage.setItem("mirisa_admin_bio", "true");
+          } catch(e) {
+            console.log("Biometria non configurata", e);
+          }
+        }
+      }
+      sbloccaDashboard();
+    }
+
+    async function registraBiometria() {
+      const challenge = new Uint8Array(32);
+      window.crypto.getRandomValues(challenge);
+      const createOptions = {
+        publicKey: {
+          challenge: challenge,
+          rp: { name: "Mirisa Ceramiche Presenze" },
+          user: {
+            id: new Uint8Array(16),
+            name: "amministrazione@mirisa.it",
+            displayName: "Nino - Mirisa Amministrazione"
+          },
+          pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+          authenticatorSelection: {
+            authenticatorAttachment: "platform",
+            userVerification: "required"
+          },
+          timeout: 60000
+        }
+      };
+      const credential = await navigator.credentials.create(createOptions);
+      if (credential) {
+        localStorage.setItem("mirisa_admin_bio_cred", credential.id);
+      }
+    }
+
+    async function avviaBiometria() {
+      if (!window.PublicKeyCredential) return;
+      try {
+        const challenge = new Uint8Array(32);
+        window.crypto.getRandomValues(challenge);
+        const getOptions = {
+          publicKey: {
+            challenge: challenge,
+            timeout: 60000,
+            userVerification: "required"
+          }
+        };
+        const assertion = await navigator.credentials.get(getOptions);
+        if (assertion) {
+          sessionStorage.setItem("admin_auth", "true");
+          sbloccaDashboard();
+        }
+      } catch (err) {
+        console.log("Autenticazione biometrica annullata o non riconosciuta:", err);
       }
     }
 
@@ -262,7 +387,18 @@
       location.reload();
     }
 
+    function resetPinAdmin() {
+      if (confirm("Vuoi reimpostare il tuo PIN personale e le preferenze biometriche?")) {
+        localStorage.removeItem("mirisa_admin_pin");
+        localStorage.removeItem("mirisa_admin_bio");
+        localStorage.removeItem("mirisa_admin_bio_cred");
+        sessionStorage.removeItem("admin_auth");
+        location.reload();
+      }
+    }
+
     window.addEventListener("DOMContentLoaded", () => {
+      initLockScreen();
       if (sessionStorage.getItem("admin_auth") === "true") {
         sbloccaDashboard();
       }
@@ -664,9 +800,7 @@
         }
       };
 
-      // ==========================================
-      // PDF CON FILIGRANA DIETRO AL TESTO
-      // ==========================================
+      // PDF SENZA OMBRE (Filigrana sottofondo chiarissima)
       function creaDocumentoPDF() {
         const summary = window.cachedSummary;
         if (!summary) return null;
@@ -705,7 +839,6 @@
           foot: [["TOTALE GENERALE", "", "", "", "", "", "", "", "", `€ ${summary.totaleGlobale.toFixed(2)}`]],
           footStyles: { fillColor: [226, 232, 240], textColor: [15, 23, 42], fontStyle: "bold", fontSize: 9 },
           willDrawPage: function() {
-            // Filigrana in sottofondo (disegnata prima delle righe)
             doc.saveGraphicsState();
             doc.setFontSize(48);
             doc.setTextColor(240, 244, 248);
@@ -714,7 +847,6 @@
             doc.restoreGraphicsState();
           },
           didDrawPage: function() {
-            // Intestazione
             doc.setFontSize(18);
             doc.setTextColor(15, 23, 42);
             doc.setFont("helvetica", "bold");
@@ -730,7 +862,6 @@
             doc.setDrawColor(203, 213, 225);
             doc.line(14, 43, 196, 43);
 
-            // Piè di pagina
             const pageStr = `Pagina ${doc.internal.getNumberOfPages()}`;
             doc.setFontSize(8);
             doc.setTextColor(148, 163, 184);
@@ -791,12 +922,12 @@
 </head>
 <body>
 
-  <!-- SCHERMATA BLOCCO PIN -->
+  <!-- SCHERMATA BLOCCO BIOMETRICA / PIN ADMIN -->
   <div id="lock-screen">
     <div class="lock-box">
-      <div class="lock-icon"><i class="fa-solid fa-shield-halved"></i></div>
-      <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: #fff;">Area Riservata</h2>
-      <p style="margin: 6px 0 0; font-size: 13px; color: var(--text-muted);">Mirisa Ceramiche &bull; Direzione</p>
+      <div class="lock-icon"><i class="fa-solid fa-fingerprint"></i></div>
+      <h2 id="lockTitle" style="margin: 0; font-size: 20px; font-weight: 800; color: #fff;">Area Riservata</h2>
+      <p id="pinInstruction" class="pin-instruction"></p>
       
       <input type="password" id="pinInput" class="pin-display" readonly placeholder="----">
       
@@ -812,10 +943,10 @@
         <button class="pin-btn" onclick="digitaPin('9')">9</button>
         <button class="pin-btn" style="color: var(--danger); font-size: 16px;" onclick="cancellaPin()"><i class="fa-solid fa-delete-left"></i></button>
         <button class="pin-btn" onclick="digitaPin('0')">0</button>
-        <button class="pin-btn" style="color: var(--accent); font-size: 16px;" onclick="verificaPin()"><i class="fa-solid fa-arrow-right"></i></button>
+        <button class="pin-btn pin-btn-bio" onclick="avviaBiometria()" title="Sblocca con Impronta"><i class="fa-solid fa-fingerprint"></i></button>
       </div>
 
-      <div id="pinError" class="pin-error">PIN errato. Riprova.</div>
+      <div id="pinError" class="pin-error"></div>
     </div>
   </div>
 
@@ -835,7 +966,10 @@
           <i class="fa-solid fa-file-pdf"></i> Scarica PDF
         </button>
         <button class="btn btn-whatsapp" onclick="condividiWhatsApp()">
-          <i class="fa-brands fa-whatsapp" style="font-size:18px;"></i> Invia con WhatsApp
+          <i class="fa-brands fa-whatsapp" style="font-size:18px;"></i> Invia WhatsApp
+        </button>
+        <button class="btn btn-secondary btn-icon" onclick="resetPinAdmin()" title="Reimposta PIN / Impronta">
+          <i class="fa-solid fa-key"></i>
         </button>
         <button class="btn btn-danger btn-icon" onclick="bloccaDashboard()" title="Disconnetti e Blocca">
           <i class="fa-solid fa-lock"></i>
