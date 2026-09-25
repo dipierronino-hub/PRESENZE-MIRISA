@@ -223,9 +223,6 @@
   </style>
 
   <script>
-    // =========================================================================
-    // MODULO SICUREZZA BIOMETRICA (IMPRONTA / FACE ID) & PIN
-    // =========================================================================
     let pinInserito = "";
     let setupFase = 1;
     let pinTemporaneo = "";
@@ -241,7 +238,6 @@
       } else {
         titleEl.textContent = "Area Riservata Admin";
         instrEl.textContent = "Inserisci PIN o usa l'impronta";
-        // Prova sblocco biometrico in automatico se disponibile
         if (localStorage.getItem("mirisa_admin_bio") === "true") {
           setTimeout(avviaBiometria, 400);
         }
@@ -274,7 +270,6 @@
       const instrEl = document.getElementById("pinInstruction");
 
       if (!pinSalvato) {
-        // Creazione PIN al primo avvio
         if (setupFase === 1) {
           pinTemporaneo = pinInserito;
           pinInserito = "";
@@ -286,7 +281,6 @@
           if (pinInserito === pinTemporaneo) {
             localStorage.setItem("mirisa_admin_pin", pinInserito);
             sessionStorage.setItem("admin_auth", "true");
-            // Richiesta di attivazione biometria
             proponiAttivazioneBiometria();
           } else {
             errEl.textContent = "I due PIN non coincidono. Riprova.";
@@ -299,7 +293,6 @@
           }
         }
       } else {
-        // Verifica normale
         if (pinInserito === pinSalvato) {
           sessionStorage.setItem("admin_auth", "true");
           sbloccaDashboard();
@@ -312,7 +305,6 @@
       }
     }
 
-    // WEBAUTHN API (Sensore di Impronta Digitale del dispositivo)
     async function proponiAttivazioneBiometria() {
       if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
         const disponibile = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
@@ -442,8 +434,25 @@
         setTimeout(() => { toast.style.display = "none"; }, 3500);
       }
 
+      // Auto-registrazione o controllo Ressa Vito
+      function verificaPresenzaRessaVito(data) {
+        const esiste = Object.values(data).some(d => (d.nome || "").toLowerCase().includes("ressa vito"));
+        if (!esiste) {
+          const newId = "ressa_vito_" + Date.now();
+          set(ref(db, `dipendenti/${newId}`), {
+            nome: "Ressa Vito",
+            mansione: "Responsabile Magazzino",
+            tariffa: 0,
+            bonus: 0,
+            telefono: "-",
+            escludiPdf: true
+          });
+        }
+      }
+
       onValue(ref(db, "dipendenti"), (snapshot) => {
         dipendentiData = snapshot.val() || {};
+        verificaPresenzaRessaVito(dipendentiData);
         popolaTendineDipendenti();
         aggiornaDashboard();
         renderAdminPlanning();
@@ -489,6 +498,7 @@
             telefono: dipendentiData[id].telefono || "-",
             tariffa: parseFloat(dipendentiData[id].tariffa || 0),
             bonus: parseFloat(dipendentiData[id].bonus || 0),
+            escludiPdf: !!dipendentiData[id].escludiPdf,
             intere: 0,
             mezze: 0,
             assenze: 0,
@@ -533,7 +543,10 @@
           const tr = document.createElement("tr");
           tr.innerHTML = `
             <td>
-              <div style="font-weight:700; color:#fff; font-size:15px;">${item.nome}</div>
+              <div style="font-weight:700; color:#fff; font-size:15px;">
+                ${item.nome}
+                ${item.escludiPdf ? '<span style="font-size:10px; background:#475569; color:#f1f5f9; padding:2px 6px; border-radius:6px; margin-left:6px;"><i class="fa-solid fa-eye-slash"></i> NO PDF</span>' : ''}
+              </div>
               <div style="font-size:12px; color:var(--text-muted);">${item.mansione} &bull; ${item.telefono}</div>
             </td>
             <td><span class="badge badge-full">${item.intere}</span></td>
@@ -665,7 +678,6 @@
         });
       }
 
-      // Popup Modifica Rapida da Planning
       window.apriQuickEdit = function(dipendente, dataIso, statoAttuale) {
         activeQuickEdit = { dipendente, data: dataIso };
         document.getElementById("quick-nome").textContent = dipendente;
@@ -700,7 +712,7 @@
         }
       };
 
-      // CRUD Anagrafica Dipendenti
+      // Modale Anagrafica Dipendenti
       window.apriModaleNuovo = function() {
         editDipendenteId = null;
         document.getElementById("modalTitolo").textContent = "Nuovo Dipendente";
@@ -709,6 +721,7 @@
         document.getElementById("form-tariffa").value = "";
         document.getElementById("form-bonus").value = "0";
         document.getElementById("form-telefono").value = "";
+        document.getElementById("form-escludi-pdf").checked = false;
         document.getElementById("modalDipendente").style.display = "flex";
       };
 
@@ -721,6 +734,7 @@
         document.getElementById("form-tariffa").value = d.tariffa || 0;
         document.getElementById("form-bonus").value = d.bonus || 0;
         document.getElementById("form-telefono").value = d.telefono || "";
+        document.getElementById("form-escludi-pdf").checked = !!d.escludiPdf;
         document.getElementById("modalDipendente").style.display = "flex";
       };
 
@@ -734,9 +748,10 @@
         const tariffa = parseFloat(document.getElementById("form-tariffa").value) || 0;
         const bonus = parseFloat(document.getElementById("form-bonus").value) || 0;
         const telefono = document.getElementById("form-telefono").value.trim();
+        const escludiPdf = document.getElementById("form-escludi-pdf").checked;
 
         if (!nome) return alert("Inserisci il nome e cognome");
-        const payload = { nome, mansione, tariffa, bonus, telefono };
+        const payload = { nome, mansione, tariffa, bonus, telefono, escludiPdf };
 
         if (editDipendenteId) {
           update(ref(db, `dipendenti/${editDipendenteId}`), payload).then(() => {
@@ -758,7 +773,7 @@
         }
       };
 
-      // Barra Rettifica Manuale
+      // Rettifiche Manuali
       window.salvaRettificaRapida = function() {
         const data = document.getElementById("manual-date").value;
         const dipendente = document.getElementById("manual-dipendente").value;
@@ -800,7 +815,9 @@
         }
       };
 
-      // PDF SENZA OMBRE (Filigrana sottofondo chiarissima)
+      // ========================================================
+      // PDF UFFICIALE CONSULENTE: ESCLUSIONE COLLABORATORI "NO PDF"
+      // ========================================================
       function creaDocumentoPDF() {
         const summary = window.cachedSummary;
         if (!summary) return null;
@@ -810,10 +827,17 @@
         const meseFormat = summary.mese;
 
         const tableRows = [];
+        let totaleConsulente = 0;
+
         Object.keys(summary.stats).forEach(id => {
           const item = summary.stats[id];
+          // FILTRO: Esclude dal PDF chi ha la spunta escludiPdf (es. Ressa Vito)
+          if (item.escludiPdf) return;
+
           const ggEq = item.intere + (item.mezze * 0.5);
           const compenso = (ggEq * item.tariffa) + item.bonus;
+          totaleConsulente += compenso;
+
           tableRows.push([
             item.nome,
             item.mansione,
@@ -836,7 +860,7 @@
           headStyles: { fillColor: [15, 27, 51], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
           styles: { fontSize: 8, cellPadding: 3.5, textColor: [15, 23, 42] },
           alternateRowStyles: { fillColor: [248, 250, 252] },
-          foot: [["TOTALE GENERALE", "", "", "", "", "", "", "", "", `€ ${summary.totaleGlobale.toFixed(2)}`]],
+          foot: [["TOTALE GENERALE", "", "", "", "", "", "", "", "", `€ ${totaleConsulente.toFixed(2)}`]],
           footStyles: { fillColor: [226, 232, 240], textColor: [15, 23, 42], fontStyle: "bold", fontSize: 9 },
           willDrawPage: function() {
             doc.saveGraphicsState();
@@ -880,7 +904,7 @@
           doc.text("Ricevuto Consulente: ___________________________", 115, finalY + 14);
         }
 
-        return { doc, filename: `Prospetto_Mirisa_${meseFormat}.pdf`, mese: meseFormat, totale: summary.totaleGlobale };
+        return { doc, filename: `Prospetto_Mirisa_${meseFormat}.pdf`, mese: meseFormat, totale: totaleConsulente };
       }
 
       window.stampaReportPDF = function() {
@@ -1185,6 +1209,14 @@
       <div class="form-group">
         <label>Telefono</label>
         <input type="tel" id="form-telefono" placeholder="es. 338 1234567">
+      </div>
+      <!-- Spunta Esclusione PDF -->
+      <div class="form-group" style="background:#081120; padding:12px; border-radius:8px; border:1px solid var(--surface-border); display:flex; align-items:center; gap:10px;">
+        <input type="checkbox" id="form-escludi-pdf" style="width:18px; height:18px; accent-color:var(--accent); cursor:pointer;">
+        <label for="form-escludi-pdf" style="margin:0; font-size:13px; color:#fff; cursor:pointer; text-transform:none;">
+          <strong>Escludi dal PDF Consulente del Lavoro</strong>
+          <span style="display:block; font-size:11px; color:var(--text-muted);">Registra le presenze regolarmente, ma non compare nel prospetto contabile.</span>
+        </label>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="chiudiModale()">Annulla</button>
