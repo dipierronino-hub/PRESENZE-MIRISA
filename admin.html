@@ -28,7 +28,84 @@
     }
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg); color: var(--text); margin: 0; padding: 24px; min-height: 100vh; }
-    .container { max-width: 1400px; margin: 0 auto; }
+    
+    /* SCHERMATA BLOCCO PIN */
+    #lock-screen {
+      position: fixed;
+      inset: 0;
+      background: #070d19;
+      z-index: 9999;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+    }
+    .lock-box {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 16px;
+      padding: 32px 24px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    }
+    .lock-icon {
+      width: 56px;
+      height: 56px;
+      background: rgba(2, 132, 199, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent);
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      margin-bottom: 16px;
+    }
+    .pin-display {
+      letter-spacing: 12px;
+      font-size: 28px;
+      font-weight: 800;
+      text-align: center;
+      width: 100%;
+      background: #081120;
+      border: 1px solid var(--surface-border);
+      color: #fff;
+      padding: 12px;
+      border-radius: 10px;
+      margin: 16px 0 20px;
+      outline: none;
+    }
+    .pin-keypad {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    .pin-btn {
+      background: #081120;
+      border: 1px solid var(--surface-border);
+      color: #fff;
+      font-size: 20px;
+      font-weight: 700;
+      padding: 14px 0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .pin-btn:active {
+      background: #0284c7;
+      transform: scale(0.96);
+    }
+    .pin-error {
+      color: var(--danger);
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 12px;
+      display: none;
+    }
+
+    .container { max-width: 1400px; margin: 0 auto; display: none; }
 
     /* Header */
     header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 24px; border-bottom: 1px solid var(--surface-border); margin-bottom: 24px; }
@@ -133,523 +210,617 @@
     #toast { position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: #fff; padding: 14px 20px; border-radius: 10px; border-left: 4px solid var(--accent); display: none; align-items: center; gap: 10px; z-index: 200; font-size: 14px; }
   </style>
 
+  <script>
+    // =========================================================================
+    // IMPOSTAZIONE PIN DI ACCESSO
+    // Sostituisci "0000" con il tuo codice desiderato (es. a 4 o 6 cifre)
+    // =========================================================================
+    const PIN_CORRETTO = "0000";
+
+    let pinInserito = "";
+
+    function digitaPin(cifra) {
+      if (pinInserito.length < 8) {
+        pinInserito += cifra;
+        aggiornaPinDisplay();
+      }
+      if (pinInserito.length === PIN_CORRETTO.length) {
+        verificaPin();
+      }
+    }
+
+    function cancellaPin() {
+      pinInserito = pinInserito.slice(0, -1);
+      aggiornaPinDisplay();
+      document.getElementById("pinError").style.display = "none";
+    }
+
+    function aggiornaPinDisplay() {
+      const display = document.getElementById("pinInput");
+      display.value = "*".repeat(pinInserito.length);
+    }
+
+    function verificaPin() {
+      if (pinInserito === PIN_CORRETTO) {
+        sessionStorage.setItem("admin_auth", "true");
+        sbloccaDashboard();
+      } else {
+        document.getElementById("pinError").style.display = "block";
+        pinInserito = "";
+        setTimeout(aggiornaPinDisplay, 400);
+      }
+    }
+
+    function sbloccaDashboard() {
+      document.getElementById("lock-screen").style.display = "none";
+      document.getElementById("main-container").style.display = "block";
+      if (window.initFirebaseApp) window.initFirebaseApp();
+    }
+
+    function bloccaDashboard() {
+      sessionStorage.removeItem("admin_auth");
+      location.reload();
+    }
+
+    window.addEventListener("DOMContentLoaded", () => {
+      if (sessionStorage.getItem("admin_auth") === "true") {
+        sbloccaDashboard();
+      }
+    });
+  </script>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, onValue, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    const firebaseConfig = {
-      databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app"
-    };
+    window.initFirebaseApp = function() {
+      if (window.firebaseInitialized) return;
+      window.firebaseInitialized = true;
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+      const firebaseConfig = {
+        databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app"
+      };
 
-    const monthInput = document.getElementById("meseSelezionato");
-    monthInput.value = new Date().toISOString().slice(0, 7);
+      const app = initializeApp(firebaseConfig);
+      const db = getDatabase(app);
 
-    let dipendentiData = {};
-    let presenzeData = {};
-    let editDipendenteId = null;
+      const monthInput = document.getElementById("meseSelezionato");
+      monthInput.value = new Date().toISOString().slice(0, 7);
 
-    const oggiStr = new Date().toISOString().split("T")[0];
-    document.getElementById("manual-date").value = oggiStr;
+      let dipendentiData = {};
+      let presenzeData = {};
+      let editDipendenteId = null;
 
-    let adminPlanningMode = "month";
-    let adminDateCursor = new Date();
-    let activeQuickEdit = { dipendente: null, data: null };
+      const oggiStr = new Date().toISOString().split("T")[0];
+      document.getElementById("manual-date").value = oggiStr;
 
-    function showToast(msg, isSuccess = true) {
-      const toast = document.getElementById("toast");
-      toast.style.borderLeftColor = isSuccess ? "var(--success)" : "var(--danger)";
-      document.getElementById("toast-text").textContent = msg;
-      toast.style.display = "flex";
-      setTimeout(() => { toast.style.display = "none"; }, 3500);
-    }
+      let adminPlanningMode = "month";
+      let adminDateCursor = new Date();
+      let activeQuickEdit = { dipendente: null, data: null };
 
-    onValue(ref(db, "dipendenti"), (snapshot) => {
-      dipendentiData = snapshot.val() || {};
-      popolaTendineDipendenti();
-      aggiornaDashboard();
-      renderAdminPlanning();
-    });
-
-    onValue(ref(db, "presenze"), (snapshot) => {
-      presenzeData = snapshot.val() || {};
-      aggiornaDashboard();
-      renderAdminPlanning();
-    });
-
-    function popolaTendineDipendenti() {
-      const selectManual = document.getElementById("manual-dipendente");
-      selectManual.innerHTML = "";
-      Object.keys(dipendentiData).forEach(id => {
-        const d = dipendentiData[id];
-        const opt = document.createElement("option");
-        opt.value = d.nome;
-        opt.textContent = `${d.nome} (${d.mansione || 'Dipendente'})`;
-        selectManual.appendChild(opt);
-      });
-    }
-
-    window.switchMainTab = function(tabId, btn) {
-      document.querySelectorAll(".view-tab-btn").forEach(b => b.classList.remove("active"));
-      document.querySelectorAll(".view-content").forEach(c => c.classList.remove("active"));
-      btn.classList.add("active");
-      document.getElementById(tabId).classList.add("active");
-      if (tabId === "view-planning") renderAdminPlanning();
-    };
-
-    function aggiornaDashboard() {
-      const mese = monthInput.value;
-      const searchFilter = document.getElementById("searchInput").value.toLowerCase();
-      let totIntere = 0, totMezze = 0, totAssenze = 0, totFerie = 0, totaleMeseStipendi = 0;
-
-      const stats = {};
-      Object.keys(dipendentiData).forEach(id => {
-        stats[id] = {
-          id: id,
-          nome: dipendentiData[id].nome,
-          mansione: dipendentiData[id].mansione || "Lavoratore",
-          telefono: dipendentiData[id].telefono || "-",
-          tariffa: parseFloat(dipendentiData[id].tariffa || 0),
-          bonus: parseFloat(dipendentiData[id].bonus || 0),
-          intere: 0,
-          mezze: 0,
-          assenze: 0,
-          ferie: 0
-        };
-      });
-
-      Object.keys(presenzeData).forEach(dataGiorno => {
-        if (dataGiorno.startsWith(mese)) {
-          const registro = presenzeData[dataGiorno];
-          Object.keys(registro).forEach(k => {
-            const entry = registro[k];
-            const targetId = Object.keys(stats).find(id => stats[id].nome.toLowerCase() === (entry.dipendente || "").toLowerCase());
-            
-            if (targetId) {
-              if (entry.stato === "Intera") { stats[targetId].intere++; totIntere++; }
-              else if (entry.stato === "Mattina" || entry.stato === "Pomeriggio") { stats[targetId].mezze++; totMezze++; }
-              else if (entry.stato === "Assente") { stats[targetId].assenze++; totAssenze++; }
-              else if (entry.stato === "Ferie" || entry.stato === "Malattia") { stats[targetId].ferie++; totFerie++; }
-            }
-          });
-        }
-      });
-
-      document.getElementById("kpi-intere").textContent = totIntere;
-      document.getElementById("kpi-mezze").textContent = totMezze;
-      document.getElementById("kpi-assenze").textContent = totAssenze;
-      document.getElementById("kpi-ferie").textContent = totFerie;
-
-      const tbody = document.getElementById("tabellaBody");
-      tbody.innerHTML = "";
-
-      Object.keys(stats).forEach(id => {
-        const item = stats[id];
-        const matchSearch = item.nome.toLowerCase().includes(searchFilter) || item.mansione.toLowerCase().includes(searchFilter);
-        const giorniEquiv = item.intere + (item.mezze * 0.5);
-        const compensoLordo = (giorniEquiv * item.tariffa) + item.bonus;
-        totaleMeseStipendi += compensoLordo;
-
-        if (!matchSearch) return;
-
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>
-            <div style="font-weight:700; color:#fff; font-size:15px;">${item.nome}</div>
-            <div style="font-size:12px; color:var(--text-muted);">${item.mansione} &bull; ${item.telefono}</div>
-          </td>
-          <td><span class="badge badge-full">${item.intere}</span></td>
-          <td><span class="badge badge-half">${item.mezze}</span></td>
-          <td><span class="badge badge-abs">${item.assenze}</span></td>
-          <td><span class="badge badge-leave">${item.ferie}</span></td>
-          <td><strong style="color:#fff;">${giorniEquiv.toFixed(1)} gg</strong></td>
-          <td>€ ${item.tariffa.toFixed(2)}</td>
-          <td><span style="color:${item.bonus >= 0 ? 'var(--accent)' : 'var(--danger)'};">€ ${item.bonus.toFixed(2)}</span></td>
-          <td><strong style="color:var(--success); font-size:15px;">€ ${compensoLordo.toFixed(2)}</strong></td>
-          <td>
-            <div style="display:flex; gap:6px;">
-              <button class="btn btn-secondary btn-icon" onclick="apriModificaDipendente('${id}')" title="Modifica Anagrafica"><i class="fa-solid fa-pen"></i></button>
-              <button class="btn btn-danger btn-icon" onclick="eliminaDipendente('${id}', '${item.nome}')" title="Rimuovi"><i class="fa-solid fa-trash"></i></button>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-
-      document.getElementById("kpi-totale").textContent = `€ ${totaleMeseStipendi.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-      window.cachedSummary = { stats: stats, mese: mese, totaleGlobale: totaleMeseStipendi };
-    }
-
-    monthInput.addEventListener("change", () => {
-      aggiornaDashboard();
-      const [y, m] = monthInput.value.split("-");
-      adminDateCursor = new Date(y, m - 1, 1);
-      renderAdminPlanning();
-    });
-
-    document.getElementById("searchInput").addEventListener("input", aggiornaDashboard);
-
-    // Planning Engine
-    window.setAdminPlanningMode = function(mode) {
-      adminPlanningMode = mode;
-      document.querySelectorAll(".btn-plan-toggle").forEach(b => b.classList.remove("active"));
-      document.getElementById(`btn-plan-${mode}`).classList.add("active");
-      renderAdminPlanning();
-    };
-
-    window.navAdminPlanning = function(direction) {
-      if (adminPlanningMode === "week") {
-        adminDateCursor.setDate(adminDateCursor.getDate() + (direction * 7));
-      } else {
-        adminDateCursor.setMonth(adminDateCursor.getMonth() + direction);
-      }
-      renderAdminPlanning();
-    };
-
-    function renderAdminPlanning() {
-      const thead = document.getElementById("admin-planning-head");
-      const tbody = document.getElementById("admin-planning-body");
-      const titleSpan = document.getElementById("admin-planning-title");
-      thead.innerHTML = "";
-      tbody.innerHTML = "";
-
-      const days = [];
-      const giorniNomi = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
-
-      if (adminPlanningMode === "week") {
-        const curr = new Date(adminDateCursor);
-        const dayOfWeek = curr.getDay();
-        const diffToMonday = curr.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-        const monday = new Date(curr.setDate(diffToMonday));
-
-        for (let i = 0; i < 7; i++) {
-          const d = new Date(monday);
-          d.setDate(monday.getDate() + i);
-          days.push(d);
-        }
-        titleSpan.textContent = `Settimana ${days[0].toLocaleDateString('it-IT', {day:'2-digit', month:'short'})} - ${days[6].toLocaleDateString('it-IT', {day:'2-digit', month:'short', year:'numeric'})}`;
-      } else {
-        const year = adminDateCursor.getFullYear();
-        const month = adminDateCursor.getMonth();
-        const totalDays = new Date(year, month + 1, 0).getDate();
-        for (let i = 1; i <= totalDays; i++) {
-          days.push(new Date(year, month, i));
-        }
-        titleSpan.textContent = adminDateCursor.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }).toUpperCase();
+      function showToast(msg, isSuccess = true) {
+        const toast = document.getElementById("toast");
+        toast.style.borderLeftColor = isSuccess ? "var(--success)" : "var(--danger)";
+        document.getElementById("toast-text").textContent = msg;
+        toast.style.display = "flex";
+        setTimeout(() => { toast.style.display = "none"; }, 3500);
       }
 
-      let headHtml = `<tr><th class="name-col">Collaboratore</th>`;
-      days.forEach(d => {
-        const isToday = d.toISOString().split("T")[0] === oggiStr;
-        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-        headHtml += `<th style="${isToday ? 'border-bottom:2px solid var(--accent); color:var(--accent); background:rgba(56,189,248,0.08);' : ''} ${isWeekend ? 'color:#64748b;' : ''}">
-          ${giorniNomi[d.getDay()]}<br><strong style="font-size:13px;">${d.getDate()}</strong>
-        </th>`;
+      onValue(ref(db, "dipendenti"), (snapshot) => {
+        dipendentiData = snapshot.val() || {};
+        popolaTendineDipendenti();
+        aggiornaDashboard();
+        renderAdminPlanning();
       });
-      headHtml += `</tr>`;
-      thead.innerHTML = headHtml;
 
-      Object.keys(dipendentiData).forEach(id => {
-        const nome = dipendentiData[id].nome;
-        let rowHtml = `<tr><td class="name-col"><i class="fa-solid fa-user" style="font-size:11px; margin-right:6px; color:var(--accent);"></i>${nome}</td>`;
+      onValue(ref(db, "presenze"), (snapshot) => {
+        presenzeData = snapshot.val() || {};
+        aggiornaDashboard();
+        renderAdminPlanning();
+      });
 
-        days.forEach(d => {
-          const iso = d.toISOString().split("T")[0];
-          const regGiorno = presenzeData[iso] || {};
-          
-          let stato = null;
-          Object.keys(regGiorno).forEach(k => {
-            if (regGiorno[k].dipendente && regGiorno[k].dipendente.toLowerCase() === nome.toLowerCase()) {
-              stato = regGiorno[k].stato;
-            }
-          });
+      function popolaTendineDipendenti() {
+        const selectManual = document.getElementById("manual-dipendente");
+        selectManual.innerHTML = "";
+        Object.keys(dipendentiData).forEach(id => {
+          const d = dipendentiData[id];
+          const opt = document.createElement("option");
+          opt.value = d.nome;
+          opt.textContent = `${d.nome} (${d.mansione || 'Dipendente'})`;
+          selectManual.appendChild(opt);
+        });
+      }
 
-          if (!stato) {
-            rowHtml += `<td class="plan-cell-interactive" onclick="apriQuickEdit('${nome}', '${iso}', null)">
-              <span class="cell-empty">&bull;</span>
-            </td>`;
-          } else {
-            let sigla = "I";
-            let cClass = "cell-I";
-            if (stato === "Mattina") { sigla = "M"; cClass = "cell-M"; }
-            else if (stato === "Pomeriggio") { sigla = "P"; cClass = "cell-P"; }
-            else if (stato === "Assente") { sigla = "A"; cClass = "cell-A"; }
-            else if (stato === "Ferie") { sigla = "F"; cClass = "cell-F"; }
-            else if (stato === "Malattia") { sigla = "MAL"; cClass = "cell-MAL"; }
-            rowHtml += `<td class="plan-cell-interactive" onclick="apriQuickEdit('${nome}', '${iso}', '${stato}')">
-              <span class="cell-badge ${cClass}" title="${stato} (${iso})">${sigla}</span>
-            </td>`;
+      window.switchMainTab = function(tabId, btn) {
+        document.querySelectorAll(".view-tab-btn").forEach(b => b.classList.remove("active"));
+        document.querySelectorAll(".view-content").forEach(c => c.classList.remove("active"));
+        btn.classList.add("active");
+        document.getElementById(tabId).classList.add("active");
+        if (tabId === "view-planning") renderAdminPlanning();
+      };
+
+      function aggiornaDashboard() {
+        const mese = monthInput.value;
+        const searchFilter = document.getElementById("searchInput").value.toLowerCase();
+        let totIntere = 0, totMezze = 0, totAssenze = 0, totFerie = 0, totaleMeseStipendi = 0;
+
+        const stats = {};
+        Object.keys(dipendentiData).forEach(id => {
+          stats[id] = {
+            id: id,
+            nome: dipendentiData[id].nome,
+            mansione: dipendentiData[id].mansione || "Lavoratore",
+            telefono: dipendentiData[id].telefono || "-",
+            tariffa: parseFloat(dipendentiData[id].tariffa || 0),
+            bonus: parseFloat(dipendentiData[id].bonus || 0),
+            intere: 0,
+            mezze: 0,
+            assenze: 0,
+            ferie: 0
+          };
+        });
+
+        Object.keys(presenzeData).forEach(dataGiorno => {
+          if (dataGiorno.startsWith(mese)) {
+            const registro = presenzeData[dataGiorno];
+            Object.keys(registro).forEach(k => {
+              const entry = registro[k];
+              const targetId = Object.keys(stats).find(id => stats[id].nome.toLowerCase() === (entry.dipendente || "").toLowerCase());
+              
+              if (targetId) {
+                if (entry.stato === "Intera") { stats[targetId].intere++; totIntere++; }
+                else if (entry.stato === "Mattina" || entry.stato === "Pomeriggio") { stats[targetId].mezze++; totMezze++; }
+                else if (entry.stato === "Assente") { stats[targetId].assenze++; totAssenze++; }
+                else if (entry.stato === "Ferie" || entry.stato === "Malattia") { stats[targetId].ferie++; totFerie++; }
+              }
+            });
           }
         });
 
-        rowHtml += `</tr>`;
-        tbody.innerHTML += rowHtml;
+        document.getElementById("kpi-intere").textContent = totIntere;
+        document.getElementById("kpi-mezze").textContent = totMezze;
+        document.getElementById("kpi-assenze").textContent = totAssenze;
+        document.getElementById("kpi-ferie").textContent = totFerie;
+
+        const tbody = document.getElementById("tabellaBody");
+        tbody.innerHTML = "";
+
+        Object.keys(stats).forEach(id => {
+          const item = stats[id];
+          const matchSearch = item.nome.toLowerCase().includes(searchFilter) || item.mansione.toLowerCase().includes(searchFilter);
+          const giorniEquiv = item.intere + (item.mezze * 0.5);
+          const compensoLordo = (giorniEquiv * item.tariffa) + item.bonus;
+          totaleMeseStipendi += compensoLordo;
+
+          if (!matchSearch) return;
+
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>
+              <div style="font-weight:700; color:#fff; font-size:15px;">${item.nome}</div>
+              <div style="font-size:12px; color:var(--text-muted);">${item.mansione} &bull; ${item.telefono}</div>
+            </td>
+            <td><span class="badge badge-full">${item.intere}</span></td>
+            <td><span class="badge badge-half">${item.mezze}</span></td>
+            <td><span class="badge badge-abs">${item.assenze}</span></td>
+            <td><span class="badge badge-leave">${item.ferie}</span></td>
+            <td><strong style="color:#fff;">${giorniEquiv.toFixed(1)} gg</strong></td>
+            <td>€ ${item.tariffa.toFixed(2)}</td>
+            <td><span style="color:${item.bonus >= 0 ? 'var(--accent)' : 'var(--danger)'};">€ ${item.bonus.toFixed(2)}</span></td>
+            <td><strong style="color:var(--success); font-size:15px;">€ ${compensoLordo.toFixed(2)}</strong></td>
+            <td>
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-secondary btn-icon" onclick="apriModificaDipendente('${id}')" title="Modifica Anagrafica"><i class="fa-solid fa-pen"></i></button>
+                <button class="btn btn-danger btn-icon" onclick="eliminaDipendente('${id}', '${item.nome}')" title="Rimuovi"><i class="fa-solid fa-trash"></i></button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        document.getElementById("kpi-totale").textContent = `€ ${totaleMeseStipendi.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        window.cachedSummary = { stats: stats, mese: mese, totaleGlobale: totaleMeseStipendi };
+      }
+
+      monthInput.addEventListener("change", () => {
+        aggiornaDashboard();
+        const [y, m] = monthInput.value.split("-");
+        adminDateCursor = new Date(y, m - 1, 1);
+        renderAdminPlanning();
       });
-    }
 
-    // Popup Modifica Rapida da Planning
-    window.apriQuickEdit = function(dipendente, dataIso, statoAttuale) {
-      activeQuickEdit = { dipendente, data: dataIso };
-      document.getElementById("quick-nome").textContent = dipendente;
-      document.getElementById("quick-data").textContent = new Date(dataIso).toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
-      document.getElementById("modalQuickEdit").style.display = "flex";
-    };
+      document.getElementById("searchInput").addEventListener("input", aggiornaDashboard);
 
-    window.chiudiQuickEdit = function() {
-      document.getElementById("modalQuickEdit").style.display = "none";
-    };
+      // Planning Engine
+      window.setAdminPlanningMode = function(mode) {
+        adminPlanningMode = mode;
+        document.querySelectorAll(".btn-plan-toggle").forEach(b => b.classList.remove("active"));
+        document.getElementById(`btn-plan-${mode}`).classList.add("active");
+        renderAdminPlanning();
+      };
 
-    window.applicaQuickStato = function(stato) {
-      if (!activeQuickEdit.dipendente || !activeQuickEdit.data) return;
-      const safeKey = activeQuickEdit.dipendente.replace(/[^a-zA-Z0-9]/g, "_");
-      
-      if (stato === "DELETE") {
-        remove(ref(db, `presenze/${activeQuickEdit.data}/${safeKey}`)).then(() => {
-          chiudiQuickEdit();
-          showToast(`Presenza rimossa per ${activeQuickEdit.dipendente}`);
+      window.navAdminPlanning = function(direction) {
+        if (adminPlanningMode === "week") {
+          adminDateCursor.setDate(adminDateCursor.getDate() + (direction * 7));
+        } else {
+          adminDateCursor.setMonth(adminDateCursor.getMonth() + direction);
+        }
+        renderAdminPlanning();
+      };
+
+      function renderAdminPlanning() {
+        const thead = document.getElementById("admin-planning-head");
+        const tbody = document.getElementById("admin-planning-body");
+        const titleSpan = document.getElementById("admin-planning-title");
+        thead.innerHTML = "";
+        tbody.innerHTML = "";
+
+        const days = [];
+        const giorniNomi = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+
+        if (adminPlanningMode === "week") {
+          const curr = new Date(adminDateCursor);
+          const dayOfWeek = curr.getDay();
+          const diffToMonday = curr.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+          const monday = new Date(curr.setDate(diffToMonday));
+
+          for (let i = 0; i < 7; i++) {
+            const d = new Date(monday);
+            d.setDate(monday.getDate() + i);
+            days.push(d);
+          }
+          titleSpan.textContent = `Settimana ${days[0].toLocaleDateString('it-IT', {day:'2-digit', month:'short'})} - ${days[6].toLocaleDateString('it-IT', {day:'2-digit', month:'short', year:'numeric'})}`;
+        } else {
+          const year = adminDateCursor.getFullYear();
+          const month = adminDateCursor.getMonth();
+          const totalDays = new Date(year, month + 1, 0).getDate();
+          for (let i = 1; i <= totalDays; i++) {
+            days.push(new Date(year, month, i));
+          }
+          titleSpan.textContent = adminDateCursor.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }).toUpperCase();
+        }
+
+        let headHtml = `<tr><th class="name-col">Collaboratore</th>`;
+        days.forEach(d => {
+          const isToday = d.toISOString().split("T")[0] === oggiStr;
+          const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+          headHtml += `<th style="${isToday ? 'border-bottom:2px solid var(--accent); color:var(--accent); background:rgba(56,189,248,0.08);' : ''} ${isWeekend ? 'color:#64748b;' : ''}">
+            ${giorniNomi[d.getDay()]}<br><strong style="font-size:13px;">${d.getDate()}</strong>
+          </th>`;
         });
-      } else {
-        set(ref(db, `presenze/${activeQuickEdit.data}/${safeKey}`), {
-          dipendente: activeQuickEdit.dipendente,
-          data: activeQuickEdit.data,
-          stato: stato,
-          orarioRegistrazione: new Date().toISOString(),
-          modificatoDa: "Admin (Planning)"
-        }).then(() => {
-          chiudiQuickEdit();
-          showToast(`${activeQuickEdit.dipendente}: ${stato}`);
+        headHtml += `</tr>`;
+        thead.innerHTML = headHtml;
+
+        Object.keys(dipendentiData).forEach(id => {
+          const nome = dipendentiData[id].nome;
+          let rowHtml = `<tr><td class="name-col"><i class="fa-solid fa-user" style="font-size:11px; margin-right:6px; color:var(--accent);"></i>${nome}</td>`;
+
+          days.forEach(d => {
+            const iso = d.toISOString().split("T")[0];
+            const regGiorno = presenzeData[iso] || {};
+            
+            let stato = null;
+            Object.keys(regGiorno).forEach(k => {
+              if (regGiorno[k].dipendente && regGiorno[k].dipendente.toLowerCase() === nome.toLowerCase()) {
+                stato = regGiorno[k].stato;
+              }
+            });
+
+            if (!stato) {
+              rowHtml += `<td class="plan-cell-interactive" onclick="apriQuickEdit('${nome}', '${iso}', null)">
+                <span class="cell-empty">&bull;</span>
+              </td>`;
+            } else {
+              let sigla = "I";
+              let cClass = "cell-I";
+              if (stato === "Mattina") { sigla = "M"; cClass = "cell-M"; }
+              else if (stato === "Pomeriggio") { sigla = "P"; cClass = "cell-P"; }
+              else if (stato === "Assente") { sigla = "A"; cClass = "cell-A"; }
+              else if (stato === "Ferie") { sigla = "F"; cClass = "cell-F"; }
+              else if (stato === "Malattia") { sigla = "MAL"; cClass = "cell-MAL"; }
+              rowHtml += `<td class="plan-cell-interactive" onclick="apriQuickEdit('${nome}', '${iso}', '${stato}')">
+                <span class="cell-badge ${cClass}" title="${stato} (${iso})">${sigla}</span>
+              </td>`;
+            }
+          });
+
+          rowHtml += `</tr>`;
+          tbody.innerHTML += rowHtml;
         });
       }
-    };
 
-    // CRUD Anagrafica Dipendenti
-    window.apriModaleNuovo = function() {
-      editDipendenteId = null;
-      document.getElementById("modalTitolo").textContent = "Nuovo Dipendente";
-      document.getElementById("form-nome").value = "";
-      document.getElementById("form-mansione").value = "";
-      document.getElementById("form-tariffa").value = "";
-      document.getElementById("form-bonus").value = "0";
-      document.getElementById("form-telefono").value = "";
-      document.getElementById("modalDipendente").style.display = "flex";
-    };
+      // Popup Modifica Rapida da Planning
+      window.apriQuickEdit = function(dipendente, dataIso, statoAttuale) {
+        activeQuickEdit = { dipendente, data: dataIso };
+        document.getElementById("quick-nome").textContent = dipendente;
+        document.getElementById("quick-data").textContent = new Date(dataIso).toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+        document.getElementById("modalQuickEdit").style.display = "flex";
+      };
 
-    window.apriModificaDipendente = function(id) {
-      editDipendenteId = id;
-      const d = dipendentiData[id];
-      document.getElementById("modalTitolo").textContent = `Modifica ${d.nome}`;
-      document.getElementById("form-nome").value = d.nome || "";
-      document.getElementById("form-mansione").value = d.mansione || "";
-      document.getElementById("form-tariffa").value = d.tariffa || 0;
-      document.getElementById("form-bonus").value = d.bonus || 0;
-      document.getElementById("form-telefono").value = d.telefono || "";
-      document.getElementById("modalDipendente").style.display = "flex";
-    };
+      window.chiudiQuickEdit = function() {
+        document.getElementById("modalQuickEdit").style.display = "none";
+      };
 
-    window.chiudiModale = function() {
-      document.getElementById("modalDipendente").style.display = "none";
-    };
-
-    window.salvaDipendenteForm = function() {
-      const nome = document.getElementById("form-nome").value.trim();
-      const mansione = document.getElementById("form-mansione").value.trim() || "Collaboratore";
-      const tariffa = parseFloat(document.getElementById("form-tariffa").value) || 0;
-      const bonus = parseFloat(document.getElementById("form-bonus").value) || 0;
-      const telefono = document.getElementById("form-telefono").value.trim();
-
-      if (!nome) return alert("Inserisci il nome e cognome");
-      const payload = { nome, mansione, tariffa, bonus, telefono };
-
-      if (editDipendenteId) {
-        update(ref(db, `dipendenti/${editDipendenteId}`), payload).then(() => {
-          chiudiModale();
-          showToast("Dipendente aggiornato!");
-        });
-      } else {
-        const newId = Date.now().toString();
-        set(ref(db, `dipendenti/${newId}`), payload).then(() => {
-          chiudiModale();
-          showToast("Nuovo collaboratore salvato!");
-        });
-      }
-    };
-
-    window.eliminaDipendente = function(id, nome) {
-      if (confirm(`Confermi l'eliminazione definitiva di ${nome}?`)) {
-        remove(ref(db, `dipendenti/${id}`)).then(() => showToast("Collaboratore rimosso."));
-      }
-    };
-
-    // Barra Rettifica Manuale
-    window.salvaRettificaRapida = function() {
-      const data = document.getElementById("manual-date").value;
-      const dipendente = document.getElementById("manual-dipendente").value;
-      const stato = document.getElementById("manual-stato").value;
-
-      if (!data || !dipendente) return alert("Compila data e collaboratore");
-
-      const safeKey = dipendente.replace(/[^a-zA-Z0-9]/g, "_");
-      set(ref(db, `presenze/${data}/${safeKey}`), {
-        dipendente: dipendente,
-        data: data,
-        stato: stato,
-        orarioRegistrazione: new Date().toISOString(),
-        modificatoDa: "Admin"
-      }).then(() => showToast("Presenza registrata con successo!"));
-    };
-
-    window.applicaATuttiAdmin = function() {
-      const data = document.getElementById("manual-date").value;
-      const stato = document.getElementById("manual-stato").value;
-      const dipendenti = Object.values(dipendentiData).map(d => d.nome);
-
-      if (!data) return alert("Inserisci una data valida!");
-      if (dipendenti.length === 0) return alert("Nessun dipendente presente nell'anagrafica!");
-
-      if (confirm(`Vuoi registrare la presenza "${stato}" per TUTTI i ${dipendenti.length} collaboratori in data ${data}?`)) {
-        const promises = dipendenti.map(nome => {
-          const safeKey = nome.replace(/[^a-zA-Z0-9]/g, "_");
-          return set(ref(db, `presenze/${data}/${safeKey}`), {
-            dipendente: nome,
-            data: data,
+      window.applicaQuickStato = function(stato) {
+        if (!activeQuickEdit.dipendente || !activeQuickEdit.data) return;
+        const safeKey = activeQuickEdit.dipendente.replace(/[^a-zA-Z0-9]/g, "_");
+        
+        if (stato === "DELETE") {
+          remove(ref(db, `presenze/${activeQuickEdit.data}/${safeKey}`)).then(() => {
+            chiudiQuickEdit();
+            showToast(`Presenza rimossa per ${activeQuickEdit.dipendente}`);
+          });
+        } else {
+          set(ref(db, `presenze/${activeQuickEdit.data}/${safeKey}`), {
+            dipendente: activeQuickEdit.dipendente,
+            data: activeQuickEdit.data,
             stato: stato,
             orarioRegistrazione: new Date().toISOString(),
-            modificatoDa: "Admin (Squadra)"
+            modificatoDa: "Admin (Planning)"
+          }).then(() => {
+            chiudiQuickEdit();
+            showToast(`${activeQuickEdit.dipendente}: ${stato}`);
           });
+        }
+      };
+
+      // CRUD Anagrafica Dipendenti
+      window.apriModaleNuovo = function() {
+        editDipendenteId = null;
+        document.getElementById("modalTitolo").textContent = "Nuovo Dipendente";
+        document.getElementById("form-nome").value = "";
+        document.getElementById("form-mansione").value = "";
+        document.getElementById("form-tariffa").value = "";
+        document.getElementById("form-bonus").value = "0";
+        document.getElementById("form-telefono").value = "";
+        document.getElementById("modalDipendente").style.display = "flex";
+      };
+
+      window.apriModificaDipendente = function(id) {
+        editDipendenteId = id;
+        const d = dipendentiData[id];
+        document.getElementById("modalTitolo").textContent = `Modifica ${d.nome}`;
+        document.getElementById("form-nome").value = d.nome || "";
+        document.getElementById("form-mansione").value = d.mansione || "";
+        document.getElementById("form-tariffa").value = d.tariffa || 0;
+        document.getElementById("form-bonus").value = d.bonus || 0;
+        document.getElementById("form-telefono").value = d.telefono || "";
+        document.getElementById("modalDipendente").style.display = "flex";
+      };
+
+      window.chiudiModale = function() {
+        document.getElementById("modalDipendente").style.display = "none";
+      };
+
+      window.salvaDipendenteForm = function() {
+        const nome = document.getElementById("form-nome").value.trim();
+        const mansione = document.getElementById("form-mansione").value.trim() || "Collaboratore";
+        const tariffa = parseFloat(document.getElementById("form-tariffa").value) || 0;
+        const bonus = parseFloat(document.getElementById("form-bonus").value) || 0;
+        const telefono = document.getElementById("form-telefono").value.trim();
+
+        if (!nome) return alert("Inserisci il nome e cognome");
+        const payload = { nome, mansione, tariffa, bonus, telefono };
+
+        if (editDipendenteId) {
+          update(ref(db, `dipendenti/${editDipendenteId}`), payload).then(() => {
+            chiudiModale();
+            showToast("Dipendente aggiornato!");
+          });
+        } else {
+          const newId = Date.now().toString();
+          set(ref(db, `dipendenti/${newId}`), payload).then(() => {
+            chiudiModale();
+            showToast("Nuovo collaboratore salvato!");
+          });
+        }
+      };
+
+      window.eliminaDipendente = function(id, nome) {
+        if (confirm(`Confermi l'eliminazione definitiva di ${nome}?`)) {
+          remove(ref(db, `dipendenti/${id}`)).then(() => showToast("Collaboratore rimosso."));
+        }
+      };
+
+      // Barra Rettifica Manuale
+      window.salvaRettificaRapida = function() {
+        const data = document.getElementById("manual-date").value;
+        const dipendente = document.getElementById("manual-dipendente").value;
+        const stato = document.getElementById("manual-stato").value;
+
+        if (!data || !dipendente) return alert("Compila data e collaboratore");
+
+        const safeKey = dipendente.replace(/[^a-zA-Z0-9]/g, "_");
+        set(ref(db, `presenze/${data}/${safeKey}`), {
+          dipendente: dipendente,
+          data: data,
+          stato: stato,
+          orarioRegistrazione: new Date().toISOString(),
+          modificatoDa: "Admin"
+        }).then(() => showToast("Presenza registrata con successo!"));
+      };
+
+      window.applicaATuttiAdmin = function() {
+        const data = document.getElementById("manual-date").value;
+        const stato = document.getElementById("manual-stato").value;
+        const dipendenti = Object.values(dipendentiData).map(d => d.nome);
+
+        if (!data) return alert("Inserisci una data valida!");
+        if (dipendenti.length === 0) return alert("Nessun dipendente presente nell'anagrafica!");
+
+        if (confirm(`Vuoi registrare la presenza "${stato}" per TUTTI i ${dipendenti.length} collaboratori in data ${data}?`)) {
+          const promises = dipendenti.map(nome => {
+            const safeKey = nome.replace(/[^a-zA-Z0-9]/g, "_");
+            return set(ref(db, `presenze/${data}/${safeKey}`), {
+              dipendente: nome,
+              data: data,
+              stato: stato,
+              orarioRegistrazione: new Date().toISOString(),
+              modificatoDa: "Admin (Squadra)"
+            });
+          });
+
+          Promise.all(promises).then(() => showToast(`Registrato "${stato}" per l'intera squadra!`));
+        }
+      };
+
+      // ==========================================
+      // PDF CON FILIGRANA DIETRO AL TESTO
+      // ==========================================
+      function creaDocumentoPDF() {
+        const summary = window.cachedSummary;
+        if (!summary) return null;
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+        const meseFormat = summary.mese;
+
+        const tableRows = [];
+        Object.keys(summary.stats).forEach(id => {
+          const item = summary.stats[id];
+          const ggEq = item.intere + (item.mezze * 0.5);
+          const compenso = (ggEq * item.tariffa) + item.bonus;
+          tableRows.push([
+            item.nome,
+            item.mansione,
+            item.intere,
+            item.mezze,
+            item.assenze,
+            item.ferie,
+            `${ggEq.toFixed(1)} gg`,
+            `€ ${item.tariffa.toFixed(2)}`,
+            `€ ${item.bonus.toFixed(2)}`,
+            `€ ${compenso.toFixed(2)}`
+          ]);
         });
 
-        Promise.all(promises).then(() => showToast(`Registrato "${stato}" per l'intera squadra!`));
-      }
-    };
+        doc.autoTable({
+          startY: 54,
+          head: [["Collaboratore", "Mansione", "Int.", "Mezze", "Ass.", "Ferie", "Totale", "Tariffa", "Extra", "Netto Stim."]],
+          body: tableRows,
+          theme: "striped",
+          headStyles: { fillColor: [15, 27, 51], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
+          styles: { fontSize: 8, cellPadding: 3.5, textColor: [15, 23, 42] },
+          alternateRowStyles: { fillColor: [248, 250, 252] },
+          foot: [["TOTALE GENERALE", "", "", "", "", "", "", "", "", `€ ${summary.totaleGlobale.toFixed(2)}`]],
+          footStyles: { fillColor: [226, 232, 240], textColor: [15, 23, 42], fontStyle: "bold", fontSize: 9 },
+          willDrawPage: function() {
+            // Filigrana in sottofondo (disegnata prima delle righe)
+            doc.saveGraphicsState();
+            doc.setFontSize(48);
+            doc.setTextColor(240, 244, 248);
+            doc.setFont("helvetica", "bold");
+            doc.text("MIRISA CERAMICHE", 28, 175, { angle: 45 });
+            doc.restoreGraphicsState();
+          },
+          didDrawPage: function() {
+            // Intestazione
+            doc.setFontSize(18);
+            doc.setTextColor(15, 23, 42);
+            doc.setFont("helvetica", "bold");
+            doc.text("MIRISA CERAMICHE S.R.L.", 14, 22);
 
-    // ==========================================
-    // PDF OTTIMIZZATO (FILIGRANA SOTTO LA TABELLA)
-    // ==========================================
-    function creaDocumentoPDF() {
-      const summary = window.cachedSummary;
-      if (!summary) return null;
+            doc.setFontSize(9);
+            doc.setTextColor(100, 116, 139);
+            doc.setFont("helvetica", "normal");
+            doc.text("Prospetto Presenze, Straordinari e Spettanze Mensili", 14, 28);
+            doc.text(`Periodo di Competenza: ${meseFormat}`, 14, 33);
+            doc.text("Documento Ufficiale per lo Studio del Consulente del Lavoro", 14, 38);
 
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const meseFormat = summary.mese;
+            doc.setDrawColor(203, 213, 225);
+            doc.line(14, 43, 196, 43);
 
-      const tableRows = [];
-      Object.keys(summary.stats).forEach(id => {
-        const item = summary.stats[id];
-        const ggEq = item.intere + (item.mezze * 0.5);
-        const compenso = (ggEq * item.tariffa) + item.bonus;
-        tableRows.push([
-          item.nome,
-          item.mansione,
-          item.intere,
-          item.mezze,
-          item.assenze,
-          item.ferie,
-          `${ggEq.toFixed(1)} gg`,
-          `€ ${item.tariffa.toFixed(2)}`,
-          `€ ${item.bonus.toFixed(2)}`,
-          `€ ${compenso.toFixed(2)}`
-        ]);
-      });
+            // Piè di pagina
+            const pageStr = `Pagina ${doc.internal.getNumberOfPages()}`;
+            doc.setFontSize(8);
+            doc.setTextColor(148, 163, 184);
+            doc.text(pageStr, 196, 288, { align: "right" });
+            doc.text("Mirisa Ceramiche S.r.l. - Dati verificati da Direzione Generale", 14, 288);
+          }
+        });
 
-      doc.autoTable({
-        startY: 54,
-        head: [["Collaboratore", "Mansione", "Int.", "Mezze", "Ass.", "Ferie", "Totale", "Tariffa", "Extra", "Netto Stim."]],
-        body: tableRows,
-        theme: "striped",
-        headStyles: { fillColor: [15, 27, 51], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
-        styles: { fontSize: 8, cellPadding: 3.5, textColor: [15, 23, 42] },
-        alternateRowStyles: { fillColor: [248, 250, 252] },
-        foot: [["TOTALE GENERALE", "", "", "", "", "", "", "", "", `€ ${summary.totaleGlobale.toFixed(2)}`]],
-        footStyles: { fillColor: [226, 232, 240], textColor: [15, 23, 42], fontStyle: "bold", fontSize: 9 },
-        willDrawPage: function() {
-          // Disegnato PRIMA delle righe: rimane rigorosamente sotto la tabella
-          doc.saveGraphicsState();
-          doc.setFontSize(48);
-          doc.setTextColor(240, 244, 248); // Grigio-azzurro chiarissimo in sottofondo
-          doc.setFont("helvetica", "bold");
-          doc.text("MIRISA CERAMICHE", 28, 175, { angle: 45 });
-          doc.restoreGraphicsState();
-        },
-        didDrawPage: function() {
-          // Intestazione documento ufficiale
-          doc.setFontSize(18);
-          doc.setTextColor(15, 23, 42);
-          doc.setFont("helvetica", "bold");
-          doc.text("MIRISA CERAMICHE S.R.L.", 14, 22);
-
+        const finalY = doc.lastAutoTable.finalY + 20;
+        if (finalY < 260) {
           doc.setFontSize(9);
-          doc.setTextColor(100, 116, 139);
           doc.setFont("helvetica", "normal");
-          doc.text("Prospetto Presenze, Straordinari e Spettanze Mensili", 14, 28);
-          doc.text(`Periodo di Competenza: ${meseFormat}`, 14, 33);
-          doc.text("Documento Ufficiale per lo Studio del Consulente del Lavoro", 14, 38);
-
-          doc.setDrawColor(203, 213, 225);
-          doc.line(14, 43, 196, 43);
-
-          // Piè di pagina
-          const pageStr = `Pagina ${doc.internal.getNumberOfPages()}`;
-          doc.setFontSize(8);
-          doc.setTextColor(148, 163, 184);
-          doc.text(pageStr, 196, 288, { align: "right" });
-          doc.text("Mirisa Ceramiche S.r.l. - Dati verificati da Direzione Generale", 14, 288);
+          doc.setTextColor(71, 85, 105);
+          doc.text("Note per lo Studio Paghe: ____________________________________________________", 14, finalY);
+          doc.text("Firma Amministrazione: ___________________________", 14, finalY + 14);
+          doc.text("Ricevuto Consulente: ___________________________", 115, finalY + 14);
         }
-      });
 
-      const finalY = doc.lastAutoTable.finalY + 20;
-      if (finalY < 260) {
-        doc.setFontSize(9);
-        doc.setFont("helvetica", "normal");
-        doc.setTextColor(71, 85, 105);
-        doc.text("Note per lo Studio Paghe: ____________________________________________________", 14, finalY);
-        doc.text("Firma Amministrazione: ___________________________", 14, finalY + 14);
-        doc.text("Ricevuto Consulente: ___________________________", 115, finalY + 14);
+        return { doc, filename: `Prospetto_Mirisa_${meseFormat}.pdf`, mese: meseFormat, totale: summary.totaleGlobale };
       }
 
-      return { doc, filename: `Prospetto_Mirisa_${meseFormat}.pdf`, mese: meseFormat, totale: summary.totaleGlobale };
-    }
+      window.stampaReportPDF = function() {
+        const res = creaDocumentoPDF();
+        if (!res) return alert("Nessun dato disponibile");
+        res.doc.save(res.filename);
+        showToast("Download del PDF completato!");
+      };
 
-    window.stampaReportPDF = function() {
-      const res = creaDocumentoPDF();
-      if (!res) return alert("Nessun dato disponibile");
-      res.doc.save(res.filename);
-      showToast("Download del PDF completato!");
-    };
+      window.condividiWhatsApp = async function() {
+        const res = creaDocumentoPDF();
+        if (!res) return alert("Nessun dato disponibile");
 
-    window.condividiWhatsApp = async function() {
-      const res = creaDocumentoPDF();
-      if (!res) return alert("Nessun dato disponibile");
+        const blob = res.doc.output("blob");
+        const file = new File([blob], res.filename, { type: "application/pdf" });
+        const messaggio = `*MIRISA CERAMICHE S.R.L.*\nSi trasmette il prospetto riepilogativo delle presenze per il mese di *${res.mese}* per l'elaborazione dei cedolini paga.\n\nTotale lordo stimato: *€ ${res.totale.toFixed(2)}*`;
 
-      const blob = res.doc.output("blob");
-      const file = new File([blob], res.filename, { type: "application/pdf" });
-      const messaggio = `*MIRISA CERAMICHE S.R.L.*\nSi trasmette il prospetto riepilogativo delle presenze per il mese di *${res.mese}* per l'elaborazione dei cedolini paga.\n\nTotale lordo stimato: *€ ${res.totale.toFixed(2)}*`;
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        try {
-          await navigator.share({
-            files: [file],
-            title: `Presenze Mirisa ${res.mese}`,
-            text: messaggio
-          });
-          showToast("Inviato su WhatsApp!");
-          return;
-        } catch (err) {
-          if (err.name !== "AbortError") console.error(err);
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              files: [file],
+              title: `Presenze Mirisa ${res.mese}`,
+              text: messaggio
+            });
+            showToast("Inviato su WhatsApp!");
+            return;
+          } catch (err) {
+            if (err.name !== "AbortError") console.error(err);
+          }
         }
-      }
 
-      res.doc.save(res.filename);
-      const encodedMsg = encodeURIComponent(`${messaggio}\n\n(Il file ${res.filename} è stato scaricato nei tuoi download, allegalo a questa chat)`);
-      window.open(`https://api.whatsapp.com/send?text=${encodedMsg}`, "_blank");
-      showToast("PDF scaricato. Invia su WhatsApp!", true);
+        res.doc.save(res.filename);
+        const encodedMsg = encodeURIComponent(`${messaggio}\n\n(Il file ${res.filename} è stato scaricato nei tuoi download, allegalo a questa chat)`);
+        window.open(`https://api.whatsapp.com/send?text=${encodedMsg}`, "_blank");
+        showToast("PDF scaricato. Invia su WhatsApp!", true);
+      };
     };
   </script>
 </head>
 <body>
-  <div class="container">
+
+  <!-- SCHERMATA BLOCCO PIN -->
+  <div id="lock-screen">
+    <div class="lock-box">
+      <div class="lock-icon"><i class="fa-solid fa-shield-halved"></i></div>
+      <h2 style="margin: 0; font-size: 20px; font-weight: 800; color: #fff;">Area Riservata</h2>
+      <p style="margin: 6px 0 0; font-size: 13px; color: var(--text-muted);">Mirisa Ceramiche &bull; Direzione</p>
+      
+      <input type="password" id="pinInput" class="pin-display" readonly placeholder="----">
+      
+      <div class="pin-keypad">
+        <button class="pin-btn" onclick="digitaPin('1')">1</button>
+        <button class="pin-btn" onclick="digitaPin('2')">2</button>
+        <button class="pin-btn" onclick="digitaPin('3')">3</button>
+        <button class="pin-btn" onclick="digitaPin('4')">4</button>
+        <button class="pin-btn" onclick="digitaPin('5')">5</button>
+        <button class="pin-btn" onclick="digitaPin('6')">6</button>
+        <button class="pin-btn" onclick="digitaPin('7')">7</button>
+        <button class="pin-btn" onclick="digitaPin('8')">8</button>
+        <button class="pin-btn" onclick="digitaPin('9')">9</button>
+        <button class="pin-btn" style="color: var(--danger); font-size: 16px;" onclick="cancellaPin()"><i class="fa-solid fa-delete-left"></i></button>
+        <button class="pin-btn" onclick="digitaPin('0')">0</button>
+        <button class="pin-btn" style="color: var(--accent); font-size: 16px;" onclick="verificaPin()"><i class="fa-solid fa-arrow-right"></i></button>
+      </div>
+
+      <div id="pinError" class="pin-error">PIN errato. Riprova.</div>
+    </div>
+  </div>
+
+  <!-- PANNELLO PRINCIPALE AMMINISTRAZIONE -->
+  <div class="container" id="main-container">
     <header>
       <div class="brand">
         <h1><i class="fa-solid fa-layer-group" style="color:var(--accent);"></i> MIRISA <span>CERAMICHE</span></h1>
@@ -665,6 +836,9 @@
         </button>
         <button class="btn btn-whatsapp" onclick="condividiWhatsApp()">
           <i class="fa-brands fa-whatsapp" style="font-size:18px;"></i> Invia con WhatsApp
+        </button>
+        <button class="btn btn-danger btn-icon" onclick="bloccaDashboard()" title="Disconnetti e Blocca">
+          <i class="fa-solid fa-lock"></i>
         </button>
       </div>
     </header>
