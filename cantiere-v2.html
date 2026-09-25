@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mirisa - Presenze Vocali Assistite</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root {
+      --bg: #070d19;
+      --surface: #0f1b33;
+      --surface-border: #1a2c4e;
+      --accent: #38bdf8;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --purple: #8b5cf6;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    body { background-color: var(--bg); color: var(--text); margin: 0; padding: 16px; min-height: 100vh; }
+    .container { max-width: 600px; margin: 0 auto; }
+    .brand { text-align: center; margin-bottom: 20px; }
+    .brand h1 { margin: 0; font-size: 22px; font-weight: 800; color: #fff; }
+    .brand h1 span { color: var(--accent); }
+    .brand p { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); }
+    .ai-badge { display: inline-block; background: linear-gradient(135deg, #0284c7, #10b981); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px; }
+
+    .card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+
+    .voice-box { text-align: center; padding: 20px 10px; }
+    .mic-button {
+      width: 90px; height: 90px; border-radius: 50%; border: none;
+      background: linear-gradient(135deg, #0284c7, #38bdf8);
+      color: #fff; font-size: 34px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      box-shadow: 0 10px 25px rgba(2, 132, 199, 0.4);
+      transition: all 0.2s;
+    }
+    .mic-button.recording {
+      background: linear-gradient(135deg, #ef4444, #f43f5e);
+      animation: pulse 1.2s infinite;
+      box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+    .voice-hint { margin-top: 14px; font-size: 13px; color: var(--text-muted); line-height: 1.4; }
+    .speech-transcript {
+      background: #081120; border: 1px solid var(--surface-border);
+      border-radius: 10px; padding: 12px; margin-top: 16px;
+      font-size: 13px; color: #fff; min-height: 48px; text-align: left; font-style: italic;
+    }
+
+    #preview-box { display: none; }
+    .preview-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.06); font-size: 14px;
+    }
+    .preview-item:last-child { border-bottom: none; }
+    .badge-preview { font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px; }
+    .badge-intera { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .badge-mezza { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    .badge-assente { background: rgba(239, 68, 68, 0.2); color: var(--danger); }
+    .badge-ferie { background: rgba(139, 92, 246, 0.2); color: var(--purple); }
+
+    .btn-confirm {
+      width: 100%; margin-top: 16px; padding: 14px; border-radius: 10px;
+      border: none; background: var(--success); color: #fff; font-size: 15px; font-weight: 700;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-confirm:active { transform: scale(0.98); }
+
+    #toast { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #1e293b; color: #fff; padding: 12px 18px; border-radius: 10px; border-left: 4px solid var(--success); display: none; text-align: center; font-size: 14px; font-weight: 600; z-index: 200; }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="brand">
+      <div class="ai-badge"><i class="fa-solid fa-bolt"></i> Motore Vocale Attivo</div>
+      <h1>MIRISA <span>CERAMICHE</span></h1>
+      <p>Registrazione Presenze Vocale Diretta</p>
+    </div>
+
+    <div class="card">
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione</label>
+        <input type="date" id="selected-date" style="width: 100%; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 14px; outline: none;">
+      </div>
+
+      <div class="voice-box">
+        <button id="btn-mic" class="mic-button" onclick="toggleVoiceRecording()">
+          <i class="fa-solid fa-microphone"></i>
+        </button>
+        <div id="mic-status" class="voice-hint">Tocca il microfono e parla</div>
+        <div id="transcript" class="speech-transcript">In attesa della tua voce...</div>
+      </div>
+    </div>
+
+    <div class="card" id="preview-box">
+      <h3 style="margin: 0 0 12px; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-list-check"></i> Riepilogo Presenze Rilevate:
+      </h3>
+      <div id="preview-list"></div>
+      
+      <button class="btn-confirm" onclick="confermaSalvataggio()">
+        <i class="fa-solid fa-cloud-arrow-up"></i> Salva su Database
+      </button>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAb6M5iEzafntiQbr7fj76XrZYNjmz17tE",
+      authDomain: "presenze-dipendenti-e377b.firebaseapp.com",
+      databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "presenze-dipendenti-e377b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const oggi = new Date().toISOString().split("T")[0];
+    document.getElementById("selected-date").value = oggi;
+
+    let dipendentiNomi = [];
+    let presenzeProposte = [];
+
+    // Caricamento continuo anagrafica dipendenti da Firebase
+    onValue(ref(db, "dipendenti"), (snap) => {
+      const data = snap.val() || {};
+      dipendentiNomi = Object.values(data).map(d => d.nome).filter(Boolean);
+    });
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      setTimeout(() => t.style.display = "none", 3000);
+    }
+
+    let recognition = null;
+    let isRecording = false;
+
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.lang = 'it-IT';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        isRecording = true;
+        document.getElementById("btn-mic").classList.add("recording");
+        document.getElementById("mic-status").textContent = "Ti sto ascoltando... Parla ora!";
+      };
+
+      recognition.onresult = (event) => {
+        const text = event.results[0][0].transcript;
+        document.getElementById("transcript").textContent = `"${text}"`;
+        elaboraFrase(text);
+      };
+
+      recognition.onerror = () => {
+        isRecording = false;
+        document.getElementById("btn-mic").classList.remove("recording");
+        document.getElementById("mic-status").textContent = "Errore microfono. Riprova.";
+      };
+
+      recognition.onend = () => {
+        isRecording = false;
+        document.getElementById("btn-mic").classList.remove("recording");
+      };
+    }
+
+    window.toggleVoiceRecording = function() {
+      if (!recognition) return alert("Riconoscimento vocale non supportato su questo browser.");
+      if (isRecording) {
+        recognition.stop();
+      } else {
+        recognition.start();
+      }
+    };
+
+    // Elaborazione semantica locale istantanea
+    function elaboraFrase(frase) {
+      document.getElementById("mic-status").textContent = "Elaborazione...";
+      const text = frase.toLowerCase();
+      let risultati = [];
+
+      // Determinazione dello stato prioritario
+      let stato = "Intera";
+      if (text.includes("assent") || text.includes("manc") || text.includes("non c'è") || text.includes("non ce")) {
+        stato = "Assente";
+      } else if (text.includes("feri")) {
+        stato = "Ferie";
+      } else if (text.includes("malatt") || text.includes("indispost")) {
+        stato = "Malattia";
+      } else if (text.includes("mezz") || text.includes("mattin")) {
+        stato = "Mattina";
+      } else if (text.includes("pomerigg")) {
+        stato = "Pomeriggio";
+      } else if (text.includes("present") || text.includes("lavorat")) {
+        stato = "Intera";
+      }
+
+      // Caso 1: Riferimento alla squadra completa ("tutti", "squadra")
+      if (text.includes("tutt") || text.includes("squadra")) {
+        const defaultState = (stato === "Assente") ? "Assente" : "Intera";
+        risultati = dipendentiNomi.map(n => ({ nome: n, stato: defaultState }));
+
+        // Gestione eccezioni ("tranne...", "eccetto...")
+        dipendentiNomi.forEach(nome => {
+          const parti = nome.toLowerCase().split(" ");
+          const nominato = parti.some(p => p.length > 2 && text.includes(p));
+          if (nominato && (text.includes("tranne") || text.includes("eccetto") || text.includes("meno"))) {
+            const idx = risultati.findIndex(r => r.nome === nome);
+            if (idx !== -1) {
+              risultati[idx].stato = (defaultState === "Intera") ? "Assente" : "Intera";
+            }
+          }
+        });
+      } else {
+        // Caso 2: Nominativi specifici individuati dall'anagrafica
+        let matched = 0;
+        dipendentiNomi.forEach(nome => {
+          const parti = nome.toLowerCase().split(" ");
+          const nominato = parti.some(p => p.length > 2 && text.includes(p));
+          if (nominato) {
+            risultati.push({ nome: nome, stato: stato });
+            matched++;
+          }
+        });
+
+        // Caso 3: Nome libero se non presente in anagrafica
+        if (matched === 0) {
+          let pulito = frase.replace(/oggi|presente|presenti|assente|assenti|ferie|malattia|mezza|mattina|pomeriggio|intera/gi, "").trim();
+          pulito = pulito.replace(/^[,\s]+|[,\s]+$/g, "");
+          if (pulito.length > 1) {
+            risultati.push({ nome: pulito, stato: stato });
+          }
+        }
+      }
+
+      if (risultati.length > 0) {
+        presenzeProposte = risultati;
+        mostraAnteprima(presenzeProposte);
+        document.getElementById("mic-status").textContent = "Presenze elaborate correttamente!";
+      } else {
+        document.getElementById("mic-status").textContent = "Nessun collaboratore individuato. Riprova.";
+      }
+    }
+
+    function mostraAnteprima(elenco) {
+      const box = document.getElementById("preview-box");
+      const list = document.getElementById("preview-list");
+      list.innerHTML = "";
+
+      elenco.forEach(item => {
+        let badgeClass = "badge-intera";
+        if (item.stato === "Mattina" || item.stato === "Pomeriggio") badgeClass = "badge-mezza";
+        if (item.stato === "Assente" || item.stato === "Malattia") badgeClass = "badge-assente";
+        if (item.stato === "Ferie") badgeClass = "badge-ferie";
+
+        const div = document.createElement("div");
+        div.className = "preview-item";
+        div.innerHTML = `
+          <span><strong>${item.nome}</strong></span>
+          <span class="badge-preview ${badgeClass}">${item.stato}</span>
+        `;
+        list.appendChild(div);
+      });
+
+      box.style.display = "block";
+    }
+
+    window.confermaSalvataggio = function() {
+      const dataSel = document.getElementById("selected-date").value;
+      if (!dataSel || presenzeProposte.length === 0) return;
+
+      const promises = presenzeProposte.map(item => {
+        const safeKey = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
+        return set(ref(db, `presenze/${dataSel}/${safeKey}`), {
+          dipendente: item.nome,
+          data: dataSel,
+          stato: item.stato,
+          orarioRegistrazione: new Date().toISOString(),
+          inseritoDa: "Assistente Vocale"
+        });
+      });
+
+      Promise.all(promises).then(() => {
+        showToast(`Salvate ${presenzeProposte.length} presenze per il ${dataSel}!`);
+        document.getElementById("preview-box").style.display = "none";
+        document.getElementById("transcript").textContent = "In attesa della tua voce...";
+        presenzeProposte = [];
+      });
+    };
+  </script>
+</body>
+</html>
