@@ -176,69 +176,377 @@
 
     #toast { position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: #fff; padding: 14px 20px; border-radius: 10px; border-left: 4px solid var(--accent); display: none; align-items: center; gap: 10px; z-index: 200; font-size: 14px; }
   </style>
+</head>
+<body>
+
+  <!-- MODALE AUTENTICAZIONE: VISIBILE DA SUBITO SENZA BLOCCHI JS -->
+  <div id="auth-overlay">
+    <div class="auth-box" id="view-login-form">
+      <div class="auth-icon"><i class="fa-solid fa-lock"></i></div>
+      <h2 style="margin:0 0 6px; font-size:20px; font-weight:800; color:#fff;">Accesso Amministrazione</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:18px;">Autenticati con le credenziali Firebase</p>
+      
+      <input type="email" id="login-email" class="auth-input" placeholder="dipierro.nino@gmail.com" value="dipierro.nino@gmail.com">
+      <input type="password" id="login-password" class="auth-input" placeholder="Password account">
+      
+      <button class="btn btn-primary" id="btn-login-action" style="width:100%; justify-content:center; padding:12px; font-size:14px; font-weight:700;">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> Accedi al Portale
+      </button>
+
+      <div id="login-error" class="auth-error"></div>
+    </div>
+
+    <div class="auth-box" id="view-quick-unlock" style="display: none;">
+      <div class="auth-icon"><i class="fa-solid fa-fingerprint"></i></div>
+      <h2 style="margin:0 0 6px; font-size:20px; font-weight:800; color:#fff;">Sblocco Rapido</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">Tocca l'impronta o digita il PIN</p>
+
+      <input type="password" id="quickPinInput" class="pin-display" readonly placeholder="----">
+
+      <div class="pin-keypad">
+        <button class="pin-btn" onclick="digitaQuickPin('1')">1</button>
+        <button class="pin-btn" onclick="digitaQuickPin('2')">2</button>
+        <button class="pin-btn" onclick="digitaQuickPin('3')">3</button>
+        <button class="pin-btn" onclick="digitaQuickPin('4')">4</button>
+        <button class="pin-btn" onclick="digitaQuickPin('5')">5</button>
+        <button class="pin-btn" onclick="digitaQuickPin('6')">6</button>
+        <button class="pin-btn" onclick="digitaQuickPin('7')">7</button>
+        <button class="pin-btn" onclick="digitaQuickPin('8')">8</button>
+        <button class="pin-btn" onclick="digitaQuickPin('9')">9</button>
+        <button class="pin-btn" style="color:var(--danger);" onclick="cancellaQuickPin()"><i class="fa-solid fa-delete-left"></i></button>
+        <button class="pin-btn" onclick="digitaQuickPin('0')">0</button>
+        <button class="pin-btn pin-btn-bio" onclick="avviaBiometria()"><i class="fa-solid fa-fingerprint"></i></button>
+      </div>
+
+      <div id="quick-pin-error" class="auth-error"></div>
+      
+      <div style="margin-top:16px;">
+        <button onclick="disconnettiAccount()" style="background:transparent; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; text-decoration:underline;">
+          Cambia account o disconnetti
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" id="main-container">
+    <header>
+      <div class="brand">
+        <h1><i class="fa-solid fa-layer-group" style="color:var(--accent);"></i> MIRISA <span>CERAMICHE</span></h1>
+        <p>Direzione Generale &bull; Controllo Presenze, Planning & Liquidazione Compensi</p>
+      </div>
+      <div class="top-actions">
+        <input type="month" id="meseSelezionato">
+        <button class="btn btn-primary" onclick="apriModaleNuovo()">
+          <i class="fa-solid fa-user-plus"></i> Nuovo Dipendente
+        </button>
+        <button class="btn btn-pdf" onclick="stampaReportPDF()">
+          <i class="fa-solid fa-file-pdf"></i> Scarica PDF
+        </button>
+        <button class="btn btn-whatsapp" onclick="condividiWhatsApp()">
+          <i class="fa-brands fa-whatsapp" style="font-size:18px;"></i> Invia WhatsApp
+        </button>
+        <button class="btn btn-danger btn-icon" onclick="disconnettiAccount()" title="Disconnetti Sessione">
+          <i class="fa-solid fa-power-off"></i>
+        </button>
+      </div>
+    </header>
+
+    <div class="kpi-grid">
+      <div class="kpi-card kpi-green">
+        <div class="kpi-title">Giornate Piene <i class="fa-solid fa-check" style="color:var(--success);"></i></div>
+        <div class="kpi-value" id="kpi-intere" style="color:var(--success);">0</div>
+      </div>
+      <div class="kpi-card kpi-orange">
+        <div class="kpi-title">Mezze Giornate <i class="fa-solid fa-clock-rotate-left" style="color:var(--warning);"></i></div>
+        <div class="kpi-value" id="kpi-mezze" style="color:var(--warning);">0</div>
+      </div>
+      <div class="kpi-card kpi-red">
+        <div class="kpi-title">Assenze Registrate <i class="fa-solid fa-ban" style="color:var(--danger);"></i></div>
+        <div class="kpi-value" id="kpi-assenze" style="color:var(--danger);">0</div>
+      </div>
+      <div class="kpi-card kpi-purple">
+        <div class="kpi-title">Ferie & Malattie <i class="fa-solid fa-umbrella-beach" style="color:var(--purple);"></i></div>
+        <div class="kpi-value" id="kpi-ferie" style="color:var(--purple);">0</div>
+      </div>
+      <div class="kpi-card kpi-blue">
+        <div class="kpi-title">Spettanze Totali Mese <i class="fa-solid fa-euro-sign" style="color:var(--accent);"></i></div>
+        <div class="kpi-value" id="kpi-totale" style="color:var(--accent);">€ 0,00</div>
+      </div>
+    </div>
+
+    <div class="view-tabs">
+      <button class="view-tab-btn active" onclick="switchMainTab('view-registro', this)">
+        <i class="fa-solid fa-file-invoice-dollar"></i> Registro Compensi & Buste Paga
+      </button>
+      <button class="view-tab-btn" onclick="switchMainTab('view-planning', this)">
+        <i class="fa-solid fa-calendar-days"></i> Planning Presenze Calendario
+      </button>
+    </div>
+
+    <div id="view-registro" class="view-content active">
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><i class="fa-solid fa-pencil" style="color:var(--accent);"></i> Registrazione / Rettifica Presenze</h2>
+          <span style="font-size:12px; color:var(--text-muted);">Registra per un singolo collaboratore o applica all'intera squadra</span>
+        </div>
+        <div class="inline-editor">
+          <div>
+            <label style="display:block; font-size:11px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">Data</label>
+            <input type="date" id="manual-date" style="width:100%;">
+          </div>
+          <div>
+            <label style="display:block; font-size:11px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">Lavoratore Singolo</label>
+            <select id="manual-dipendente" style="width:100%;"></select>
+          </div>
+          <div>
+            <label style="display:block; font-size:11px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">Stato Presenza</label>
+            <select id="manual-stato" style="width:100%;">
+              <option value="Intera">Intera (1.0 gg)</option>
+              <option value="Mattina">Mezza Mattina (0.5 gg)</option>
+              <option value="Pomeriggio">Mezza Pomeriggio (0.5 gg)</option>
+              <option value="Ferie">Ferie / Chiusura</option>
+              <option value="Malattia">Malattia</option>
+              <option value="Assente">Assente (0.0 gg)</option>
+            </select>
+          </div>
+          <div>
+            <button class="btn btn-secondary" onclick="salvaRettificaRapida()" style="height:44px; width:100%;">
+              <i class="fa-solid fa-floppy-disk"></i> Salva Singolo
+            </button>
+          </div>
+          <div>
+            <button class="btn btn-primary" onclick="applicaATuttiAdmin()" style="height:44px; width:100%;">
+              <i class="fa-solid fa-users-gear"></i> Applica a TUTTI
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title"><i class="fa-solid fa-users" style="color:var(--accent);"></i> Prospetto Collaboratori & Spettanze Mensili</h2>
+          <div style="width:260px;">
+            <input type="text" id="searchInput" placeholder="Cerca collaboratore o mansione..." style="width:100%;">
+          </div>
+        </div>
+        <div class="table-responsive">
+          <table>
+            <thead>
+              <tr>
+                <th>Collaboratore</th>
+                <th>Intere</th>
+                <th>Mezze</th>
+                <th>Assenze</th>
+                <th>Ferie/Mal.</th>
+                <th>Tot. Giorni</th>
+                <th>Tariffa Base</th>
+                <th>Extra/Bonus</th>
+                <th>Netto Stimato</th>
+                <th style="width:110px;">Azioni</th>
+              </tr>
+            </thead>
+            <tbody id="tabellaBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="view-planning" class="view-content">
+      <div class="card" style="padding: 16px;">
+        <div class="planning-nav">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <button onclick="navAdminPlanning(-1)" style="background:#081120; border:1px solid var(--surface-border); color:#fff; padding:8px 14px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-chevron-left"></i></button>
+            <span id="admin-planning-title" style="font-weight:800; font-size:15px; color:#fff; min-width:200px; text-align:center;"></span>
+            <button onclick="navAdminPlanning(1)" style="background:#081120; border:1px solid var(--surface-border); color:#fff; padding:8px 14px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-secondary btn-plan-toggle active" id="btn-plan-month" onclick="setAdminPlanningMode('month')" style="padding:8px 14px; font-size:13px;">Mese Intero</button>
+            <button class="btn btn-secondary btn-plan-toggle" id="btn-plan-week" onclick="setAdminPlanningMode('week')" style="padding:8px 14px; font-size:13px;">Vista Settimana</button>
+          </div>
+        </div>
+
+        <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; padding:10px; background:#081120; border-radius:8px; border:1px solid var(--surface-border);">
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <span><b style="color:var(--success)">I</b> = Intera</span>
+            <span><b style="color:var(--warning)">M</b> = Mattina</span>
+            <span><b style="color:var(--warning)">P</b> = Pomeriggio</span>
+            <span><b style="color:var(--danger)">A</b> = Assente</span>
+            <span><b style="color:var(--purple)">F</b> = Ferie</span>
+            <span><b style="color:#94a3b8">MAL</b> = Malattia</span>
+          </div>
+          <span style="color:var(--accent); font-weight:600;"><i class="fa-solid fa-hand-pointer"></i> Clicca su qualsiasi casella per modificare</span>
+        </div>
+
+        <div class="planning-container">
+          <table class="plan-table">
+            <thead id="admin-planning-head"></thead>
+            <tbody id="admin-planning-body"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalQuickEdit">
+    <div class="modal" style="max-width: 420px;">
+      <div class="modal-header">
+        <div>
+          <h3 id="quick-nome" style="color:var(--accent); font-size:18px;"></h3>
+          <p id="quick-data" style="margin:2px 0 0; font-size:13px; color:var(--text-muted); text-transform:capitalize;"></p>
+        </div>
+        <button onclick="chiudiQuickEdit()" style="background:transparent; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p style="font-size:12px; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:8px;">Seleziona Nuovo Stato:</p>
+      <div class="quick-status-grid">
+        <button class="btn-quick-status" onclick="applicaQuickStato('Intera')" style="border-color:var(--success);">
+          <i class="fa-solid fa-circle-check" style="color:var(--success);"></i> Intera (1.0)
+        </button>
+        <button class="btn-quick-status" onclick="applicaQuickStato('Mattina')" style="border-color:var(--warning);">
+          <i class="fa-solid fa-sun" style="color:var(--warning);"></i> Mattina (0.5)
+        </button>
+        <button class="btn-quick-status" onclick="applicaQuickStato('Pomeriggio')" style="border-color:var(--warning);">
+          <i class="fa-solid fa-moon" style="color:var(--warning);"></i> Pomeriggio (0.5)
+        </button>
+        <button class="btn-quick-status" onclick="applicaQuickStato('Assente')" style="border-color:var(--danger);">
+          <i class="fa-solid fa-ban" style="color:var(--danger);"></i> Assente (0.0)
+        </button>
+        <button class="btn-quick-status" onclick="applicaQuickStato('Ferie')" style="border-color:var(--purple);">
+          <i class="fa-solid fa-umbrella-beach" style="color:var(--purple);"></i> Ferie
+        </button>
+        <button class="btn-quick-status" onclick="applicaQuickStato('Malattia')" style="border-color:#64748b;">
+          <i class="fa-solid fa-notes-medical" style="color:#64748b;"></i> Malattia
+        </button>
+      </div>
+      <div style="margin-top:16px; border-top:1px solid var(--surface-border); padding-top:12px; display:flex; justify-content:space-between;">
+        <button class="btn btn-danger" onclick="applicaQuickStato('DELETE')" style="font-size:12px; padding:8px 12px;">
+          <i class="fa-solid fa-trash"></i> Elimina Giornata
+        </button>
+        <button class="btn btn-secondary" onclick="chiudiQuickEdit()" style="font-size:12px; padding:8px 12px;">Chiudi</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="modalDipendente">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitolo">Dettagli Collaboratore</h3>
+        <button onclick="chiudiModale()" style="background:transparent; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="form-group">
+        <label>Nome e Cognome *</label>
+        <input type="text" id="form-nome" placeholder="es. Mario Rossi">
+      </div>
+      <div class="form-group">
+        <label>Mansione / Reparto</label>
+        <input type="text" id="form-mansione" placeholder="es. Posatore, Magazziniere">
+      </div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="form-group">
+          <label>Tariffa Giornaliera (€) *</label>
+          <input type="number" step="0.5" id="form-tariffa" placeholder="es. 80.00">
+        </div>
+        <div class="form-group">
+          <label>Bonus / Extra Mese (€)</label>
+          <input type="number" step="1" id="form-bonus" placeholder="es. 50.00">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Telefono</label>
+        <input type="tel" id="form-telefono" placeholder="es. 338 1234567">
+      </div>
+      <div class="form-group" style="background:#081120; padding:12px; border-radius:8px; border:1px solid var(--surface-border); display:flex; align-items:center; gap:10px;">
+        <input type="checkbox" id="form-escludi-pdf" style="width:18px; height:18px; accent-color:var(--accent); cursor:pointer;">
+        <label for="form-escludi-pdf" style="margin:0; font-size:13px; color:#fff; cursor:pointer; text-transform:none;">
+          <strong>Escludi dal PDF Consulente del Lavoro</strong>
+          <span style="display:block; font-size:11px; color:var(--text-muted);">Registra le presenze regolarmente, ma non compare nel prospetto contabile.</span>
+        </label>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="chiudiModale()">Annulla</button>
+        <button class="btn btn-primary" onclick="salvaDipendenteForm()"><i class="fa-solid fa-check"></i> Salva</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast">
+    <i class="fa-solid fa-circle-check" style="color:var(--success);"></i>
+    <span id="toast-text">Operazione completata</span>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, onValue, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+    // Configurazione completa del tuo progetto Firebase
     const firebaseConfig = {
+      projectId: "presenze-dipendenti-e377b",
       databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app"
     };
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getDatabase(app);
+    let app, auth, db;
+    try {
+      app = initializeApp(firebaseConfig);
+      auth = getAuth(app);
+      db = getDatabase(app);
+    } catch (e) {
+      console.error("Errore inizializzazione Firebase:", e);
+    }
 
     let quickPin = "";
 
-    onAuthStateChanged(auth, (user) => {
-      const overlay = document.getElementById("auth-overlay");
-      const loginView = document.getElementById("view-login-form");
-      const quickView = document.getElementById("view-quick-unlock");
-
-      if (user) {
-        const savedQuickPin = localStorage.getItem("admin_quick_pin");
-        if (savedQuickPin) {
-          loginView.style.display = "none";
-          quickView.style.display = "block";
-          if (localStorage.getItem("admin_bio_active") === "true") {
-            setTimeout(avviaBiometria, 300);
-          }
-        } else {
-          const pinChoice = prompt("Accesso autorizzato! Imposta un PIN rapido a 4 cifre per i prossimi accessi:");
-          if (pinChoice && pinChoice.length === 4) {
-            localStorage.setItem("admin_quick_pin", pinChoice);
-            proponiBiometria();
-          }
-          sbloccaDashboard();
-        }
-      } else {
-        loginView.style.display = "block";
-        quickView.style.display = "none";
-        overlay.style.display = "flex";
-        document.getElementById("main-container").style.display = "none";
-      }
-    });
-
-    window.eseguiLoginFirebase = function() {
+    document.getElementById("btn-login-action").addEventListener("click", () => {
       const email = document.getElementById("login-email").value.trim();
       const pass = document.getElementById("login-password").value;
       const errEl = document.getElementById("login-error");
 
       if (!email || !pass) {
-        errEl.textContent = "Compila email e password";
+        errEl.textContent = "Inserisci email e password.";
         errEl.style.display = "block";
         return;
       }
 
       signInWithEmailAndPassword(auth, email, pass)
-        .then(() => { errEl.style.display = "none"; })
-        .catch(() => {
-          errEl.textContent = "Credenziali non valide o accesso negato.";
+        .then(() => {
+          errEl.style.display = "none";
+        })
+        .catch((error) => {
+          console.error(error);
+          errEl.textContent = "Credenziali errate o account non trovato.";
           errEl.style.display = "block";
         });
-    };
+    });
+
+    if (auth) {
+      onAuthStateChanged(auth, (user) => {
+        const overlay = document.getElementById("auth-overlay");
+        const loginView = document.getElementById("view-login-form");
+        const quickView = document.getElementById("view-quick-unlock");
+
+        if (user) {
+          const savedQuickPin = localStorage.getItem("admin_quick_pin");
+          if (savedQuickPin) {
+            loginView.style.display = "none";
+            quickView.style.display = "block";
+            if (localStorage.getItem("admin_bio_active") === "true") {
+              setTimeout(avviaBiometria, 300);
+            }
+          } else {
+            const pinChoice = prompt("Accesso autorizzato! Imposta un PIN rapido a 4 cifre per i prossimi accessi:");
+            if (pinChoice && pinChoice.length === 4) {
+              localStorage.setItem("admin_quick_pin", pinChoice);
+              proponiBiometria();
+            }
+            sbloccaDashboard();
+          }
+        } else {
+          loginView.style.display = "block";
+          quickView.style.display = "none";
+          overlay.style.display = "flex";
+          document.getElementById("main-container").style.display = "none";
+        }
+      });
+    }
 
     window.digitaQuickPin = function(cifra) {
       const savedPin = localStorage.getItem("admin_quick_pin");
@@ -310,7 +618,11 @@
       if (confirm("Vuoi davvero disconnettere l'account da questo dispositivo?")) {
         localStorage.removeItem("admin_quick_pin");
         localStorage.removeItem("admin_bio_active");
-        signOut(auth).then(() => location.reload());
+        if (auth) {
+          signOut(auth).then(() => location.reload());
+        } else {
+          location.reload();
+        }
       }
     };
 
@@ -335,6 +647,7 @@
     let activeQuickEdit = { dipendente: null, data: null };
 
     function avviaAscoltoDati() {
+      if (!db) return;
       onValue(ref(db, "dipendenti"), (snapshot) => {
         dipendentiData = snapshot.val() || {};
         verificaPresenzaRessaVito(dipendentiData);
@@ -823,301 +1136,5 @@
       showToast("PDF scaricato. Invia su WhatsApp!", true);
     };
   </script>
-</head>
-<body>
-
-  <!-- MODALE AUTENTICAZIONE / SBLOCCO ADMIN -->
-  <div id="auth-overlay">
-    <div class="auth-box" id="view-login-form" style="display: none;">
-      <div class="auth-icon"><i class="fa-solid fa-lock"></i></div>
-      <h2 style="margin:0 0 6px; font-size:20px; font-weight:800; color:#fff;">Accesso Amministrazione</h2>
-      <p style="font-size:13px; color:var(--text-muted); margin-bottom:18px;">Autenticati con le tue credenziali Firebase</p>
-      
-      <input type="email" id="login-email" class="auth-input" placeholder="dipierro.nino@gmail.com">
-      <input type="password" id="login-password" class="auth-input" placeholder="Password account">
-      
-      <button class="btn btn-primary" onclick="eseguiLoginFirebase()" style="width:100%; justify-content:center; padding:12px; font-size:14px; font-weight:700;">
-        <i class="fa-solid fa-arrow-right-to-bracket"></i> Accedi al Portale
-      </button>
-
-      <div id="login-error" class="auth-error"></div>
-    </div>
-
-    <div class="auth-box" id="view-quick-unlock" style="display: none;">
-      <div class="auth-icon"><i class="fa-solid fa-fingerprint"></i></div>
-      <h2 style="margin:0 0 6px; font-size:20px; font-weight:800; color:#fff;">Sblocco Rapido</h2>
-      <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">Tocca l'impronta o digita il PIN</p>
-
-      <input type="password" id="quickPinInput" class="pin-display" readonly placeholder="----">
-
-      <div class="pin-keypad">
-        <button class="pin-btn" onclick="digitaQuickPin('1')">1</button>
-        <button class="pin-btn" onclick="digitaQuickPin('2')">2</button>
-        <button class="pin-btn" onclick="digitaQuickPin('3')">3</button>
-        <button class="pin-btn" onclick="digitaQuickPin('4')">4</button>
-        <button class="pin-btn" onclick="digitaQuickPin('5')">5</button>
-        <button class="pin-btn" onclick="digitaQuickPin('6')">6</button>
-        <button class="pin-btn" onclick="digitaQuickPin('7')">7</button>
-        <button class="pin-btn" onclick="digitaQuickPin('8')">8</button>
-        <button class="pin-btn" onclick="digitaQuickPin('9')">9</button>
-        <button class="pin-btn" style="color:var(--danger);" onclick="cancellaQuickPin()"><i class="fa-solid fa-delete-left"></i></button>
-        <button class="pin-btn" onclick="digitaQuickPin('0')">0</button>
-        <button class="pin-btn pin-btn-bio" onclick="avviaBiometria()"><i class="fa-solid fa-fingerprint"></i></button>
-      </div>
-
-      <div id="quick-pin-error" class="auth-error"></div>
-      
-      <div style="margin-top:16px;">
-        <button onclick="disconnettiAccount()" style="background:transparent; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; text-decoration:underline;">
-          Cambia account o disconnetti
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div class="container" id="main-container">
-    <header>
-      <div class="brand">
-        <h1><i class="fa-solid fa-layer-group" style="color:var(--accent);"></i> MIRISA <span>CERAMICHE</span></h1>
-        <p>Direzione Generale &bull; Controllo Presenze, Planning & Liquidazione Compensi</p>
-      </div>
-      <div class="top-actions">
-        <input type="month" id="meseSelezionato">
-        <button class="btn btn-primary" onclick="apriModaleNuovo()">
-          <i class="fa-solid fa-user-plus"></i> Nuovo Dipendente
-        </button>
-        <button class="btn btn-pdf" onclick="stampaReportPDF()">
-          <i class="fa-solid fa-file-pdf"></i> Scarica PDF
-        </button>
-        <button class="btn btn-whatsapp" onclick="condividiWhatsApp()">
-          <i class="fa-brands fa-whatsapp" style="font-size:18px;"></i> Invia WhatsApp
-        </button>
-        <button class="btn btn-danger btn-icon" onclick="disconnettiAccount()" title="Disconnetti Sessione">
-          <i class="fa-solid fa-power-off"></i>
-        </button>
-      </div>
-    </header>
-
-    <div class="kpi-grid">
-      <div class="kpi-card kpi-green">
-        <div class="kpi-title">Giornate Piene <i class="fa-solid fa-check" style="color:var(--success);"></i></div>
-        <div class="kpi-value" id="kpi-intere" style="color:var(--success);">0</div>
-      </div>
-      <div class="kpi-card kpi-orange">
-        <div class="kpi-title">Mezze Giornate <i class="fa-solid fa-clock-rotate-left" style="color:var(--warning);"></i></div>
-        <div class="kpi-value" id="kpi-mezze" style="color:var(--warning);">0</div>
-      </div>
-      <div class="kpi-card kpi-red">
-        <div class="kpi-title">Assenze Registrate <i class="fa-solid fa-ban" style="color:var(--danger);"></i></div>
-        <div class="kpi-value" id="kpi-assenze" style="color:var(--danger);">0</div>
-      </div>
-      <div class="kpi-card kpi-purple">
-        <div class="kpi-title">Ferie & Malattie <i class="fa-solid fa-umbrella-beach" style="color:var(--purple);"></i></div>
-        <div class="kpi-value" id="kpi-ferie" style="color:var(--purple);">0</div>
-      </div>
-      <div class="kpi-card kpi-blue">
-        <div class="kpi-title">Spettanze Totali Mese <i class="fa-solid fa-euro-sign" style="color:var(--accent);"></i></div>
-        <div class="kpi-value" id="kpi-totale" style="color:var(--accent);">€ 0,00</div>
-      </div>
-    </div>
-
-    <div class="view-tabs">
-      <button class="view-tab-btn active" onclick="switchMainTab('view-registro', this)">
-        <i class="fa-solid fa-file-invoice-dollar"></i> Registro Compensi & Buste Paga
-      </button>
-      <button class="view-tab-btn" onclick="switchMainTab('view-planning', this)">
-        <i class="fa-solid fa-calendar-days"></i> Planning Presenze Calendario
-      </button>
-    </div>
-
-    <div id="view-registro" class="view-content active">
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title"><i class="fa-solid fa-pencil" style="color:var(--accent);"></i> Registrazione / Rettifica Presenze</h2>
-          <span style="font-size:12px; color:var(--text-muted);">Registra per un singolo collaboratore o applica all'intera squadra</span>
-        </div>
-        <div class="inline-editor">
-          <div>
-            <label style="display:block; font-size:11px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">Data</label>
-            <input type="date" id="manual-date" style="width:100%;">
-          </div>
-          <div>
-            <label style="display:block; font-size:11px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">Lavoratore Singolo</label>
-            <select id="manual-dipendente" style="width:100%;"></select>
-          </div>
-          <div>
-            <label style="display:block; font-size:11px; text-transform:uppercase; color:var(--text-muted); margin-bottom:6px;">Stato Presenza</label>
-            <select id="manual-stato" style="width:100%;">
-              <option value="Intera">Intera (1.0 gg)</option>
-              <option value="Mattina">Mezza Mattina (0.5 gg)</option>
-              <option value="Pomeriggio">Mezza Pomeriggio (0.5 gg)</option>
-              <option value="Ferie">Ferie / Chiusura</option>
-              <option value="Malattia">Malattia</option>
-              <option value="Assente">Assente (0.0 gg)</option>
-            </select>
-          </div>
-          <div>
-            <button class="btn btn-secondary" onclick="salvaRettificaRapida()" style="height:44px; width:100%;">
-              <i class="fa-solid fa-floppy-disk"></i> Salva Singolo
-            </button>
-          </div>
-          <div>
-            <button class="btn btn-primary" onclick="applicaATuttiAdmin()" style="height:44px; width:100%;">
-              <i class="fa-solid fa-users-gear"></i> Applica a TUTTI
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <h2 class="card-title"><i class="fa-solid fa-users" style="color:var(--accent);"></i> Prospetto Collaboratori & Spettanze Mensili</h2>
-          <div style="width:260px;">
-            <input type="text" id="searchInput" placeholder="Cerca collaboratore o mansione..." style="width:100%;">
-          </div>
-        </div>
-        <div class="table-responsive">
-          <table>
-            <thead>
-              <tr>
-                <th>Collaboratore</th>
-                <th>Intere</th>
-                <th>Mezze</th>
-                <th>Assenze</th>
-                <th>Ferie/Mal.</th>
-                <th>Tot. Giorni</th>
-                <th>Tariffa Base</th>
-                <th>Extra/Bonus</th>
-                <th>Netto Stimato</th>
-                <th style="width:110px;">Azioni</th>
-              </tr>
-            </thead>
-            <tbody id="tabellaBody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div id="view-planning" class="view-content">
-      <div class="card" style="padding: 16px;">
-        <div class="planning-nav">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <button onclick="navAdminPlanning(-1)" style="background:#081120; border:1px solid var(--surface-border); color:#fff; padding:8px 14px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-chevron-left"></i></button>
-            <span id="admin-planning-title" style="font-weight:800; font-size:15px; color:#fff; min-width:200px; text-align:center;"></span>
-            <button onclick="navAdminPlanning(1)" style="background:#081120; border:1px solid var(--surface-border); color:#fff; padding:8px 14px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-chevron-right"></i></button>
-          </div>
-          <div style="display:flex; gap:8px;">
-            <button class="btn btn-secondary btn-plan-toggle active" id="btn-plan-month" onclick="setAdminPlanningMode('month')" style="padding:8px 14px; font-size:13px;">Mese Intero</button>
-            <button class="btn btn-secondary btn-plan-toggle" id="btn-plan-week" onclick="setAdminPlanningMode('week')" style="padding:8px 14px; font-size:13px;">Vista Settimana</button>
-          </div>
-        </div>
-
-        <div style="font-size:12px; color:var(--text-muted); margin-bottom:14px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; padding:10px; background:#081120; border-radius:8px; border:1px solid var(--surface-border);">
-          <div style="display:flex; gap:12px; flex-wrap:wrap;">
-            <span><b style="color:var(--success)">I</b> = Intera</span>
-            <span><b style="color:var(--warning)">M</b> = Mattina</span>
-            <span><b style="color:var(--warning)">P</b> = Pomeriggio</span>
-            <span><b style="color:var(--danger)">A</b> = Assente</span>
-            <span><b style="color:var(--purple)">F</b> = Ferie</span>
-            <span><b style="color:#94a3b8">MAL</b> = Malattia</span>
-          </div>
-          <span style="color:var(--accent); font-weight:600;"><i class="fa-solid fa-hand-pointer"></i> Clicca su qualsiasi casella per modificare</span>
-        </div>
-
-        <div class="planning-container">
-          <table class="plan-table">
-            <thead id="admin-planning-head"></thead>
-            <tbody id="admin-planning-body"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="modalQuickEdit">
-    <div class="modal" style="max-width: 420px;">
-      <div class="modal-header">
-        <div>
-          <h3 id="quick-nome" style="color:var(--accent); font-size:18px;"></h3>
-          <p id="quick-data" style="margin:2px 0 0; font-size:13px; color:var(--text-muted); text-transform:capitalize;"></p>
-        </div>
-        <button onclick="chiudiQuickEdit()" style="background:transparent; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <p style="font-size:12px; color:var(--text-muted); text-transform:uppercase; font-weight:700; margin-bottom:8px;">Seleziona Nuovo Stato:</p>
-      <div class="quick-status-grid">
-        <button class="btn-quick-status" onclick="applicaQuickStato('Intera')" style="border-color:var(--success);">
-          <i class="fa-solid fa-circle-check" style="color:var(--success);"></i> Intera (1.0)
-        </button>
-        <button class="btn-quick-status" onclick="applicaQuickStato('Mattina')" style="border-color:var(--warning);">
-          <i class="fa-solid fa-sun" style="color:var(--warning);"></i> Mattina (0.5)
-        </button>
-        <button class="btn-quick-status" onclick="applicaQuickStato('Pomeriggio')" style="border-color:var(--warning);">
-          <i class="fa-solid fa-moon" style="color:var(--warning);"></i> Pomeriggio (0.5)
-        </button>
-        <button class="btn-quick-status" onclick="applicaQuickStato('Assente')" style="border-color:var(--danger);">
-          <i class="fa-solid fa-ban" style="color:var(--danger);"></i> Assente (0.0)
-        </button>
-        <button class="btn-quick-status" onclick="applicaQuickStato('Ferie')" style="border-color:var(--purple);">
-          <i class="fa-solid fa-umbrella-beach" style="color:var(--purple);"></i> Ferie
-        </button>
-        <button class="btn-quick-status" onclick="applicaQuickStato('Malattia')" style="border-color:#64748b;">
-          <i class="fa-solid fa-notes-medical" style="color:#64748b;"></i> Malattia
-        </button>
-      </div>
-      <div style="margin-top:16px; border-top:1px solid var(--surface-border); padding-top:12px; display:flex; justify-content:space-between;">
-        <button class="btn btn-danger" onclick="applicaQuickStato('DELETE')" style="font-size:12px; padding:8px 12px;">
-          <i class="fa-solid fa-trash"></i> Elimina Giornata
-        </button>
-        <button class="btn btn-secondary" onclick="chiudiQuickEdit()" style="font-size:12px; padding:8px 12px;">Chiudi</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal-backdrop" id="modalDipendente">
-    <div class="modal">
-      <div class="modal-header">
-        <h3 id="modalTitolo">Dettagli Collaboratore</h3>
-        <button onclick="chiudiModale()" style="background:transparent; border:none; color:var(--text-muted); font-size:18px; cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
-      </div>
-      <div class="form-group">
-        <label>Nome e Cognome *</label>
-        <input type="text" id="form-nome" placeholder="es. Mario Rossi">
-      </div>
-      <div class="form-group">
-        <label>Mansione / Reparto</label>
-        <input type="text" id="form-mansione" placeholder="es. Posatore, Magazziniere">
-      </div>
-      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-        <div class="form-group">
-          <label>Tariffa Giornaliera (€) *</label>
-          <input type="number" step="0.5" id="form-tariffa" placeholder="es. 80.00">
-        </div>
-        <div class="form-group">
-          <label>Bonus / Extra Mese (€)</label>
-          <input type="number" step="1" id="form-bonus" placeholder="es. 50.00">
-        </div>
-      </div>
-      <div class="form-group">
-        <label>Telefono</label>
-        <input type="tel" id="form-telefono" placeholder="es. 338 1234567">
-      </div>
-      <div class="form-group" style="background:#081120; padding:12px; border-radius:8px; border:1px solid var(--surface-border); display:flex; align-items:center; gap:10px;">
-        <input type="checkbox" id="form-escludi-pdf" style="width:18px; height:18px; accent-color:var(--accent); cursor:pointer;">
-        <label for="form-escludi-pdf" style="margin:0; font-size:13px; color:#fff; cursor:pointer; text-transform:none;">
-          <strong>Escludi dal PDF Consulente del Lavoro</strong>
-          <span style="display:block; font-size:11px; color:var(--text-muted);">Registra le presenze regolarmente, ma non compare nel prospetto contabile.</span>
-        </label>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-secondary" onclick="chiudiModale()">Annulla</button>
-        <button class="btn btn-primary" onclick="salvaDipendenteForm()"><i class="fa-solid fa-check"></i> Salva</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="toast">
-    <i class="fa-solid fa-circle-check" style="color:var(--success);"></i>
-    <span id="toast-text">Operazione completata</span>
-  </div>
 </body>
 </html>
