@@ -179,12 +179,12 @@
 </head>
 <body>
 
-  <!-- MODALE AUTENTICAZIONE: VISIBILE DA SUBITO SENZA BLOCCHI JS -->
+  <!-- SCHERMATA LOGIN & SBLOCCO -->
   <div id="auth-overlay">
     <div class="auth-box" id="view-login-form">
       <div class="auth-icon"><i class="fa-solid fa-lock"></i></div>
       <h2 style="margin:0 0 6px; font-size:20px; font-weight:800; color:#fff;">Accesso Amministrazione</h2>
-      <p style="font-size:13px; color:var(--text-muted); margin-bottom:18px;">Autenticati con le credenziali Firebase</p>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:18px;">Autenticati con le tue credenziali Firebase</p>
       
       <input type="email" id="login-email" class="auth-input" placeholder="dipierro.nino@gmail.com" value="dipierro.nino@gmail.com">
       <input type="password" id="login-password" class="auth-input" placeholder="Password account">
@@ -478,20 +478,19 @@
     import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, onValue, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // Configurazione completa del tuo progetto Firebase
     const firebaseConfig = {
+      apiKey: "AIzaSyAb6M5iEzafntiQbr7fj76XrZYNjmz17tE",
+      authDomain: "presenze-dipendenti-e377b.firebaseapp.com",
+      databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "presenze-dipendenti-e377b",
-      databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app"
+      storageBucket: "presenze-dipendenti-e377b.firebasestorage.app",
+      messagingSenderId: "895033614696",
+      appId: "1:895033614696:web:329b34765347320024b6dd"
     };
 
-    let app, auth, db;
-    try {
-      app = initializeApp(firebaseConfig);
-      auth = getAuth(app);
-      db = getDatabase(app);
-    } catch (e) {
-      console.error("Errore inizializzazione Firebase:", e);
-    }
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
 
     let quickPin = "";
 
@@ -517,36 +516,34 @@
         });
     });
 
-    if (auth) {
-      onAuthStateChanged(auth, (user) => {
-        const overlay = document.getElementById("auth-overlay");
-        const loginView = document.getElementById("view-login-form");
-        const quickView = document.getElementById("view-quick-unlock");
+    onAuthStateChanged(auth, (user) => {
+      const overlay = document.getElementById("auth-overlay");
+      const loginView = document.getElementById("view-login-form");
+      const quickView = document.getElementById("view-quick-unlock");
 
-        if (user) {
-          const savedQuickPin = localStorage.getItem("admin_quick_pin");
-          if (savedQuickPin) {
-            loginView.style.display = "none";
-            quickView.style.display = "block";
-            if (localStorage.getItem("admin_bio_active") === "true") {
-              setTimeout(avviaBiometria, 300);
-            }
-          } else {
-            const pinChoice = prompt("Accesso autorizzato! Imposta un PIN rapido a 4 cifre per i prossimi accessi:");
-            if (pinChoice && pinChoice.length === 4) {
-              localStorage.setItem("admin_quick_pin", pinChoice);
-              proponiBiometria();
-            }
-            sbloccaDashboard();
+      if (user) {
+        const savedQuickPin = localStorage.getItem("admin_quick_pin");
+        if (savedQuickPin) {
+          loginView.style.display = "none";
+          quickView.style.display = "block";
+          if (localStorage.getItem("admin_bio_active") === "true") {
+            setTimeout(avviaBiometria, 300);
           }
         } else {
-          loginView.style.display = "block";
-          quickView.style.display = "none";
-          overlay.style.display = "flex";
-          document.getElementById("main-container").style.display = "none";
+          const pinChoice = prompt("Accesso autorizzato! Imposta un PIN rapido a 4 cifre per i prossimi accessi:");
+          if (pinChoice && pinChoice.length === 4) {
+            localStorage.setItem("admin_quick_pin", pinChoice);
+            proponiBiometria();
+          }
+          sbloccaDashboard();
         }
-      });
-    }
+      } else {
+        loginView.style.display = "block";
+        quickView.style.display = "none";
+        overlay.style.display = "flex";
+        document.getElementById("main-container").style.display = "none";
+      }
+    });
 
     window.digitaQuickPin = function(cifra) {
       const savedPin = localStorage.getItem("admin_quick_pin");
@@ -618,11 +615,7 @@
       if (confirm("Vuoi davvero disconnettere l'account da questo dispositivo?")) {
         localStorage.removeItem("admin_quick_pin");
         localStorage.removeItem("admin_bio_active");
-        if (auth) {
-          signOut(auth).then(() => location.reload());
-        } else {
-          location.reload();
-        }
+        signOut(auth).then(() => location.reload());
       }
     };
 
@@ -647,7 +640,6 @@
     let activeQuickEdit = { dipendente: null, data: null };
 
     function avviaAscoltoDati() {
-      if (!db) return;
       onValue(ref(db, "dipendenti"), (snapshot) => {
         dipendentiData = snapshot.val() || {};
         verificaPresenzaRessaVito(dipendentiData);
