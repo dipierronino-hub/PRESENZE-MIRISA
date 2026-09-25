@@ -20,7 +20,7 @@
       --radius: 12px;
     }
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    body { background-color: var(--bg); color: var(--text); margin: 0; padding: 16px; min-height: 100vh; }
+    body { background-color: var(--bg); color: var(--text); margin: 0; padding: 12px 16px; min-height: 100vh; }
     
     /* SCHERMATA BLOCCO BIOMETRICA PER GIACOMO */
     #lock-screen {
@@ -111,24 +111,25 @@
       display: none;
     }
 
-    /* CONTAINER A TUTTO SCHERMO SU PC */
-    .container { width: 100%; max-width: 1750px; margin: 0 auto; display: none; }
+    /* CONTAINER FLUIDO A SCHERMO INTERO */
+    .container { width: 100%; max-width: 100%; margin: 0 auto; display: none; }
 
-    .brand { text-align: center; margin-bottom: 20px; position: relative; }
+    .brand { text-align: center; margin-bottom: 16px; position: relative; }
     .brand h1 { margin: 0; font-size: 22px; font-weight: 800; color: #fff; }
     .brand h1 span { color: var(--accent); }
     .brand p { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); }
     .btn-top-lock { position: absolute; right: 0; top: 0; display: flex; gap: 6px; }
     .btn-lock-action { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: var(--danger); border-radius: 8px; padding: 6px 10px; font-size: 11px; cursor: pointer; font-weight: 600; }
 
-    .tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; max-width: 900px; margin-left: auto; margin-right: auto; }
     .tab-btn { flex: 1; padding: 12px; border-radius: var(--radius); border: 1px solid var(--surface-border); background: var(--surface); color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
     .tab-btn.active { background: #0284c7; color: #fff; border-color: transparent; }
 
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    .card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    .card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 18px; margin-bottom: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+    .card-small { max-width: 800px; margin: 0 auto; }
     .card-title { margin: 0 0 16px; font-size: 16px; font-weight: 700; color: var(--accent); display: flex; align-items: center; gap: 8px; }
 
     .form-group { margin-bottom: 16px; }
@@ -151,14 +152,12 @@
     .check-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: #0284c7; }
 
     /* ==============================================================
-       PLANNING FLUIDO A SCHERMO INTERO (SENZA SPAZI VUOTI)
+       PLANNING A TUTTA LARGHEZZA SENZA BARRA DI SCORRIMENTO SU PC
        ============================================================== */
     .planning-controls { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
     
     .planning-container {
       width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
       border: 1px solid var(--surface-border);
       border-radius: 8px;
       background: #081120;
@@ -168,63 +167,68 @@
       border-collapse: separate; 
       border-spacing: 0;
       table-layout: fixed; 
-      width: 100%; /* Si espande su tutto lo schermo */
-      min-width: 1100px; /* Assicura che i 31 giorni abbiano sempre spazio */
+      width: 100%;
     }
     
-    /* COLONNA COLLABORATORE BLOCCATA: 180PX PULITI */
+    /* COLONNA COLLABORATORE: LARGHEZZA PROPORZIONATA FISSA */
     table.plan-table th.name-col,
     table.plan-table td.name-col { 
       position: sticky !important; 
       left: 0 !important; 
       z-index: 10 !important;
-      width: 180px !important; 
-      min-width: 180px !important; 
-      max-width: 180px !important; 
+      width: 175px !important; 
+      min-width: 175px !important; 
+      max-width: 175px !important; 
       background: #0d1a33 !important; 
-      border-right: 3px solid #0284c7 !important;
+      border-right: 2px solid #0284c7 !important;
       border-bottom: 1px solid var(--surface-border) !important;
-      padding: 10px 12px !important;
+      padding: 8px 10px !important;
       text-align: left !important;
       white-space: nowrap !important;
       overflow: hidden !important;
       text-overflow: ellipsis !important;
       color: #ffffff !important;
       font-weight: 700 !important;
-      font-size: 13px !important;
-      box-shadow: 4px 0 10px rgba(0,0,0,0.5);
+      font-size: 12.5px !important;
+      box-shadow: 3px 0 8px rgba(0,0,0,0.5);
     }
 
-    /* CASELLE GIORNI PROPORZIONALI */
+    /* CASELLE GIORNI: DISTRIBUZIONE AUTOMATICA A TUTTO SCHERMO */
     table.plan-table th.day-col { 
       background: #0b1528; 
       color: var(--text-muted); 
-      font-size: 10px; 
+      font-size: 9.5px; 
       text-transform: uppercase; 
       text-align: center;
-      padding: 8px 0;
+      padding: 6px 0;
       border-bottom: 1px solid var(--surface-border);
-      border-right: 1px solid rgba(255,255,255,0.06);
+      border-right: 1px solid rgba(255,255,255,0.05);
     }
 
     table.plan-table td.day-cell { 
       text-align: center; 
-      padding: 6px 0;
+      padding: 4px 0;
       border-bottom: 1px solid var(--surface-border);
-      border-right: 1px solid rgba(255,255,255,0.06);
+      border-right: 1px solid rgba(255,255,255,0.05);
     }
 
     .plan-cell-interactive { cursor: pointer; user-select: none; }
     .plan-cell-interactive:hover { background: rgba(56, 189, 248, 0.15) !important; }
-    .plan-cell-interactive:active { background: rgba(56, 189, 248, 0.25) !important; }
 
-    .cell-badge { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; font-size: 10.5px; font-weight: 800; }
+    .cell-badge { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 5px; font-size: 10px; font-weight: 800; }
     .cell-I { background: rgba(16, 185, 129, 0.25); color: var(--success); border: 1px solid rgba(16,185,129,0.4); }
     .cell-M, .cell-P { background: rgba(245, 158, 11, 0.25); color: var(--warning); border: 1px solid rgba(245,158,11,0.4); }
     .cell-A { background: rgba(239, 68, 68, 0.25); color: var(--danger); border: 1px solid rgba(239,68,68,0.4); }
     .cell-F { background: rgba(139, 92, 246, 0.25); color: var(--purple); border: 1px solid rgba(139,92,246,0.4); }
     .cell-MAL { background: rgba(100, 116, 139, 0.25); color: #94a3b8; border: 1px solid rgba(100,116,139,0.4); }
-    .cell-empty { color: #334155; font-size: 15px; line-height: 26px; }
+    .cell-empty { color: #334155; font-size: 13px; line-height: 22px; }
+
+    /* COMPORTAMENTO SMARTPHONE: SCORRIMENTO ORIZZONTALE */
+    @media (max-width: 1024px) {
+      .planning-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      table.plan-table { width: max-content; min-width: 1000px; }
+      .cell-badge { width: 26px; height: 26px; font-size: 11px; }
+    }
 
     /* Modal Popup Modifica Rapida */
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); padding: 16px; }
@@ -420,7 +424,6 @@
       document.getElementById("data-singola").value = oggiStr;
       document.getElementById("data-collettiva").value = oggiStr;
 
-      // Apertura Mese su PC, Settimana su Mobile
       const isPcScreen = window.innerWidth >= 1024;
       let planningMode = isPcScreen ? "month" : "week";
       let currentDateCursor = new Date();
@@ -592,7 +595,7 @@
           const isToday = d.toISOString().split("T")[0] === oggiStr;
           const isWeekend = d.getDay() === 0 || d.getDay() === 6;
           headHtml += `<th class="day-col" style="${isToday ? 'border-bottom:2px solid var(--accent); color:var(--accent); background:rgba(56,189,248,0.12);' : ''} ${isWeekend ? 'color:#64748b;' : ''}">
-            <span style="font-size:9px;">${giorniNomi[d.getDay()]}</span><br><strong style="font-size:12px;">${d.getDate()}</strong>
+            <span style="font-size:8.5px;">${giorniNomi[d.getDay()]}</span><br><strong style="font-size:11.5px;">${d.getDate()}</strong>
           </th>`;
         });
         headHtml += `</tr>`;
@@ -600,7 +603,7 @@
 
         Object.keys(dipendentiData).forEach(id => {
           const nome = dipendentiData[id].nome;
-          let rowHtml = `<tr><td class="name-col" title="${nome}"><i class="fa-solid fa-user" style="font-size:11px; margin-right:6px; color:var(--accent);"></i>${nome}</td>`;
+          let rowHtml = `<tr><td class="name-col" title="${nome}"><i class="fa-solid fa-user" style="font-size:10px; margin-right:5px; color:var(--accent);"></i>${nome}</td>`;
 
           days.forEach(d => {
             const iso = d.toISOString().split("T")[0];
@@ -723,7 +726,7 @@
 
     <!-- 1. PRESENZA SQUADRA -->
     <div id="tab-tutti" class="tab-content active">
-      <div class="card">
+      <div class="card card-small">
         <h2 class="card-title"><i class="fa-solid fa-check-double"></i> Registra Presenza per Tutta la Squadra</h2>
         
         <div class="form-group">
@@ -775,7 +778,7 @@
 
     <!-- 2. SINGOLO -->
     <div id="tab-singolo" class="tab-content">
-      <div class="card">
+      <div class="card card-small">
         <h2 class="card-title"><i class="fa-solid fa-user-clock"></i> Timbratura Singola</h2>
         <div class="form-group">
           <label>Data</label>
@@ -816,7 +819,7 @@
 
     <!-- 3. PLANNING INTERATTIVO A SCHERMO INTERO -->
     <div id="tab-planning" class="tab-content">
-      <div class="card" style="padding: 16px;">
+      <div class="card" style="padding: 14px;">
         <div class="planning-controls">
           <div>
             <button onclick="navPlanning(-1)" style="background:#081120; border:1px solid var(--surface-border); color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-chevron-left"></i></button>
