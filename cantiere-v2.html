@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mirisa - Presenze Vocali Assistite</title>
+  <title>Mirisa - Presenze Vocali Protette</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     :root {
@@ -29,6 +29,10 @@
     .ai-badge { display: inline-block; background: linear-gradient(135deg, #0284c7, #10b981); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px; }
 
     .card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
+
+    /* Modalità Login Sicuro */
+    #login-box { display: none; }
+    .login-input { width: 100%; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 12px; outline: none; }
 
     .voice-box { text-align: center; padding: 20px 10px; }
     .mic-button {
@@ -75,14 +79,8 @@
       transition: all 0.3s ease;
     }
     .btn-confirm:active { transform: scale(0.98); }
-    .btn-confirm.loading {
-      background: #0284c7 !important;
-      cursor: wait;
-    }
-    .btn-confirm.success {
-      background: #059669 !important;
-      box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
-    }
+    .btn-confirm.loading { background: #0284c7 !important; cursor: wait; }
+    .btn-confirm.success { background: #059669 !important; }
 
     #toast { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #1e293b; color: #fff; padding: 12px 18px; border-radius: 10px; border-left: 4px solid var(--success); display: none; text-align: center; font-size: 14px; font-weight: 600; z-index: 200; }
   </style>
@@ -91,35 +89,49 @@
 
   <div class="container">
     <div class="brand">
-      <div class="ai-badge"><i class="fa-solid fa-bolt"></i> Motore Vocale Intelligente</div>
+      <div class="ai-badge"><i class="fa-solid fa-shield-halved"></i> Accesso Protetto</div>
       <h1>MIRISA <span>CERAMICHE</span></h1>
       <p>Registrazione Presenze Vocale Diretta</p>
     </div>
 
-    <div class="card">
-      <div style="margin-bottom: 14px;">
-        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione attiva</label>
-        <input type="date" id="selected-date" style="width: 100%; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 14px; outline: none;">
-      </div>
-
-      <div class="voice-box">
-        <button id="btn-mic" class="mic-button" onclick="toggleVoiceRecording()">
-          <i class="fa-solid fa-microphone"></i>
-        </button>
-        <div id="mic-status" class="voice-hint">Tocca il microfono e parla liberamente</div>
-        <div id="transcript" class="speech-transcript">In attesa della tua voce...</div>
-      </div>
+    <!-- BOX LOGIN (appare solo se non sei autenticato) -->
+    <div class="card" id="login-box">
+      <h3 style="margin-top:0; font-size: 16px; color: var(--accent);"><i class="fa-solid fa-lock"></i> Accesso Amministrativo Richiesto</h3>
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Inserisci le credenziali Mirisa per abilitare la registrazione su questo smartphone (lo farai una sola volta):</p>
+      <input type="email" id="login-email" class="login-input" value="dipierro.nino@gmail.com" placeholder="Email autorizzata">
+      <input type="password" id="login-pass" class="login-input" placeholder="Password account">
+      <button class="btn-confirm" onclick="effettuaLogin()" style="background: var(--accent); color: #070d19;">
+        <i class="fa-solid fa-key"></i> Autorizza Smartphone
+      </button>
     </div>
 
-    <div class="card" id="preview-box">
-      <h3 style="margin: 0 0 12px; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 8px;">
-        <i class="fa-solid fa-list-check"></i> Riepilogo Presenze Rilevate:
-      </h3>
-      <div id="preview-list"></div>
-      
-      <button id="btn-salva" class="btn-confirm" onclick="confermaSalvataggio()">
-        <i class="fa-solid fa-cloud-arrow-up"></i> <span>Salva su Database</span>
-      </button>
+    <!-- AREA OPERATIVA (visibile appena autenticato) -->
+    <div id="main-app" style="display: none;">
+      <div class="card">
+        <div style="margin-bottom: 14px;">
+          <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione attiva</label>
+          <input type="date" id="selected-date" style="width: 100%; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 14px; outline: none;">
+        </div>
+
+        <div class="voice-box">
+          <button id="btn-mic" class="mic-button" onclick="toggleVoiceRecording()">
+            <i class="fa-solid fa-microphone"></i>
+          </button>
+          <div id="mic-status" class="voice-hint">Tocca il microfono e parla liberamente</div>
+          <div id="transcript" class="speech-transcript">In attesa della tua voce...</div>
+        </div>
+      </div>
+
+      <div class="card" id="preview-box">
+        <h3 style="margin: 0 0 12px; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-list-check"></i> Riepilogo Presenze Rilevate:
+        </h3>
+        <div id="preview-list"></div>
+        
+        <button id="btn-salva" class="btn-confirm" onclick="confermaSalvataggio()">
+          <i class="fa-solid fa-cloud-arrow-up"></i> <span>Salva su Database</span>
+        </button>
+      </div>
     </div>
   </div>
 
@@ -127,7 +139,8 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, browserLocalPersistence, setPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAb6M5iEzafntiQbr7fj76XrZYNjmz17tE",
@@ -137,16 +150,18 @@
     };
 
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // Imposta data corrente
+    // Mantenimento permanente dell'accesso sul browser
+    setPersistence(auth, browserLocalPersistence).catch(console.error);
+
     const dOggi = new Date();
     const annoOggi = dOggi.getFullYear();
     const meseOggi = String(dOggi.getMonth() + 1).padStart(2, '0');
     const giornoOggi = String(dOggi.getDate()).padStart(2, '0');
     document.getElementById("selected-date").value = `${annoOggi}-${meseOggi}-${giornoOggi}`;
 
-    // Struttura mappa anagrafica: { "Nome Completo": { id: "firebaseKey", nome: "Nome Completo" } }
     let dipendentiMap = {
       "Errede Francesca": { id: "Errede_Francesca", nome: "Errede Francesca" },
       "Antonio Campobasso": { id: "Antonio_Campobasso", nome: "Antonio Campobasso" },
@@ -163,19 +178,44 @@
 
     let presenzeProposte = [];
 
-    // Sincronizza dinamicamente le chiavi ID originali da Firebase se presenti
-    onValue(ref(db, "dipendenti"), (snap) => {
-      const data = snap.val();
-      if (data) {
-        Object.keys(data).forEach(k => {
-          const val = data[k];
-          const nomeDip = typeof val === 'string' ? val : (val.nome || val.nominativo);
-          if (nomeDip) {
-            dipendentiMap[nomeDip] = { id: k, nome: nomeDip };
-          }
-        });
+    // Controllo Sicurezza Sessione
+    onAuthStateChanged(auth, (user) => {
+      if (user && (user.email === 'dipierro.nino@gmail.com' || user.email === 'mirisa.ceramiche@gmail.com')) {
+        document.getElementById("login-box").style.display = "none";
+        document.getElementById("main-app").style.display = "block";
+        inizializzaAscoltoDipendenti();
+      } else {
+        document.getElementById("login-box").style.display = "block";
+        document.getElementById("main-app").style.display = "none";
       }
     });
+
+    window.effettuaLogin = async function() {
+      const email = document.getElementById("login-email").value.trim();
+      const pass = document.getElementById("login-pass").value.trim();
+      if (!pass) return alert("Inserisci la password");
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+        showToast("Accesso autorizzato!");
+      } catch (err) {
+        alert("Errore accesso: " + err.message);
+      }
+    };
+
+    function inizializzaAscoltoDipendenti() {
+      onValue(ref(db, "dipendenti"), (snap) => {
+        const data = snap.val();
+        if (data) {
+          Object.keys(data).forEach(k => {
+            const val = data[k];
+            const nomeDip = typeof val === 'string' ? val : (val.nome || val.nominativo);
+            if (nomeDip) {
+              dipendentiMap[nomeDip] = { id: k, nome: nomeDip };
+            }
+          });
+        }
+      });
+    }
 
     function showToast(msg) {
       const t = document.getElementById("toast");
@@ -219,7 +259,7 @@
     }
 
     window.toggleVoiceRecording = function() {
-      if (!recognition) return alert("Riconoscimento vocale non supportato su questo browser.");
+      if (!recognition) return alert("Riconoscimento vocale non supportato.");
       if (isRecording) {
         recognition.stop();
       } else {
@@ -271,7 +311,6 @@
       return `${y}-${m}-${day}`;
     }
 
-    // Sigle usate dal Planning di Mirisa: I, M, P, A, F, MAL
     function rilevaSiglaStato(testo) {
       const t = testo.toLowerCase();
       if (t.includes("assent") || t.includes("manc") || t.includes("non c'è") || t.includes("non ce")) return { sigla: "A", label: "Assente" };
@@ -358,7 +397,7 @@
         presenzeProposte = risultati;
         mostraAnteprima(presenzeProposte);
         const dataAttiva = document.getElementById("selected-date").value;
-        document.getElementById("mic-status").textContent = `Presenze pronte per la data: ${dataAttiva}`;
+        document.getElementById("mic-status").textContent = `Presenze pronte per: ${dataAttiva}`;
       } else {
         document.getElementById("mic-status").textContent = "Nessun collaboratore riconosciuto. Riprova.";
       }
@@ -384,7 +423,6 @@
         list.appendChild(div);
       });
 
-      // Reset stato del pulsante
       const btn = document.getElementById("btn-salva");
       btn.className = "btn-confirm";
       btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up"></i> <span>Salva su Database</span>`;
@@ -393,21 +431,20 @@
       box.style.display = "block";
     }
 
-    // SALVATAGGIO CON MULTI-SCRITTURA DIRETTA AL PLANNING E CAMBIO COLORE TASTO
+    // SALVATAGGIO PROTETTO
     window.confermaSalvataggio = async function() {
       const dataSel = document.getElementById("selected-date").value;
       if (!dataSel || presenzeProposte.length === 0) return;
 
       const btn = document.getElementById("btn-salva");
-      // 1. CAMBIO COLORE: Diventa blu e mostra rotella
       btn.classList.add("loading");
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Salvataggio in corso...</span>`;
       btn.disabled = true;
 
       const [anno, mese, giornoStr] = dataSel.split("-");
-      const meseAnno = `${anno}-${mese}`;       // es: "2026-09"
-      const giornoNum = parseInt(giornoStr, 10);  // es: 25
-      const giorno2Digit = giornoStr.padStart(2, '0'); // es: "25"
+      const meseAnno = `${anno}-${mese}`;
+      const giornoNum = parseInt(giornoStr, 10);
+      const giorno2Digit = giornoStr.padStart(2, '0');
 
       const updates = {};
 
@@ -416,20 +453,18 @@
         const nomeClean = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
         const sigla = item.statoSigla;
 
-        // Struttura A: Griglia per mese presenze/2026-09/25/id = "I"
+        // Scrittura in tutti i formati supportati da admin.html
         updates[`presenze/${meseAnno}/${giornoNum}/${idDip}`] = sigla;
         updates[`presenze/${meseAnno}/${giornoNum}/${nomeClean}`] = sigla;
         updates[`presenze/${meseAnno}/${giornoNum}/${item.nome}`] = sigla;
         updates[`presenze/${meseAnno}/${giorno2Digit}/${idDip}`] = sigla;
         updates[`presenze/${meseAnno}/${giorno2Digit}/${nomeClean}`] = sigla;
 
-        // Struttura B: presenze/2026-09/id/25 = "I"
         updates[`presenze/${meseAnno}/${idDip}/${giornoNum}`] = sigla;
         updates[`presenze/${meseAnno}/${nomeClean}/${giornoNum}`] = sigla;
         updates[`presenze/${meseAnno}/${item.nome}/${giornoNum}`] = sigla;
         updates[`presenze/${meseAnno}/${idDip}/${giorno2Digit}`] = sigla;
 
-        // Struttura C: Giornaliera estesa presenze/2026-09-25/id
         updates[`presenze/${dataSel}/${idDip}`] = {
           dipendente: item.nome,
           data: dataSel,
@@ -445,21 +480,18 @@
           orario: new Date().toISOString()
         };
 
-        // Struttura D: presenze_registro
         updates[`presenze_registro/${idDip}/${dataSel}`] = sigla;
       });
 
       try {
         await update(ref(db), updates);
 
-        // 2. CAMBIO COLORE: Diventa VERDE BRILLANTE con spunta
         btn.classList.remove("loading");
         btn.classList.add("success");
         btn.innerHTML = `<i class="fa-solid fa-check"></i> <span>Presenze Registrate!</span>`;
 
         showToast(`Presenze salvate per il ${dataSel}!`);
 
-        // Scomparsa fluida dopo 1.5 secondi
         setTimeout(() => {
           document.getElementById("preview-box").style.display = "none";
           document.getElementById("transcript").textContent = "In attesa della tua voce...";
