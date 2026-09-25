@@ -111,7 +111,8 @@
       display: none;
     }
 
-    .container { max-width: 1400px; margin: 0 auto; display: none; }
+    /* CONTAINER A TUTTO SCHERMO SU PC */
+    .container { width: 100%; max-width: 1750px; margin: 0 auto; display: none; }
 
     .brand { text-align: center; margin-bottom: 20px; position: relative; }
     .brand h1 { margin: 0; font-size: 22px; font-weight: 800; color: #fff; }
@@ -150,7 +151,7 @@
     .check-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: #0284c7; }
 
     /* ==============================================================
-       STRUTTURA BLINDATA PLANNING GIACOMO
+       PLANNING FLUIDO A SCHERMO INTERO (SENZA SPAZI VUOTI)
        ============================================================== */
     .planning-controls { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
     
@@ -160,53 +161,50 @@
       -webkit-overflow-scrolling: touch;
       border: 1px solid var(--surface-border);
       border-radius: 8px;
+      background: #081120;
     }
 
     table.plan-table { 
       border-collapse: separate; 
       border-spacing: 0;
       table-layout: fixed; 
-      width: max-content;
-      min-width: 100%;
-      background: #081120;
+      width: 100%; /* Si espande su tutto lo schermo */
+      min-width: 1100px; /* Assicura che i 31 giorni abbiano sempre spazio */
     }
     
-    /* COLONNA COLLABORATORE: LARGHEZZA RIGIDA 220PX */
+    /* COLONNA COLLABORATORE BLOCCATA: 180PX PULITI */
     table.plan-table th.name-col,
     table.plan-table td.name-col { 
       position: sticky !important; 
       left: 0 !important; 
       z-index: 10 !important;
-      width: 220px !important; 
-      min-width: 220px !important; 
-      max-width: 220px !important; 
+      width: 180px !important; 
+      min-width: 180px !important; 
+      max-width: 180px !important; 
       background: #0d1a33 !important; 
       border-right: 3px solid #0284c7 !important;
       border-bottom: 1px solid var(--surface-border) !important;
-      padding: 10px 14px !important;
+      padding: 10px 12px !important;
       text-align: left !important;
       white-space: nowrap !important;
       overflow: hidden !important;
       text-overflow: ellipsis !important;
       color: #ffffff !important;
       font-weight: 700 !important;
-      font-size: 13.5px !important;
+      font-size: 13px !important;
       box-shadow: 4px 0 10px rgba(0,0,0,0.5);
     }
 
-    /* CASELLE GIORNI: LARGHEZZA UNIFORME E DEFINITA */
+    /* CASELLE GIORNI PROPORZIONALI */
     table.plan-table th.day-col { 
       background: #0b1528; 
       color: var(--text-muted); 
-      font-size: 10.5px; 
+      font-size: 10px; 
       text-transform: uppercase; 
       text-align: center;
       padding: 8px 0;
       border-bottom: 1px solid var(--surface-border);
       border-right: 1px solid rgba(255,255,255,0.06);
-      width: 40px !important;
-      min-width: 40px !important;
-      max-width: 40px !important;
     }
 
     table.plan-table td.day-cell { 
@@ -214,21 +212,19 @@
       padding: 6px 0;
       border-bottom: 1px solid var(--surface-border);
       border-right: 1px solid rgba(255,255,255,0.06);
-      width: 40px !important;
-      min-width: 40px !important;
-      max-width: 40px !important;
     }
 
-    .plan-cell-interactive { cursor: pointer; transition: background 0.15s; user-select: none; }
+    .plan-cell-interactive { cursor: pointer; user-select: none; }
     .plan-cell-interactive:hover { background: rgba(56, 189, 248, 0.15) !important; }
+    .plan-cell-interactive:active { background: rgba(56, 189, 248, 0.25) !important; }
 
-    .cell-badge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; font-size: 11px; font-weight: 800; }
+    .cell-badge { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; font-size: 10.5px; font-weight: 800; }
     .cell-I { background: rgba(16, 185, 129, 0.25); color: var(--success); border: 1px solid rgba(16,185,129,0.4); }
     .cell-M, .cell-P { background: rgba(245, 158, 11, 0.25); color: var(--warning); border: 1px solid rgba(245,158,11,0.4); }
     .cell-A { background: rgba(239, 68, 68, 0.25); color: var(--danger); border: 1px solid rgba(239,68,68,0.4); }
     .cell-F { background: rgba(139, 92, 246, 0.25); color: var(--purple); border: 1px solid rgba(139,92,246,0.4); }
     .cell-MAL { background: rgba(100, 116, 139, 0.25); color: #94a3b8; border: 1px solid rgba(100,116,139,0.4); }
-    .cell-empty { color: #334155; font-size: 16px; line-height: 28px; }
+    .cell-empty { color: #334155; font-size: 15px; line-height: 26px; }
 
     /* Modal Popup Modifica Rapida */
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); padding: 16px; }
@@ -424,7 +420,7 @@
       document.getElementById("data-singola").value = oggiStr;
       document.getElementById("data-collettiva").value = oggiStr;
 
-      // Apertura predefinita Mese su PC, Settimana su Mobile
+      // Apertura Mese su PC, Settimana su Mobile
       const isPcScreen = window.innerWidth >= 1024;
       let planningMode = isPcScreen ? "month" : "week";
       let currentDateCursor = new Date();
@@ -618,9 +614,7 @@
             });
 
             if (!stato) {
-              rowHtml += `<td class="day-cell plan-cell-interactive" onclick="apriQuickEditGiacomo('${nome}', '${iso}')">
-                <span class="cell-empty">&bull;</span>
-              </td>`;
+              rowHtml += `<td class="day-cell plan-cell-interactive" onclick="apriQuickEditGiacomo('${nome}', '${iso}')"><span class="cell-empty">&bull;</span></td>`;
             } else {
               let sigla = "I";
               let cClass = "cell-I";
@@ -629,9 +623,7 @@
               else if (stato === "Assente") { sigla = "A"; cClass = "cell-A"; }
               else if (stato === "Ferie") { sigla = "F"; cClass = "cell-F"; }
               else if (stato === "Malattia") { sigla = "MAL"; cClass = "cell-MAL"; }
-              rowHtml += `<td class="day-cell plan-cell-interactive" onclick="apriQuickEditGiacomo('${nome}', '${iso}')">
-                <span class="cell-badge ${cClass}" title="${stato}">${sigla}</span>
-              </td>`;
+              rowHtml += `<td class="day-cell plan-cell-interactive" onclick="apriQuickEditGiacomo('${nome}', '${iso}')"><span class="cell-badge ${cClass}" title="${stato}">${sigla}</span></td>`;
             }
           });
 
@@ -678,7 +670,7 @@
 </head>
 <body>
 
-  <!-- SCHERMATA BLOCCO BIOMETRICA PER GIACOMO -->
+  <!-- BLOCCO BIOMETRICO GIACOMO -->
   <div id="lock-screen">
     <div class="lock-box">
       <div class="lock-icon"><i class="fa-solid fa-fingerprint"></i></div>
@@ -706,7 +698,7 @@
     </div>
   </div>
 
-  <!-- PANNELLO PRINCIPALE DI GIACOMO -->
+  <!-- PANNELLO PRINCIPALE GIACOMO -->
   <div class="container" id="main-container">
     <div class="brand">
       <div class="btn-top-lock">
@@ -822,7 +814,7 @@
       </div>
     </div>
 
-    <!-- 3. PLANNING INTERATTIVO BLINDATO -->
+    <!-- 3. PLANNING INTERATTIVO A SCHERMO INTERO -->
     <div id="tab-planning" class="tab-content">
       <div class="card" style="padding: 16px;">
         <div class="planning-controls">
@@ -833,7 +825,7 @@
           </div>
           <div style="display:flex; gap:6px;">
             <button class="tab-btn btn-giacomo-toggle" id="btn-g-plan-week" style="padding:6px 12px; font-size:12px;" onclick="setPlanningMode('week')">Settimana</button>
-            <button class="tab-btn btn-giacomo-toggle" id="btn-g-plan-month" style="padding:6px 12px; font-size:12px;" onclick="setPlanningMode('month')">Mese</button>
+            <button class="tab-btn btn-giacomo-toggle active" id="btn-g-plan-month" style="padding:6px 12px; font-size:12px;" onclick="setPlanningMode('month')">Mese</button>
           </div>
         </div>
 
