@@ -22,103 +22,47 @@
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { background-color: var(--bg); color: var(--text); margin: 0; padding: 12px 16px; min-height: 100vh; }
     
-    /* SCHERMATA BLOCCO BIOMETRICA PER GIACOMO */
-    #lock-screen {
-      position: fixed;
-      inset: 0;
-      background: #070d19;
-      z-index: 9999;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
+    #auth-overlay {
+      position: fixed; inset: 0; background: #070d19; z-index: 9999;
+      display: flex; justify-content: center; align-items: center; padding: 20px;
     }
-    .lock-box {
-      background: var(--surface);
-      border: 1px solid var(--surface-border);
-      border-radius: 16px;
-      padding: 30px 22px;
-      width: 100%;
-      max-width: 340px;
-      text-align: center;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    .auth-box {
+      background: var(--surface); border: 1px solid var(--surface-border);
+      border-radius: 16px; padding: 32px 24px; width: 100%; max-width: 350px;
+      text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
     }
-    .lock-icon {
-      width: 54px;
-      height: 54px;
-      background: rgba(2, 132, 199, 0.15);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      color: var(--accent);
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      margin-bottom: 12px;
+    .auth-icon {
+      width: 54px; height: 54px; background: rgba(2, 132, 199, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3); color: var(--accent);
+      border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+      font-size: 22px; margin-bottom: 12px;
     }
-    .pin-instruction {
-      font-size: 13px;
-      color: var(--accent);
-      font-weight: 700;
-      margin: 6px 0 12px;
-      min-height: 18px;
+    .auth-input {
+      width: 100%; background: #081120; border: 1px solid var(--surface-border);
+      color: #fff; padding: 12px; border-radius: 10px; margin-bottom: 12px; outline: none; font-size: 14px;
     }
+    .auth-input:focus { border-color: var(--accent); }
     .pin-display {
-      letter-spacing: 12px;
-      font-size: 28px;
-      font-weight: 800;
-      text-align: center;
-      width: 100%;
-      background: #081120;
-      border: 1px solid var(--surface-border);
-      color: #fff;
-      padding: 10px;
-      border-radius: 10px;
-      margin-bottom: 14px;
-      outline: none;
+      letter-spacing: 14px; font-size: 28px; font-weight: 800; text-align: center;
+      width: 100%; background: #081120; border: 1px solid var(--surface-border);
+      color: #fff; padding: 10px; border-radius: 10px; margin: 12px 0; outline: none;
     }
-    .pin-keypad {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
+    .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
     .pin-btn {
-      background: #081120;
-      border: 1px solid var(--surface-border);
-      color: #fff;
-      font-size: 20px;
-      font-weight: 700;
-      padding: 13px 0;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.15s;
+      background: #081120; border: 1px solid var(--surface-border); color: #fff;
+      font-size: 20px; font-weight: 700; padding: 12px 0; border-radius: 10px; cursor: pointer;
     }
-    .pin-btn:active {
-      background: #0284c7;
-      transform: scale(0.96);
-    }
-    .pin-btn-bio {
-      background: rgba(56, 189, 248, 0.15);
-      border-color: rgba(56, 189, 248, 0.3);
-      color: var(--accent);
-    }
-    .pin-error {
-      color: var(--danger);
-      font-size: 13px;
-      font-weight: 600;
-      margin-top: 10px;
-      min-height: 18px;
-      display: none;
-    }
+    .pin-btn:active { background: #0284c7; }
+    .pin-btn-bio { background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.3); color: var(--accent); }
+    .auth-error { color: var(--danger); font-size: 13px; font-weight: 700; margin-top: 10px; display: none; }
 
-    /* CONTAINER FLUIDO A SCHERMO INTERO */
     .container { width: 100%; max-width: 100%; margin: 0 auto; display: none; }
 
     .brand { text-align: center; margin-bottom: 16px; position: relative; }
     .brand h1 { margin: 0; font-size: 22px; font-weight: 800; color: #fff; }
     .brand h1 span { color: var(--accent); }
     .brand p { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); }
-    .btn-top-lock { position: absolute; right: 0; top: 0; display: flex; gap: 6px; }
+    .btn-top-lock { position: absolute; right: 0; top: 0; }
     .btn-lock-action { background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.3); color: var(--danger); border-radius: 8px; padding: 6px 10px; font-size: 11px; cursor: pointer; font-weight: 600; }
 
     .tabs { display: flex; gap: 8px; margin-bottom: 16px; max-width: 900px; margin-left: auto; margin-right: auto; }
@@ -151,65 +95,24 @@
     .check-item { display: flex; align-items: center; gap: 10px; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; cursor: pointer; }
     .check-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: #0284c7; }
 
-    /* ==============================================================
-       PLANNING A TUTTA LARGHEZZA SENZA BARRA DI SCORRIMENTO SU PC
-       ============================================================== */
     .planning-controls { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .planning-container { width: 100%; border: 1px solid var(--surface-border); border-radius: 8px; background: #081120; }
+    table.plan-table { border-collapse: separate; border-spacing: 0; table-layout: fixed; width: 100%; }
     
-    .planning-container {
-      width: 100%;
-      border: 1px solid var(--surface-border);
-      border-radius: 8px;
-      background: #081120;
-    }
-
-    table.plan-table { 
-      border-collapse: separate; 
-      border-spacing: 0;
-      table-layout: fixed; 
-      width: 100%;
-    }
-    
-    /* COLONNA COLLABORATORE: LARGHEZZA PROPORZIONATA FISSA */
     table.plan-table th.name-col,
     table.plan-table td.name-col { 
-      position: sticky !important; 
-      left: 0 !important; 
-      z-index: 10 !important;
-      width: 175px !important; 
-      min-width: 175px !important; 
-      max-width: 175px !important; 
-      background: #0d1a33 !important; 
-      border-right: 2px solid #0284c7 !important;
-      border-bottom: 1px solid var(--surface-border) !important;
-      padding: 8px 10px !important;
-      text-align: left !important;
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      color: #ffffff !important;
-      font-weight: 700 !important;
-      font-size: 12.5px !important;
-      box-shadow: 3px 0 8px rgba(0,0,0,0.5);
+      position: sticky !important; left: 0 !important; z-index: 10 !important;
+      width: 175px !important; min-width: 175px !important; max-width: 175px !important;
+      background: #0d1a33 !important; border-right: 2px solid #0284c7 !important; border-bottom: 1px solid var(--surface-border) !important;
+      padding: 8px 10px !important; text-align: left !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+      color: #ffffff !important; font-weight: 700 !important; font-size: 12.5px !important; box-shadow: 3px 0 8px rgba(0,0,0,0.5);
     }
-
-    /* CASELLE GIORNI: DISTRIBUZIONE AUTOMATICA A TUTTO SCHERMO */
     table.plan-table th.day-col { 
-      background: #0b1528; 
-      color: var(--text-muted); 
-      font-size: 9.5px; 
-      text-transform: uppercase; 
-      text-align: center;
-      padding: 6px 0;
-      border-bottom: 1px solid var(--surface-border);
-      border-right: 1px solid rgba(255,255,255,0.05);
+      background: #0b1528; color: var(--text-muted); font-size: 9.5px; text-transform: uppercase; text-align: center;
+      padding: 6px 0; border-bottom: 1px solid var(--surface-border); border-right: 1px solid rgba(255,255,255,0.05);
     }
-
     table.plan-table td.day-cell { 
-      text-align: center; 
-      padding: 4px 0;
-      border-bottom: 1px solid var(--surface-border);
-      border-right: 1px solid rgba(255,255,255,0.05);
+      text-align: center; padding: 4px 0; border-bottom: 1px solid var(--surface-border); border-right: 1px solid rgba(255,255,255,0.05);
     }
 
     .plan-cell-interactive { cursor: pointer; user-select: none; }
@@ -223,14 +126,12 @@
     .cell-MAL { background: rgba(100, 116, 139, 0.25); color: #94a3b8; border: 1px solid rgba(100,116,139,0.4); }
     .cell-empty { color: #334155; font-size: 13px; line-height: 22px; }
 
-    /* COMPORTAMENTO SMARTPHONE: SCORRIMENTO ORIZZONTALE */
     @media (max-width: 1024px) {
       .planning-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
       table.plan-table { width: max-content; min-width: 1000px; }
       .cell-badge { width: 26px; height: 26px; font-size: 11px; }
     }
 
-    /* Modal Popup Modifica Rapida */
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); padding: 16px; }
     .modal { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); width: 100%; max-width: 380px; padding: 20px; box-shadow: 0 20px 25px rgba(0,0,0,0.6); }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
@@ -240,473 +141,62 @@
 
     #toast { position: fixed; bottom: 20px; right: 20px; left: 20px; max-width: 400px; margin: auto; background: #1e293b; color: #fff; padding: 12px 18px; border-radius: 10px; border-left: 4px solid var(--success); display: none; text-align: center; font-size: 14px; font-weight: 600; box-shadow: 0 10px 20px rgba(0,0,0,0.5); z-index: 200; }
   </style>
-
-  <script>
-    let pinInserito = "";
-    let setupFase = 1;
-    let pinTemporaneo = "";
-
-    function initLockScreen() {
-      const pinSalvato = localStorage.getItem("giacomo_pin_saved");
-      const titleEl = document.getElementById("lockTitle");
-      const instrEl = document.getElementById("pinInstruction");
-
-      if (!pinSalvato) {
-        titleEl.textContent = "Imposta Nuovo PIN";
-        instrEl.textContent = "Scegli un PIN di 4 cifre per accedere";
-      } else {
-        titleEl.textContent = "Accesso Cantiere";
-        instrEl.textContent = "Inserisci PIN o tocca l'impronta";
-        if (localStorage.getItem("giacomo_bio_active") === "true") {
-          setTimeout(avviaBiometriaGiacomo, 400);
-        }
-      }
-    }
-
-    function digitaPin(cifra) {
-      if (pinInserito.length < 4) {
-        pinInserito += cifra;
-        aggiornaPinDisplay();
-      }
-      if (pinInserito.length === 4) {
-        setTimeout(processaPin, 100);
-      }
-    }
-
-    function cancellaPin() {
-      pinInserito = pinInserito.slice(0, -1);
-      aggiornaPinDisplay();
-      document.getElementById("pinError").style.display = "none";
-    }
-
-    function aggiornaPinDisplay() {
-      document.getElementById("pinInput").value = "*".repeat(pinInserito.length);
-    }
-
-    function processaPin() {
-      const pinSalvato = localStorage.getItem("giacomo_pin_saved");
-      const errEl = document.getElementById("pinError");
-      const instrEl = document.getElementById("pinInstruction");
-
-      if (!pinSalvato) {
-        if (setupFase === 1) {
-          pinTemporaneo = pinInserito;
-          pinInserito = "";
-          setupFase = 2;
-          aggiornaPinDisplay();
-          instrEl.textContent = "Ripeti il PIN per conferma";
-          errEl.style.display = "none";
-        } else if (setupFase === 2) {
-          if (pinInserito === pinTemporaneo) {
-            localStorage.setItem("giacomo_pin_saved", pinInserito);
-            sessionStorage.setItem("giacomo_auth", "true");
-            proponiBiometriaGiacomo();
-          } else {
-            errEl.textContent = "I due PIN non coincidono. Riprova.";
-            errEl.style.display = "block";
-            setupFase = 1;
-            pinTemporaneo = "";
-            pinInserito = "";
-            instrEl.textContent = "Scegli un PIN di 4 cifre per accedere";
-            aggiornaPinDisplay();
-          }
-        }
-      } else {
-        if (pinInserito === pinSalvato) {
-          sessionStorage.setItem("giacomo_auth", "true");
-          sbloccaDashboard();
-        } else {
-          errEl.textContent = "PIN errato. Riprova.";
-          errEl.style.display = "block";
-          pinInserito = "";
-          aggiornaPinDisplay();
-        }
-      }
-    }
-
-    async function proponiBiometriaGiacomo() {
-      if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-        const disp = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-        if (disp && confirm("Vuoi attivare lo sblocco rapido con l'impronta digitale?")) {
-          try {
-            await registraBiometriaGiacomo();
-            localStorage.setItem("giacomo_bio_active", "true");
-          } catch(e) {
-            console.log("Biometria fallita", e);
-          }
-        }
-      }
-      sbloccaDashboard();
-    }
-
-    async function registraBiometriaGiacomo() {
-      const challenge = new Uint8Array(32);
-      window.crypto.getRandomValues(challenge);
-      const createOptions = {
-        publicKey: {
-          challenge: challenge,
-          rp: { name: "Terminale Presenze Mirisa" },
-          user: { id: new Uint8Array(16), name: "giacomo@mirisa.it", displayName: "Giacomo - Mirisa" },
-          pubKeyCredParams: [{ type: "public-key", alg: -7 }],
-          authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
-          timeout: 60000
-        }
-      };
-      await navigator.credentials.create(createOptions);
-    }
-
-    async function avviaBiometriaGiacomo() {
-      if (!window.PublicKeyCredential) return;
-      try {
-        const challenge = new Uint8Array(32);
-        window.crypto.getRandomValues(challenge);
-        const assertion = await navigator.credentials.get({
-          publicKey: { challenge: challenge, timeout: 60000, userVerification: "required" }
-        });
-        if (assertion) {
-          sessionStorage.setItem("giacomo_auth", "true");
-          sbloccaDashboard();
-        }
-      } catch (err) {
-        console.log("Impronta non riconosciuta:", err);
-      }
-    }
-
-    function sbloccaDashboard() {
-      document.getElementById("lock-screen").style.display = "none";
-      document.getElementById("main-container").style.display = "block";
-      if (window.initFirebaseApp) window.initFirebaseApp();
-    }
-
-    function bloccaDashboard() {
-      sessionStorage.removeItem("giacomo_auth");
-      location.reload();
-    }
-
-    function cambiaPinGiacomo() {
-      if (confirm("Vuoi reimpostare il PIN e l'impronta digitale?")) {
-        localStorage.removeItem("giacomo_pin_saved");
-        localStorage.removeItem("giacomo_bio_active");
-        sessionStorage.removeItem("giacomo_auth");
-        location.reload();
-      }
-    }
-
-    window.addEventListener("DOMContentLoaded", () => {
-      initLockScreen();
-      if (sessionStorage.getItem("giacomo_auth") === "true") {
-        sbloccaDashboard();
-      }
-    });
-  </script>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
-    window.initFirebaseApp = function() {
-      if (window.firebaseInitialized) return;
-      window.firebaseInitialized = true;
-
-      const firebaseConfig = {
-        databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app"
-      };
-
-      const app = initializeApp(firebaseConfig);
-      const db = getDatabase(app);
-
-      let dipendentiData = {};
-      let presenzeData = {};
-      let statoSingolo = "Intera";
-      let statoCollettivo = "Intera";
-
-      const oggiStr = new Date().toISOString().split("T")[0];
-      document.getElementById("data-singola").value = oggiStr;
-      document.getElementById("data-collettiva").value = oggiStr;
-
-      const isPcScreen = window.innerWidth >= 1024;
-      let planningMode = isPcScreen ? "month" : "week";
-      let currentDateCursor = new Date();
-      let activeQuickEdit = { dipendente: null, data: null };
-
-      document.querySelectorAll(".btn-giacomo-toggle").forEach(b => b.classList.remove("active"));
-      const initialToggleBtn = document.getElementById(isPcScreen ? "btn-g-plan-month" : "btn-g-plan-week");
-      if (initialToggleBtn) initialToggleBtn.classList.add("active");
-
-      function showToast(msg, ok = true) {
-        const t = document.getElementById("toast");
-        t.style.borderLeftColor = ok ? "var(--success)" : "var(--danger)";
-        t.textContent = msg;
-        t.style.display = "block";
-        setTimeout(() => t.style.display = "none", 3000);
-      }
-
-      onValue(ref(db, "dipendenti"), (snap) => {
-        dipendentiData = snap.val() || {};
-        popolaDipendentiSingolo();
-        popolaChecklistCollettiva();
-        renderPlanning();
-      });
-
-      onValue(ref(db, "presenze"), (snap) => {
-        presenzeData = snap.val() || {};
-        renderPlanning();
-      });
-
-      function popolaDipendentiSingolo() {
-        const sel = document.getElementById("dipendente-singolo");
-        sel.innerHTML = "";
-        Object.keys(dipendentiData).forEach(id => {
-          const d = dipendentiData[id];
-          const opt = document.createElement("option");
-          opt.value = d.nome;
-          opt.textContent = `${d.nome} (${d.mansione || 'Collaboratore'})`;
-          sel.appendChild(opt);
-        });
-      }
-
-      function popolaChecklistCollettiva() {
-        const box = document.getElementById("team-checkbox-list");
-        box.innerHTML = "";
-        Object.keys(dipendentiData).forEach(id => {
-          const d = dipendentiData[id];
-          const div = document.createElement("label");
-          div.className = "check-item";
-          div.innerHTML = `
-            <input type="checkbox" class="chk-team" value="${d.nome}" checked>
-            <span><strong>${d.nome}</strong> <small style="color:var(--text-muted)">(${d.mansione || 'Dipendente'})</small></span>
-          `;
-          box.appendChild(div);
-        });
-      }
-
-      window.switchTab = function(tabId, btn) {
-        document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
-        document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
-        btn.classList.add("active");
-        document.getElementById(tabId).classList.add("active");
-        if (tabId === "tab-planning") renderPlanning();
-      };
-
-      window.setStatoSingolo = function(st, btn) {
-        statoSingolo = st;
-        document.querySelectorAll("#grid-singolo .btn-status").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-      };
-
-      window.setStatoCollettivo = function(st, btn) {
-        statoCollettivo = st;
-        document.querySelectorAll("#grid-collettivo .btn-status").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-      };
-
-      window.salvaSingolo = function() {
-        const dip = document.getElementById("dipendente-singolo").value;
-        const data = document.getElementById("data-singola").value;
-        if (!dip || !data) return alert("Seleziona collaboratore e data");
-
-        const safeKey = dip.replace(/[^a-zA-Z0-9]/g, "_");
-        set(ref(db, `presenze/${data}/${safeKey}`), {
-          dipendente: dip,
-          data: data,
-          stato: statoSingolo,
-          orarioRegistrazione: new Date().toISOString(),
-          inseritoDa: "Giacomo"
-        }).then(() => showToast(`Salvato: ${dip} (${statoSingolo})`));
-      };
-
-      window.salvaCollettivo = function() {
-        const data = document.getElementById("data-collettiva").value;
-        if (!data) return alert("Scegli una data");
-
-        const checked = Array.from(document.querySelectorAll(".chk-team:checked")).map(cb => cb.value);
-        if (checked.length === 0) return alert("Seleziona almeno un lavoratore!");
-
-        const promises = checked.map(nome => {
-          const safeKey = nome.replace(/[^a-zA-Z0-9]/g, "_");
-          return set(ref(db, `presenze/${data}/${safeKey}`), {
-            dipendente: nome,
-            data: data,
-            stato: statoCollettivo,
-            orarioRegistrazione: new Date().toISOString(),
-            inseritoDa: "Giacomo (Collettivo)"
-          });
-        });
-
-        Promise.all(promises).then(() => {
-          showToast(`Registrati ${checked.length} collaboratori come "${statoCollettivo}"!`);
-        });
-      };
-
-      window.selezionaTuttiCheckbox = function(check) {
-        document.querySelectorAll(".chk-team").forEach(cb => cb.checked = check);
-      };
-
-      window.setPlanningMode = function(mode) {
-        planningMode = mode;
-        document.querySelectorAll(".btn-giacomo-toggle").forEach(b => b.classList.remove("active"));
-        document.getElementById(`btn-g-plan-${mode}`).classList.add("active");
-        renderPlanning();
-      };
-
-      window.navPlanning = function(direction) {
-        if (planningMode === "week") {
-          currentDateCursor.setDate(currentDateCursor.getDate() + (direction * 7));
-        } else {
-          currentDateCursor.setMonth(currentDateCursor.getMonth() + direction);
-        }
-        renderPlanning();
-      };
-
-      function renderPlanning() {
-        const thead = document.getElementById("planning-head");
-        const tbody = document.getElementById("planning-body");
-        const titleSpan = document.getElementById("planning-title-range");
-        thead.innerHTML = "";
-        tbody.innerHTML = "";
-
-        const days = [];
-        const giorniNomi = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
-
-        if (planningMode === "week") {
-          const curr = new Date(currentDateCursor);
-          const dayOfWeek = curr.getDay();
-          const diffToMonday = curr.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-          const monday = new Date(curr.setDate(diffToMonday));
-
-          for (let i = 0; i < 7; i++) {
-            const d = new Date(monday);
-            d.setDate(monday.getDate() + i);
-            days.push(d);
-          }
-          titleSpan.textContent = `Sett. ${days[0].toLocaleDateString('it-IT', {day:'2-digit', month:'short'})} - ${days[6].toLocaleDateString('it-IT', {day:'2-digit', month:'short'})}`;
-        } else {
-          const year = currentDateCursor.getFullYear();
-          const month = currentDateCursor.getMonth();
-          const totalDays = new Date(year, month + 1, 0).getDate();
-          for (let i = 1; i <= totalDays; i++) {
-            days.push(new Date(year, month, i));
-          }
-          titleSpan.textContent = currentDateCursor.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }).toUpperCase();
-        }
-
-        let headHtml = `<tr><th class="name-col">Collaboratore</th>`;
-        days.forEach(d => {
-          const isToday = d.toISOString().split("T")[0] === oggiStr;
-          const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-          headHtml += `<th class="day-col" style="${isToday ? 'border-bottom:2px solid var(--accent); color:var(--accent); background:rgba(56,189,248,0.12);' : ''} ${isWeekend ? 'color:#64748b;' : ''}">
-            <span style="font-size:8.5px;">${giorniNomi[d.getDay()]}</span><br><strong style="font-size:11.5px;">${d.getDate()}</strong>
-          </th>`;
-        });
-        headHtml += `</tr>`;
-        thead.innerHTML = headHtml;
-
-        Object.keys(dipendentiData).forEach(id => {
-          const nome = dipendentiData[id].nome;
-          let rowHtml = `<tr><td class="name-col" title="${nome}"><i class="fa-solid fa-user" style="font-size:10px; margin-right:5px; color:var(--accent);"></i>${nome}</td>`;
-
-          days.forEach(d => {
-            const iso = d.toISOString().split("T")[0];
-            const regGiorno = presenzeData[iso] || {};
-            
-            let stato = null;
-            Object.keys(regGiorno).forEach(k => {
-              if (regGiorno[k].dipendente && regGiorno[k].dipendente.toLowerCase() === nome.toLowerCase()) {
-                stato = regGiorno[k].stato;
-              }
-            });
-
-            if (!stato) {
-              rowHtml += `<td class="day-cell plan-cell-interactive" onclick="apriQuickEditGiacomo('${nome}', '${iso}')"><span class="cell-empty">&bull;</span></td>`;
-            } else {
-              let sigla = "I";
-              let cClass = "cell-I";
-              if (stato === "Mattina") { sigla = "M"; cClass = "cell-M"; }
-              else if (stato === "Pomeriggio") { sigla = "P"; cClass = "cell-P"; }
-              else if (stato === "Assente") { sigla = "A"; cClass = "cell-A"; }
-              else if (stato === "Ferie") { sigla = "F"; cClass = "cell-F"; }
-              else if (stato === "Malattia") { sigla = "MAL"; cClass = "cell-MAL"; }
-              rowHtml += `<td class="day-cell plan-cell-interactive" onclick="apriQuickEditGiacomo('${nome}', '${iso}')"><span class="cell-badge ${cClass}" title="${stato}">${sigla}</span></td>`;
-            }
-          });
-
-          rowHtml += `</tr>`;
-          tbody.innerHTML += rowHtml;
-        });
-      }
-
-      window.apriQuickEditGiacomo = function(nome, dataIso) {
-        activeQuickEdit = { dipendente: nome, data: dataIso };
-        document.getElementById("quick-nome").textContent = nome;
-        document.getElementById("quick-data").textContent = new Date(dataIso).toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'short' });
-        document.getElementById("modalQuickEdit").style.display = "flex";
-      };
-
-      window.chiudiQuickEdit = function() {
-        document.getElementById("modalQuickEdit").style.display = "none";
-      };
-
-      window.applicaQuickStatoGiacomo = function(stato) {
-        if (!activeQuickEdit.dipendente || !activeQuickEdit.data) return;
-        const safeKey = activeQuickEdit.dipendente.replace(/[^a-zA-Z0-9]/g, "_");
-
-        if (stato === "DELETE") {
-          remove(ref(db, `presenze/${activeQuickEdit.data}/${safeKey}`)).then(() => {
-            chiudiQuickEdit();
-            showToast(`Cancellato per ${activeQuickEdit.dipendente}`);
-          });
-        } else {
-          set(ref(db, `presenze/${activeQuickEdit.data}/${safeKey}`), {
-            dipendente: activeQuickEdit.dipendente,
-            data: activeQuickEdit.data,
-            stato: stato,
-            orarioRegistrazione: new Date().toISOString(),
-            inseritoDa: "Giacomo (Planning)"
-          }).then(() => {
-            chiudiQuickEdit();
-            showToast(`Assegnato: ${stato}`);
-          });
-        }
-      };
-    };
-  </script>
 </head>
 <body>
 
-  <!-- BLOCCO BIOMETRICO GIACOMO -->
-  <div id="lock-screen">
-    <div class="lock-box">
-      <div class="lock-icon"><i class="fa-solid fa-fingerprint"></i></div>
-      <h2 id="lockTitle" style="margin: 0; font-size: 20px; font-weight: 800; color: #fff;">Accesso Cantiere</h2>
-      <p id="pinInstruction" class="pin-instruction"></p>
+  <!-- SCHERMATA LOGIN & SBLOCCO GIACOMO -->
+  <div id="auth-overlay">
+    <div class="auth-box" id="view-login-form">
+      <div class="auth-icon"><i class="fa-solid fa-hard-hat"></i></div>
+      <h2 style="margin:0 0 6px; font-size:20px; font-weight:800; color:#fff;">Terminale Cantiere</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:18px;">Inserisci le tue credenziali cantiere</p>
       
-      <input type="password" id="pinInput" class="pin-display" readonly placeholder="----">
+      <input type="email" id="login-email" class="auth-input" placeholder="mirisa.ceramiche@gmail.com" value="mirisa.ceramiche@gmail.com">
+      <input type="password" id="login-password" class="auth-input" placeholder="Password cantiere">
       
+      <button class="btn btn-primary" id="btn-login-action-giacomo" style="width:100%; justify-content:center; padding:12px; font-size:14px; font-weight:700;">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> Accedi
+      </button>
+
+      <div id="login-error" class="auth-error"></div>
+    </div>
+
+    <div class="auth-box" id="view-quick-unlock" style="display: none;">
+      <div class="auth-icon"><i class="fa-solid fa-fingerprint"></i></div>
+      <h2 style="margin:0 0 6px; font-size:20px; font-weight:800; color:#fff;">Terminale Presenze</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">Tocca l'impronta o digita il PIN</p>
+
+      <input type="password" id="quickPinInput" class="pin-display" readonly placeholder="----">
+
       <div class="pin-keypad">
-        <button class="pin-btn" onclick="digitaPin('1')">1</button>
-        <button class="pin-btn" onclick="digitaPin('2')">2</button>
-        <button class="pin-btn" onclick="digitaPin('3')">3</button>
-        <button class="pin-btn" onclick="digitaPin('4')">4</button>
-        <button class="pin-btn" onclick="digitaPin('5')">5</button>
-        <button class="pin-btn" onclick="digitaPin('6')">6</button>
-        <button class="pin-btn" onclick="digitaPin('7')">7</button>
-        <button class="pin-btn" onclick="digitaPin('8')">8</button>
-        <button class="pin-btn" onclick="digitaPin('9')">9</button>
-        <button class="pin-btn" style="color: var(--danger); font-size: 16px;" onclick="cancellaPin()"><i class="fa-solid fa-delete-left"></i></button>
-        <button class="pin-btn" onclick="digitaPin('0')">0</button>
-        <button class="pin-btn pin-btn-bio" onclick="avviaBiometriaGiacomo()" title="Sblocca con Impronta"><i class="fa-solid fa-fingerprint"></i></button>
+        <button class="pin-btn" onclick="digitaQuickPinGiacomo('1')">1</button>
+        <button class="pin-btn" onclick="digitaQuickPinGiacomo('2')">2</button>
+        <button class="pin-btn" onclick="digitaQuickPinGiacomo('3')">3</button>
+        <button class="pin-btn" onclick="digitaQuickPinGiacomo('4')">4</button>
+        <button class="pin-btn" onclick="digitaQuickPinGiacomo('5')">5</button>
+        <button class="pin-btn" onclick="digitaQuickPinGiacomo('6')">6</button>
+        <button class="pin-btn" onclick="digitaQuickPinGiacomo('7')">7</button>
+        <button class="pin-btn" onclick="digitaQuickPinGiacomo('8')">8</button>
+        <button class="pin-btn" onclick="digitaQuickPinGiacomo('9')">9</button>
+        <button class="pin-btn" style="color:var(--danger);" onclick="cancellaQuickPinGiacomo()"><i class="fa-solid fa-delete-left"></i></button>
+        <button class="pin-btn" onclick="digitaQuickPinGiacomo('0')">0</button>
+        <button class="pin-btn pin-btn-bio" onclick="avviaBiometriaGiacomo()"><i class="fa-solid fa-fingerprint"></i></button>
       </div>
 
-      <div id="pinError" class="pin-error"></div>
+      <div id="quick-pin-error" class="auth-error"></div>
+      
+      <div style="margin-top:16px;">
+        <button onclick="disconnettiGiacomo()" style="background:transparent; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; text-decoration:underline;">
+          Cambia account o disconnetti
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- PANNELLO PRINCIPALE GIACOMO -->
   <div class="container" id="main-container">
     <div class="brand">
       <div class="btn-top-lock">
-        <button class="btn-lock-action" onclick="cambiaPinGiacomo()" title="Reimposta PIN / Impronta"><i class="fa-solid fa-key"></i></button>
-        <button class="btn-lock-action" onclick="bloccaDashboard()" title="Blocca"><i class="fa-solid fa-lock"></i></button>
+        <button class="btn-lock-action" onclick="disconnettiGiacomo()" title="Disconnetti Sessione"><i class="fa-solid fa-power-off"></i> Esci</button>
       </div>
       <h1><i class="fa-solid fa-layer-group" style="color:var(--accent);"></i> MIRISA <span>CERAMICHE</span></h1>
       <p>Terminale Presenze & Planning Lavori &bull; Giacomo</p>
@@ -724,7 +214,6 @@
       </button>
     </div>
 
-    <!-- 1. PRESENZA SQUADRA -->
     <div id="tab-tutti" class="tab-content active">
       <div class="card card-small">
         <h2 class="card-title"><i class="fa-solid fa-check-double"></i> Registra Presenza per Tutta la Squadra</h2>
@@ -776,7 +265,6 @@
       </div>
     </div>
 
-    <!-- 2. SINGOLO -->
     <div id="tab-singolo" class="tab-content">
       <div class="card card-small">
         <h2 class="card-title"><i class="fa-solid fa-user-clock"></i> Timbratura Singola</h2>
@@ -817,7 +305,6 @@
       </div>
     </div>
 
-    <!-- 3. PLANNING INTERATTIVO A SCHERMO INTERO -->
     <div id="tab-planning" class="tab-content">
       <div class="card" style="padding: 14px;">
         <div class="planning-controls">
@@ -852,7 +339,6 @@
     </div>
   </div>
 
-  <!-- POPUP MODIFICA PER GIACOMO -->
   <div class="modal-backdrop" id="modalQuickEdit">
     <div class="modal">
       <div class="modal-header">
@@ -891,5 +377,402 @@
   </div>
 
   <div id="toast"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAb6M5iEzafntiQbr7fj76XrZYNjmz17tE",
+      authDomain: "presenze-dipendenti-e377b.firebaseapp.com",
+      databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "presenze-dipendenti-e377b",
+      storageBucket: "presenze-dipendenti-e377b.firebasestorage.app",
+      messagingSenderId: "895033614696",
+      appId: "1:895033614696:web:329b34765347320024b6dd"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    let quickPinGiacomo = "";
+
+    document.getElementById("btn-login-action-giacomo").addEventListener("click", () => {
+      const email = document.getElementById("login-email").value.trim();
+      const pass = document.getElementById("login-password").value;
+      const errEl = document.getElementById("login-error");
+
+      if (!email || !pass) {
+        errEl.textContent = "Compila email e password";
+        errEl.style.display = "block";
+        return;
+      }
+
+      signInWithEmailAndPassword(auth, email, pass)
+        .then(() => { errEl.style.display = "none"; })
+        .catch(() => {
+          errEl.textContent = "Credenziali non valide.";
+          errEl.style.display = "block";
+        });
+    });
+
+    onAuthStateChanged(auth, (user) => {
+      const overlay = document.getElementById("auth-overlay");
+      const loginView = document.getElementById("view-login-form");
+      const quickView = document.getElementById("view-quick-unlock");
+
+      if (user) {
+        const savedQuickPin = localStorage.getItem("giacomo_quick_pin");
+        if (savedQuickPin) {
+          loginView.style.display = "none";
+          quickView.style.display = "block";
+          if (localStorage.getItem("giacomo_bio_active") === "true") {
+            setTimeout(avviaBiometriaGiacomo, 300);
+          }
+        } else {
+          const pinChoice = prompt("Accesso cantiere riuscito! Crea un PIN rapido a 4 cifre per sbloccare l'app dal cantiere:");
+          if (pinChoice && pinChoice.length === 4) {
+            localStorage.setItem("giacomo_quick_pin", pinChoice);
+            proponiBiometriaGiacomo();
+          }
+          sbloccaDashboard();
+        }
+      } else {
+        loginView.style.display = "block";
+        quickView.style.display = "none";
+        overlay.style.display = "flex";
+        document.getElementById("main-container").style.display = "none";
+      }
+    });
+
+    window.digitaQuickPinGiacomo = function(cifra) {
+      const savedPin = localStorage.getItem("giacomo_quick_pin");
+      if (quickPinGiacomo.length < 4) {
+        quickPinGiacomo += cifra;
+        document.getElementById("quickPinInput").value = "*".repeat(quickPinGiacomo.length);
+      }
+      if (quickPinGiacomo.length === 4) {
+        setTimeout(() => {
+          if (quickPinGiacomo === savedPin) {
+            sbloccaDashboard();
+          } else {
+            const err = document.getElementById("quick-pin-error");
+            err.textContent = "PIN errato";
+            err.style.display = "block";
+            quickPinGiacomo = "";
+            document.getElementById("quickPinInput").value = "";
+          }
+        }, 100);
+      }
+    };
+
+    window.cancellaQuickPinGiacomo = function() {
+      quickPinGiacomo = quickPinGiacomo.slice(0, -1);
+      document.getElementById("quickPinInput").value = "*".repeat(quickPinGiacomo.length);
+      document.getElementById("quick-pin-error").style.display = "none";
+    };
+
+    async function proponiBiometriaGiacomo() {
+      if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
+        const ok = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        if (ok && confirm("Vuoi attivare lo sblocco rapido con l'impronta digitale?")) {
+          try {
+            await registraBiometriaGiacomo();
+            localStorage.setItem("giacomo_bio_active", "true");
+          } catch(e) { console.log(e); }
+        }
+      }
+    }
+
+    async function registraBiometriaGiacomo() {
+      const challenge = new Uint8Array(32);
+      window.crypto.getRandomValues(challenge);
+      await navigator.credentials.create({
+        publicKey: {
+          challenge: challenge,
+          rp: { name: "Terminale Mirisa" },
+          user: { id: new Uint8Array(16), name: "mirisa.ceramiche@gmail.com", displayName: "Giacomo Mirisa" },
+          pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+          authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+          timeout: 60000
+        }
+      });
+    }
+
+    window.avviaBiometriaGiacomo = async function() {
+      if (!window.PublicKeyCredential) return;
+      try {
+        const challenge = new Uint8Array(32);
+        window.crypto.getRandomValues(challenge);
+        const assertion = await navigator.credentials.get({
+          publicKey: { challenge: challenge, timeout: 60000, userVerification: "required" }
+        });
+        if (assertion) sbloccaDashboard();
+      } catch(e) { console.log("Biometria fallita:", e); }
+    };
+
+    window.disconnettiGiacomo = function() {
+      if (confirm("Vuoi disconnettere l'account da questo dispositivo?")) {
+        localStorage.removeItem("giacomo_quick_pin");
+        localStorage.removeItem("giacomo_bio_active");
+        signOut(auth).then(() => location.reload());
+      }
+    };
+
+    function sbloccaDashboard() {
+      document.getElementById("auth-overlay").style.display = "none";
+      document.getElementById("main-container").style.display = "block";
+      avviaAscoltoDatiGiacomo();
+    }
+
+    let dipendentiData = {};
+    let presenzeData = {};
+    let statoSingolo = "Intera";
+    let statoCollettivo = "Intera";
+
+    const oggiStr = new Date().toISOString().split("T")[0];
+    document.getElementById("data-singola").value = oggiStr;
+    document.getElementById("data-collettiva").value = oggiStr;
+
+    const isPcScreen = window.innerWidth >= 1024;
+    let planningMode = isPcScreen ? "month" : "week";
+    let currentDateCursor = new Date();
+    let activeQuickEdit = { dipendente: null, data: null };
+
+    document.querySelectorAll(".btn-giacomo-toggle").forEach(b => b.classList.remove("active"));
+    const initialToggleBtn = document.getElementById(isPcScreen ? "btn-g-plan-month" : "btn-g-plan-week");
+    if (initialToggleBtn) initialToggleBtn.classList.add("active");
+
+    function avviaAscoltoDatiGiacomo() {
+      onValue(ref(db, "dipendenti"), (snap) => {
+        dipendentiData = snap.val() || {};
+        popolaDipendentiSingolo();
+        popolaChecklistCollettiva();
+        renderPlanning();
+      });
+
+      onValue(ref(db, "presenze"), (snap) => {
+        presenzeData = snap.val() || {};
+        renderPlanning();
+      });
+    }
+
+    function showToast(msg, ok = true) {
+      const t = document.getElementById("toast");
+      t.style.borderLeftColor = ok ? "var(--success)" : "var(--danger)";
+      t.textContent = msg;
+      t.style.display = "block";
+      setTimeout(() => t.style.display = "none", 3000);
+    }
+
+    function popolaDipendentiSingolo() {
+      const sel = document.getElementById("dipendente-singolo");
+      sel.innerHTML = "";
+      Object.keys(dipendentiData).forEach(id => {
+        const d = dipendentiData[id];
+        const opt = document.createElement("option");
+        opt.value = d.nome;
+        opt.textContent = `${d.nome} (${d.mansione || 'Collaboratore'})`;
+        sel.appendChild(opt);
+      });
+    }
+
+    function popolaChecklistCollettiva() {
+      const box = document.getElementById("team-checkbox-list");
+      box.innerHTML = "";
+      Object.keys(dipendentiData).forEach(id => {
+        const d = dipendentiData[id];
+        const div = document.createElement("label");
+        div.className = "check-item";
+        div.innerHTML = `
+          <input type="checkbox" class="chk-team" value="${d.nome}" checked>
+          <span><strong>${d.nome}</strong> <small style="color:var(--text-muted)">(${d.mansione || 'Dipendente'})</small></span>
+        `;
+        box.appendChild(div);
+      });
+    }
+
+    window.switchTab = function(tabId, btn) {
+      document.querySelectorAll(".tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".tab-content").forEach(c => c.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(tabId).classList.add("active");
+      if (tabId === "tab-planning") renderPlanning();
+    };
+
+    window.setStatoSingolo = function(st, btn) {
+      statoSingolo = st;
+      document.querySelectorAll("#grid-singolo .btn-status").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    };
+
+    window.setStatoCollettivo = function(st, btn) {
+      statoCollettivo = st;
+      document.querySelectorAll("#grid-collettivo .btn-status").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+    };
+
+    window.salvaSingolo = function() {
+      const dip = document.getElementById("dipendente-singolo").value;
+      const data = document.getElementById("data-singola").value;
+      if (!dip || !data) return alert("Seleziona collaboratore e data");
+
+      const safeKey = dip.replace(/[^a-zA-Z0-9]/g, "_");
+      set(ref(db, `presenze/${data}/${safeKey}`), {
+        dipendente: dip, data: data, stato: statoSingolo,
+        orarioRegistrazione: new Date().toISOString(), inseritoDa: "Giacomo"
+      }).then(() => showToast(`Salvato: ${dip} (${statoSingolo})`));
+    };
+
+    window.salvaCollettivo = function() {
+      const data = document.getElementById("data-collettiva").value;
+      if (!data) return alert("Scegli una data");
+
+      const checked = Array.from(document.querySelectorAll(".chk-team:checked")).map(cb => cb.value);
+      if (checked.length === 0) return alert("Seleziona almeno un lavoratore!");
+
+      const promises = checked.map(nome => {
+        const safeKey = nome.replace(/[^a-zA-Z0-9]/g, "_");
+        return set(ref(db, `presenze/${data}/${safeKey}`), {
+          dipendente: nome, data: data, stato: statoCollettivo,
+          orarioRegistrazione: new Date().toISOString(), inseritoDa: "Giacomo (Collettivo)"
+        });
+      });
+
+      Promise.all(promises).then(() => {
+        showToast(`Registrati ${checked.length} collaboratori come "${statoCollettivo}"!`);
+      });
+    };
+
+    window.selezionaTuttiCheckbox = function(check) {
+      document.querySelectorAll(".chk-team").forEach(cb => cb.checked = check);
+    };
+
+    window.setPlanningMode = function(mode) {
+      planningMode = mode;
+      document.querySelectorAll(".btn-giacomo-toggle").forEach(b => b.classList.remove("active"));
+      document.getElementById(`btn-g-plan-${mode}`).classList.add("active");
+      renderPlanning();
+    };
+
+    window.navPlanning = function(direction) {
+      if (planningMode === "week") {
+        currentDateCursor.setDate(currentDateCursor.getDate() + (direction * 7));
+      } else {
+        currentDateCursor.setMonth(currentDateCursor.getMonth() + direction);
+      }
+      renderPlanning();
+    };
+
+    function renderPlanning() {
+      const thead = document.getElementById("planning-head");
+      const tbody = document.getElementById("planning-body");
+      const titleSpan = document.getElementById("planning-title-range");
+      thead.innerHTML = "";
+      tbody.innerHTML = "";
+
+      const days = [];
+      const giorniNomi = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+
+      if (planningMode === "week") {
+        const curr = new Date(currentDateCursor);
+        const dayOfWeek = curr.getDay();
+        const diffToMonday = curr.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+        const monday = new Date(curr.setDate(diffToMonday));
+
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(monday);
+          d.setDate(monday.getDate() + i);
+          days.push(d);
+        }
+        titleSpan.textContent = `Sett. ${days[0].toLocaleDateString('it-IT', {day:'2-digit', month:'short'})} - ${days[6].toLocaleDateString('it-IT', {day:'2-digit', month:'short'})}`;
+      } else {
+        const year = currentDateCursor.getFullYear();
+        const month = currentDateCursor.getMonth();
+        const totalDays = new Date(year, month + 1, 0).getDate();
+        for (let i = 1; i <= totalDays; i++) {
+          days.push(new Date(year, month, i));
+        }
+        titleSpan.textContent = currentDateCursor.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }).toUpperCase();
+      }
+
+      let headHtml = `<tr><th class="name-col">Collaboratore</th>`;
+      days.forEach(d => {
+        const isToday = d.toISOString().split("T")[0] === oggiStr;
+        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+        headHtml += `<th class="day-col" style="${isToday ? 'border-bottom:2px solid var(--accent); color:var(--accent); background:rgba(56,189,248,0.12);' : ''} ${isWeekend ? 'color:#64748b;' : ''}">
+          <span style="font-size:8.5px;">${giorniNomi[d.getDay()]}</span><br><strong style="font-size:11.5px;">${d.getDate()}</strong>
+        </th>`;
+      });
+      headHtml += `</tr>`;
+      thead.innerHTML = headHtml;
+
+      Object.keys(dipendentiData).forEach(id => {
+        const nome = dipendentiData[id].nome;
+        let rowHtml = `<tr><td class="name-col" title="${nome}"><i class="fa-solid fa-user" style="font-size:10px; margin-right:5px; color:var(--accent);"></i>${nome}</td>`;
+
+        days.forEach(d => {
+          const iso = d.toISOString().split("T")[0];
+          const regGiorno = presenzeData[iso] || {};
+          
+          let stato = null;
+          Object.keys(regGiorno).forEach(k => {
+            if (regGiorno[k].dipendente && regGiorno[k].dipendente.toLowerCase() === nome.toLowerCase()) {
+              stato = regGiorno[k].stato;
+            }
+          });
+
+          if (!stato) {
+            rowHtml += `<td class="day-cell plan-cell-interactive" onclick="apriQuickEditGiacomo('${nome}', '${iso}')"><span class="cell-empty">&bull;</span></td>`;
+          } else {
+            let sigla = "I";
+            let cClass = "cell-I";
+            if (stato === "Mattina") { sigla = "M"; cClass = "cell-M"; }
+            else if (stato === "Pomeriggio") { sigla = "P"; cClass = "cell-P"; }
+            else if (stato === "Assente") { sigla = "A"; cClass = "cell-A"; }
+            else if (stato === "Ferie") { sigla = "F"; cClass = "cell-F"; }
+            else if (stato === "Malattia") { sigla = "MAL"; cClass = "cell-MAL"; }
+            rowHtml += `<td class="day-cell plan-cell-interactive" onclick="apriQuickEditGiacomo('${nome}', '${iso}')"><span class="cell-badge ${cClass}" title="${stato}">${sigla}</span></td>`;
+          }
+        });
+
+        rowHtml += `</tr>`;
+        tbody.innerHTML += rowHtml;
+      });
+    }
+
+    window.apriQuickEditGiacomo = function(nome, dataIso) {
+      activeQuickEdit = { dipendente: nome, data: dataIso };
+      document.getElementById("quick-nome").textContent = nome;
+      document.getElementById("quick-data").textContent = new Date(dataIso).toLocaleDateString('it-IT', { weekday: 'short', day: '2-digit', month: 'short' });
+      document.getElementById("modalQuickEdit").style.display = "flex";
+    };
+
+    window.chiudiQuickEdit = function() {
+      document.getElementById("modalQuickEdit").style.display = "none";
+    };
+
+    window.applicaQuickStatoGiacomo = function(stato) {
+      if (!activeQuickEdit.dipendente || !activeQuickEdit.data) return;
+      const safeKey = activeQuickEdit.dipendente.replace(/[^a-zA-Z0-9]/g, "_");
+
+      if (stato === "DELETE") {
+        remove(ref(db, `presenze/${activeQuickEdit.data}/${safeKey}`)).then(() => {
+          chiudiQuickEdit();
+          showToast(`Cancellato per ${activeQuickEdit.dipendente}`);
+        });
+      } else {
+        set(ref(db, `presenze/${activeQuickEdit.data}/${safeKey}`), {
+          dipendente: activeQuickEdit.dipendente, data: activeQuickEdit.data, stato: stato,
+          orarioRegistrazione: new Date().toISOString(), inseritoDa: "Giacomo (Planning)"
+        }).then(() => {
+          chiudiQuickEdit();
+          showToast(`Assegnato: ${stato}`);
+        });
+      }
+    };
+  </script>
 </body>
 </html>
