@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Mirisa - Presenze Vocali Protette</title>
+  <title>Mirisa - Presenze Vocali Assistite</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   <style>
     :root {
@@ -29,10 +29,6 @@
     .ai-badge { display: inline-block; background: linear-gradient(135deg, #0284c7, #10b981); color: #fff; font-size: 10px; font-weight: 800; padding: 3px 8px; border-radius: 20px; text-transform: uppercase; margin-bottom: 6px; letter-spacing: 0.5px; }
 
     .card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
-
-    /* Modalità Login Sicuro */
-    #login-box { display: none; }
-    .login-input { width: 100%; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 12px; border-radius: 8px; font-size: 14px; margin-bottom: 12px; outline: none; }
 
     .voice-box { text-align: center; padding: 20px 10px; }
     .mic-button {
@@ -79,8 +75,14 @@
       transition: all 0.3s ease;
     }
     .btn-confirm:active { transform: scale(0.98); }
-    .btn-confirm.loading { background: #0284c7 !important; cursor: wait; }
-    .btn-confirm.success { background: #059669 !important; }
+    .btn-confirm.loading {
+      background: #0284c7 !important;
+      cursor: wait;
+    }
+    .btn-confirm.success {
+      background: #059669 !important;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
+    }
 
     #toast { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #1e293b; color: #fff; padding: 12px 18px; border-radius: 10px; border-left: 4px solid var(--success); display: none; text-align: center; font-size: 14px; font-weight: 600; z-index: 200; }
   </style>
@@ -89,49 +91,35 @@
 
   <div class="container">
     <div class="brand">
-      <div class="ai-badge"><i class="fa-solid fa-shield-halved"></i> Accesso Protetto</div>
+      <div class="ai-badge"><i class="fa-solid fa-bolt"></i> Sistema Vocale Mirisa</div>
       <h1>MIRISA <span>CERAMICHE</span></h1>
-      <p>Registrazione Presenze Vocale Diretta</p>
+      <p>Sincronizzazione Diretta Planning</p>
     </div>
 
-    <!-- BOX LOGIN (appare solo se non sei autenticato) -->
-    <div class="card" id="login-box">
-      <h3 style="margin-top:0; font-size: 16px; color: var(--accent);"><i class="fa-solid fa-lock"></i> Accesso Amministrativo Richiesto</h3>
-      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Inserisci le credenziali Mirisa per abilitare la registrazione su questo smartphone (lo farai una sola volta):</p>
-      <input type="email" id="login-email" class="login-input" value="dipierro.nino@gmail.com" placeholder="Email autorizzata">
-      <input type="password" id="login-pass" class="login-input" placeholder="Password account">
-      <button class="btn-confirm" onclick="effettuaLogin()" style="background: var(--accent); color: #070d19;">
-        <i class="fa-solid fa-key"></i> Autorizza Smartphone
-      </button>
-    </div>
-
-    <!-- AREA OPERATIVA (visibile appena autenticato) -->
-    <div id="main-app" style="display: none;">
-      <div class="card">
-        <div style="margin-bottom: 14px;">
-          <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione attiva</label>
-          <input type="date" id="selected-date" style="width: 100%; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 14px; outline: none;">
-        </div>
-
-        <div class="voice-box">
-          <button id="btn-mic" class="mic-button" onclick="toggleVoiceRecording()">
-            <i class="fa-solid fa-microphone"></i>
-          </button>
-          <div id="mic-status" class="voice-hint">Tocca il microfono e parla liberamente</div>
-          <div id="transcript" class="speech-transcript">In attesa della tua voce...</div>
-        </div>
+    <div class="card">
+      <div style="margin-bottom: 14px;">
+        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione attiva</label>
+        <input type="date" id="selected-date" style="width: 100%; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 14px; outline: none;">
       </div>
 
-      <div class="card" id="preview-box">
-        <h3 style="margin: 0 0 12px; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 8px;">
-          <i class="fa-solid fa-list-check"></i> Riepilogo Presenze Rilevate:
-        </h3>
-        <div id="preview-list"></div>
-        
-        <button id="btn-salva" class="btn-confirm" onclick="confermaSalvataggio()">
-          <i class="fa-solid fa-cloud-arrow-up"></i> <span>Salva su Database</span>
+      <div class="voice-box">
+        <button id="btn-mic" class="mic-button" onclick="toggleVoiceRecording()">
+          <i class="fa-solid fa-microphone"></i>
         </button>
+        <div id="mic-status" class="voice-hint">Caricamento dipendenti da Firebase...</div>
+        <div id="transcript" class="speech-transcript">In attesa della tua voce...</div>
       </div>
+    </div>
+
+    <div class="card" id="preview-box">
+      <h3 style="margin: 0 0 12px; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-list-check"></i> Riepilogo Presenze Rilevate:
+      </h3>
+      <div id="preview-list"></div>
+      
+      <button id="btn-salva" class="btn-confirm" onclick="confermaSalvataggio()">
+        <i class="fa-solid fa-cloud-arrow-up"></i> <span>Salva su Database</span>
+      </button>
     </div>
   </div>
 
@@ -139,8 +127,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, browserLocalPersistence, setPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { getDatabase, ref, update, onValue } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, update, onValue, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAb6M5iEzafntiQbr7fj76XrZYNjmz17tE",
@@ -150,72 +137,53 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getDatabase(app);
 
-    // Mantenimento permanente dell'accesso sul browser
-    setPersistence(auth, browserLocalPersistence).catch(console.error);
-
+    // Imposta data corrente del dispositivo
     const dOggi = new Date();
     const annoOggi = dOggi.getFullYear();
     const meseOggi = String(dOggi.getMonth() + 1).padStart(2, '0');
     const giornoOggi = String(dOggi.getDate()).padStart(2, '0');
     document.getElementById("selected-date").value = `${annoOggi}-${meseOggi}-${giornoOggi}`;
 
-    let dipendentiMap = {
-      "Errede Francesca": { id: "Errede_Francesca", nome: "Errede Francesca" },
-      "Antonio Campobasso": { id: "Antonio_Campobasso", nome: "Antonio Campobasso" },
-      "Dipierro Sebastiano": { id: "Dipierro_Sebastiano", nome: "Dipierro Sebastiano" },
-      "Sansone Andrea": { id: "Sansone_Andrea", nome: "Sansone Andrea" },
-      "Bulicko Davide": { id: "Bulicko_Davide", nome: "Bulicko Davide" },
-      "Ungaro Maria Domenica": { id: "Ungaro_Maria_Domenica", nome: "Ungaro Maria Domenica" },
-      "Loschiavone Isabella": { id: "Loschiavone_Isabella", nome: "Loschiavone Isabella" },
-      "Gongo Pellump": { id: "Gongo_Pellump", nome: "Gongo Pellump" },
-      "Latifi Rudina": { id: "Latifi_Rudina", nome: "Latifi Rudina" },
-      "Scarano Margherita": { id: "Scarano_Margherita", nome: "Scarano Margherita" },
-      "Ressa Vito": { id: "Ressa_Vito", nome: "Ressa Vito" }
-    };
-
+    // Array dinamico popolato con gli ID REALI di Firebase
+    let listaDipendentiReali = [];
     let presenzeProposte = [];
 
-    // Controllo Sicurezza Sessione
-    onAuthStateChanged(auth, (user) => {
-      if (user && (user.email === 'dipierro.nino@gmail.com' || user.email === 'mirisa.ceramiche@gmail.com')) {
-        document.getElementById("login-box").style.display = "none";
-        document.getElementById("main-app").style.display = "block";
-        inizializzaAscoltoDipendenti();
-      } else {
-        document.getElementById("login-box").style.display = "block";
-        document.getElementById("main-app").style.display = "none";
-      }
-    });
-
-    window.effettuaLogin = async function() {
-      const email = document.getElementById("login-email").value.trim();
-      const pass = document.getElementById("login-pass").value.trim();
-      if (!pass) return alert("Inserisci la password");
-      try {
-        await signInWithEmailAndPassword(auth, email, pass);
-        showToast("Accesso autorizzato!");
-      } catch (err) {
-        alert("Errore accesso: " + err.message);
-      }
-    };
-
-    function inizializzaAscoltoDipendenti() {
-      onValue(ref(db, "dipendenti"), (snap) => {
-        const data = snap.val();
-        if (data) {
-          Object.keys(data).forEach(k => {
-            const val = data[k];
-            const nomeDip = typeof val === 'string' ? val : (val.nome || val.nominativo);
-            if (nomeDip) {
-              dipendentiMap[nomeDip] = { id: k, nome: nomeDip };
-            }
-          });
-        }
-      });
+    function normalizzaNome(str) {
+      return (str || "").toLowerCase().replace(/[^a-z0-9]/g, "");
     }
+
+    // Caricamento e mappatura esatta ID <-> Dipendente
+    onValue(ref(db, "dipendenti"), (snap) => {
+      const data = snap.val() || {};
+      listaDipendentiReali = [];
+
+      Object.keys(data).forEach(idChiave => {
+        const val = data[idChiave];
+        let nomeVisualizzato = "";
+
+        if (typeof val === "string") {
+          nomeVisualizzato = val;
+        } else if (val && typeof val === "object") {
+          nomeVisualizzato = val.nome || val.nominativo || val.nomeCompleto || val.name || idChiave;
+        } else {
+          nomeVisualizzato = idChiave;
+        }
+
+        listaDipendentiReali.push({
+          id: idChiave,
+          nome: nomeVisualizzato,
+          normNome: normalizzaNome(nomeVisualizzato),
+          normId: normalizzaNome(idChiave)
+        });
+      });
+
+      document.getElementById("mic-status").textContent = `Collegato! ${listaDipendentiReali.length} dipendenti pronti. Tocca e parla.`;
+    }, (error) => {
+      console.warn("Errore lettura dipendenti:", error);
+      document.getElementById("mic-status").textContent = "Tocca il microfono e parla liberamente";
+    });
 
     function showToast(msg) {
       const t = document.getElementById("toast");
@@ -330,28 +298,31 @@
       }
 
       const text = frase.toLowerCase();
-      const listaNomi = Object.keys(dipendentiMap);
+      const textNorm = normalizzaNome(frase);
       let risultati = [];
 
+      // 1. Comando di squadra collettivo
       if (text.includes("tutt") || text.includes("squadra")) {
         const statoObj = rilevaSiglaStato(text.split(/tranne|eccetto|meno/)[0]);
-        risultati = listaNomi.map(n => ({
-          nome: n,
-          id: dipendentiMap[n].id,
+        risultati = listaDipendentiReali.map(d => ({
+          id: d.id,
+          nome: d.nome,
           statoSigla: statoObj.sigla,
           statoLabel: statoObj.label
         }));
 
         if (text.includes("tranne") || text.includes("eccetto") || text.includes("meno")) {
           const parteEccezioni = text.split(/tranne|eccetto|meno/)[1];
+          const parteNorm = normalizzaNome(parteEccezioni);
           const eccObj = rilevaSiglaStato(parteEccezioni);
           const siglaApplicare = eccObj.sigla === statoObj.sigla ? (statoObj.sigla === "I" ? "A" : "I") : eccObj.sigla;
           const labelApplicare = siglaApplicare === "A" ? "Assente" : (siglaApplicare === "I" ? "Intera" : eccObj.label);
 
-          listaNomi.forEach(nome => {
-            const parole = nome.toLowerCase().split(" ");
-            if (parole.some(p => p.length > 2 && parteEccezioni.includes(p))) {
-              const idx = risultati.findIndex(r => r.nome === nome);
+          listaDipendentiReali.forEach(d => {
+            const parole = d.nome.toLowerCase().split(" ");
+            const nominato = parole.some(p => p.length > 2 && parteEccezioni.includes(p)) || parteNorm.includes(d.normNome) || parteNorm.includes(d.normId);
+            if (nominato) {
+              const idx = risultati.findIndex(r => r.id === d.id);
               if (idx !== -1) {
                 risultati[idx].statoSigla = siglaApplicare;
                 risultati[idx].statoLabel = labelApplicare;
@@ -360,18 +331,18 @@
           });
         }
       } else {
+        // 2. Singoli nominativi
         const statoObj = rilevaSiglaStato(text);
         let trovati = 0;
 
-        listaNomi.forEach(nome => {
-          const parole = nome.toLowerCase().split(" ");
-          const nomeCompresso = nome.toLowerCase().replace(/\s+/g, '');
-          const fraseCompressa = text.replace(/\s+/g, '');
+        listaDipendentiReali.forEach(d => {
+          const parole = d.nome.toLowerCase().split(" ");
+          const nominato = parole.some(p => p.length > 2 && text.includes(p)) || textNorm.includes(d.normNome) || textNorm.includes(d.normId);
 
-          if (parole.some(p => p.length > 2 && text.includes(p)) || fraseCompressa.includes(nomeCompresso)) {
+          if (nominato) {
             risultati.push({
-              nome: nome,
-              id: dipendentiMap[nome].id,
+              id: d.id,
+              nome: d.nome,
               statoSigla: statoObj.sigla,
               statoLabel: statoObj.label
             });
@@ -379,13 +350,14 @@
           }
         });
 
+        // Fallback di sicurezza se la lista dipendenti stava ancora caricando
         if (trovati === 0) {
           let pulito = frase.replace(/ieri|oggi|l'altro ieri|presente|presenti|assente|assenti|ferie|malattia|mezza|mattina|pomeriggio|intera|gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|\d{1,2}|\d{4}/gi, "").trim();
           pulito = pulito.replace(/^[,\s]+|[,\s]+$/g, "");
           if (pulito.length > 1) {
             risultati.push({
-              nome: pulito,
               id: pulito.replace(/[^a-zA-Z0-9]/g, "_"),
+              nome: pulito,
               statoSigla: statoObj.sigla,
               statoLabel: statoObj.label
             });
@@ -397,7 +369,7 @@
         presenzeProposte = risultati;
         mostraAnteprima(presenzeProposte);
         const dataAttiva = document.getElementById("selected-date").value;
-        document.getElementById("mic-status").textContent = `Presenze pronte per: ${dataAttiva}`;
+        document.getElementById("mic-status").textContent = `Presenze pronte per: ${dataAttiva}!`;
       } else {
         document.getElementById("mic-status").textContent = "Nessun collaboratore riconosciuto. Riprova.";
       }
@@ -431,7 +403,7 @@
       box.style.display = "block";
     }
 
-    // SALVATAGGIO PROTETTO
+    // SALVATAGGIO ALLINEATO CON GLI ID ESATTI DI FIREBASE
     window.confermaSalvataggio = async function() {
       const dataSel = document.getElementById("selected-date").value;
       if (!dataSel || presenzeProposte.length === 0) return;
@@ -442,37 +414,31 @@
       btn.disabled = true;
 
       const [anno, mese, giornoStr] = dataSel.split("-");
-      const meseAnno = `${anno}-${mese}`;
-      const giornoNum = parseInt(giornoStr, 10);
-      const giorno2Digit = giornoStr.padStart(2, '0');
+      const meseAnno = `${anno}-${mese}`;       // es: "2026-09"
+      const giornoNum = parseInt(giornoStr, 10);  // es: 25 (senza zero iniziale)
+      const giorno2Digit = giornoStr.padStart(2, '0'); // es: "25"
 
       const updates = {};
 
       presenzeProposte.forEach(item => {
-        const idDip = item.id;
+        const idReale = item.id;
         const nomeClean = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
         const sigla = item.statoSigla;
 
-        // Scrittura in tutti i formati supportati da admin.html
-        updates[`presenze/${meseAnno}/${giornoNum}/${idDip}`] = sigla;
+        // 1. STRUTTURA PRINCIPALE LETTA DAL PLANNING: presenze/YYYY-MM/giorno/ID = "I"
+        updates[`presenze/${meseAnno}/${giornoNum}/${idReale}`] = sigla;
+        updates[`presenze/${meseAnno}/${giorno2Digit}/${idReale}`] = sigla;
+
+        // Scrittura di sicurezza anche per nome
         updates[`presenze/${meseAnno}/${giornoNum}/${nomeClean}`] = sigla;
         updates[`presenze/${meseAnno}/${giornoNum}/${item.nome}`] = sigla;
-        updates[`presenze/${meseAnno}/${giorno2Digit}/${idDip}`] = sigla;
-        updates[`presenze/${meseAnno}/${giorno2Digit}/${nomeClean}`] = sigla;
 
-        updates[`presenze/${meseAnno}/${idDip}/${giornoNum}`] = sigla;
-        updates[`presenze/${meseAnno}/${nomeClean}/${giornoNum}`] = sigla;
-        updates[`presenze/${meseAnno}/${item.nome}/${giornoNum}`] = sigla;
-        updates[`presenze/${meseAnno}/${idDip}/${giorno2Digit}`] = sigla;
+        // 2. STRUTTURA ALTERNATIVA: presenze/YYYY-MM/ID/giorno = "I"
+        updates[`presenze/${meseAnno}/${idReale}/${giornoNum}`] = sigla;
+        updates[`presenze/${meseAnno}/${idReale}/${giorno2Digit}`] = sigla;
 
-        updates[`presenze/${dataSel}/${idDip}`] = {
-          dipendente: item.nome,
-          data: dataSel,
-          stato: sigla,
-          statoEsteso: item.statoLabel,
-          orario: new Date().toISOString()
-        };
-        updates[`presenze/${dataSel}/${nomeClean}`] = {
+        // 3. REGISTRO GIORNALIERO: presenze/YYYY-MM-DD/ID
+        updates[`presenze/${dataSel}/${idReale}`] = {
           dipendente: item.nome,
           data: dataSel,
           stato: sigla,
@@ -480,7 +446,8 @@
           orario: new Date().toISOString()
         };
 
-        updates[`presenze_registro/${idDip}/${dataSel}`] = sigla;
+        // 4. Registro storico
+        updates[`presenze_registro/${idReale}/${dataSel}`] = sigla;
       });
 
       try {
