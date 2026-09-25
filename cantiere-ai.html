@@ -111,6 +111,7 @@
       </div>
     </div>
 
+    <!-- ANTEPRIMA PROPOSTA ELABORATA DALL'AI -->
     <div class="card" id="ai-preview-box">
       <h3 style="margin: 0 0 12px; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 8px;">
         <i class="fa-solid fa-list-check"></i> Presenze Rilevate dall'AI:
@@ -207,7 +208,6 @@
       recognition.onend = () => {
         isRecording = false;
         document.getElementById("btn-mic").classList.remove("recording");
-        document.getElementById("mic-status").textContent = "Elaborazione della tua voce in corso...";
       };
     }
 
@@ -224,42 +224,50 @@
       }
     };
 
+    // ELABORAZIONE CON GEMINI (Invio corretto tramite header x-goog-api-key)
     async function analizzaFraseConAI(frase) {
       const GEMINI_API_KEY = recuperaApiKeyAI();
       if (!GEMINI_API_KEY) return;
 
-      document.getElementById("mic-status").textContent = "Gemini AI sta analizzando la squadra...";
+      document.getElementById("mic-status").textContent = "Gemini AI sta analizzando la frase...";
       
-      const elencoDipendenti = dipendentiNomi.join(", ");
+      const elencoDipendenti = dipendentiNomi.length > 0 ? dipendentiNomi.join(", ") : "Nessun dipendente ancora registrato";
       
       const prompt = `
-Sei il coordinatore presenze di Mirisa Ceramiche.
-L'elenco completo dei collaboratori è: [${elencoDipendenti}].
+Sei il coordinatore presenze di un'azienda.
+I dipendenti registrati a sistema sono: [${elencoDipendenti}].
 
-Frase pronunciata: "${frase}".
+Frase pronunciata dall'operatore: "${frase}".
 
-Regole di interpretazione:
-1. Gli stati validi sono solo: "Intera", "Mattina", "Pomeriggio", "Assente", "Ferie", "Malattia".
-2. Se viene detto "tutta la squadra intera tranne...", assegna "Intera" a tutti i collaboratori della lista, eccetto le eccezioni citate.
-3. Riconosci i nomi anche se pronunciati solo per nome di battesimo o con lievi variazioni.
+Istruzioni:
+1. Gli stati validi sono ESCLUSIVAMENTE: "Intera", "Mattina", "Pomeriggio", "Assente", "Ferie", "Malattia".
+2. Se nella frase viene citato un nome già registrato, abbinalo al dipendente registrato. Se viene citato un nome nuovo non ancora presente nell'elenco (ad esempio "Margherita Scarano"), mantieni esattamente il nome pronunciato.
+3. Se viene detto "tutta la squadra intera tranne...", assegna "Intera" a tutti i collaboratori registrati, eccetto le eccezioni citate.
 
-Rispondi ESCLUSIVAMENTE con un JSON valido nel seguente formato:
+Rispondi ESCLUSIVAMENTE con un array JSON puro, senza spiegazioni, nel seguente formato:
 [
-  {"nome": "Nome Cognome", "stato": "Intera"},
-  {"nome": "Nome Cognome", "stato": "Ferie"}
+  {"nome": "Nome Rilevato", "stato": "Assente"}
 ]
 `;
 
       try {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+        const res = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "x-goog-api-key": GEMINI_API_KEY
+          },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }]
           })
         });
 
         const data = await res.json();
+        
+        if (data.error) {
+          throw new Error(data.error.message || "Errore API Google");
+        }
+
         const rawText = data.candidates[0].content.parts[0].text;
         const cleanJson = rawText.replace(/```json/g, "").replace(/```/g, "").trim();
         presenzeProposte = JSON.parse(cleanJson);
@@ -268,7 +276,7 @@ Rispondi ESCLUSIVAMENTE con un JSON valido nel seguente formato:
         document.getElementById("mic-status").textContent = "Analisi completata con successo!";
       } catch (e) {
         console.error(e);
-        document.getElementById("mic-status").textContent = "Non sono riuscito a interpretare. Riprova parlando chiaramente.";
+        document.getElementById("mic-status").textContent = "Errore: " + (e.message || "Verifica la chiave API");
       }
     }
 
