@@ -29,104 +29,48 @@
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; min-height: 100vh; }
     
-    /* SCHERMATA BLOCCO BIOMETRICA & PIN */
-    #lock-screen {
-      position: fixed;
-      inset: 0;
-      background: #070d19;
-      z-index: 9999;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
+    #auth-overlay {
+      position: fixed; inset: 0; background: #070d19; z-index: 9999;
+      display: flex; justify-content: center; align-items: center; padding: 20px;
     }
-    .lock-box {
-      background: var(--surface);
-      border: 1px solid var(--surface-border);
-      border-radius: 16px;
-      padding: 30px 22px;
-      width: 100%;
-      max-width: 350px;
-      text-align: center;
-      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    .auth-box {
+      background: var(--surface); border: 1px solid var(--surface-border);
+      border-radius: 16px; padding: 32px 24px; width: 100%; max-width: 360px;
+      text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
     }
-    .lock-icon {
-      width: 56px;
-      height: 56px;
-      background: rgba(2, 132, 199, 0.15);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      color: var(--accent);
-      border-radius: 50%;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 22px;
-      margin-bottom: 12px;
+    .auth-icon {
+      width: 56px; height: 56px; background: rgba(2, 132, 199, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3); color: var(--accent);
+      border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+      font-size: 22px; margin-bottom: 12px;
     }
-    .pin-instruction {
-      font-size: 13px;
-      color: var(--accent);
-      font-weight: 700;
-      margin: 6px 0 12px;
-      min-height: 18px;
+    .auth-input {
+      width: 100%; background: #081120; border: 1px solid var(--surface-border);
+      color: #fff; padding: 12px; border-radius: 10px; margin-bottom: 12px; outline: none; font-size: 14px;
     }
+    .auth-input:focus { border-color: var(--accent); }
     .pin-display {
-      letter-spacing: 12px;
-      font-size: 28px;
-      font-weight: 800;
-      text-align: center;
-      width: 100%;
-      background: #081120;
-      border: 1px solid var(--surface-border);
-      color: #fff;
-      padding: 10px;
-      border-radius: 10px;
-      margin-bottom: 14px;
-      outline: none;
+      letter-spacing: 14px; font-size: 28px; font-weight: 800; text-align: center;
+      width: 100%; background: #081120; border: 1px solid var(--surface-border);
+      color: #fff; padding: 10px; border-radius: 10px; margin: 12px 0; outline: none;
     }
-    .pin-keypad {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
+    .pin-keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
     .pin-btn {
-      background: #081120;
-      border: 1px solid var(--surface-border);
-      color: #fff;
-      font-size: 20px;
-      font-weight: 700;
-      padding: 13px 0;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.15s;
+      background: #081120; border: 1px solid var(--surface-border); color: #fff;
+      font-size: 20px; font-weight: 700; padding: 12px 0; border-radius: 10px; cursor: pointer;
     }
-    .pin-btn:active {
-      background: #0284c7;
-      transform: scale(0.96);
-    }
-    .pin-btn-bio {
-      background: rgba(56, 189, 248, 0.15);
-      border-color: rgba(56, 189, 248, 0.3);
-      color: var(--accent);
-    }
-    .pin-error {
-      color: var(--danger);
-      font-size: 13px;
-      font-weight: 600;
-      margin-top: 10px;
-      display: none;
-    }
+    .pin-btn:active { background: #0284c7; }
+    .pin-btn-bio { background: rgba(56, 189, 248, 0.15); border-color: rgba(56, 189, 248, 0.3); color: var(--accent); }
+    .auth-error { color: var(--danger); font-size: 13px; font-weight: 700; margin-top: 10px; display: none; }
 
     .container { max-width: 1600px; margin: 0 auto; display: none; }
 
-    /* Header */
     header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 16px; padding-bottom: 20px; border-bottom: 1px solid var(--surface-border); margin-bottom: 20px; }
     .brand h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px; color: #fff; display: flex; align-items: center; gap: 12px; }
     .brand h1 span { color: var(--accent); }
     .brand p { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); }
     .top-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 
-    /* Navigazione Viste / Tabs */
     .view-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
     .view-tab-btn { padding: 12px 18px; border-radius: var(--radius); border: 1px solid var(--surface-border); background: var(--surface); color: var(--text-muted); font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
     .view-tab-btn.active { background: #0284c7; color: #fff; border-color: transparent; box-shadow: 0 4px 12px rgba(2,132,199,0.3); }
@@ -155,7 +99,6 @@
     .btn-secondary:hover { background: #263c66; }
     .btn-icon { padding: 8px 12px; font-size: 13px; }
 
-    /* KPI Grid */
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px; }
     .kpi-card { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); padding: 18px; position: relative; overflow: hidden; }
     .kpi-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
@@ -185,74 +128,26 @@
 
     .inline-editor { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) auto auto; gap: 10px; align-items: end; background: #081120; padding: 16px; border-radius: var(--radius); border: 1px solid var(--surface-border); }
 
-    /* ==============================================================
-       STRUTTURA BLINDATA PLANNING: NOMI BLOCCATI E SEPARATI
-       ============================================================== */
     .planning-nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
+    .planning-container { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--surface-border); border-radius: 8px; background: #081120; }
+    table.plan-table { border-collapse: separate; border-spacing: 0; table-layout: fixed; width: max-content; min-width: 100%; background: #081120; }
     
-    .planning-container {
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-      border: 1px solid var(--surface-border);
-      border-radius: 8px;
-    }
-
-    table.plan-table { 
-      border-collapse: separate; 
-      border-spacing: 0;
-      table-layout: fixed; 
-      width: max-content;
-      min-width: 100%;
-      background: #081120;
-    }
-    
-    /* COLONNA COLLABORATORE: LARGHEZZA RIGIDA 220PX */
     table.plan-table th.name-col,
     table.plan-table td.name-col { 
-      position: sticky !important; 
-      left: 0 !important; 
-      z-index: 10 !important;
-      width: 220px !important; 
-      min-width: 220px !important; 
-      max-width: 220px !important; 
-      background: #0d1a33 !important; 
-      border-right: 3px solid #0284c7 !important;
-      border-bottom: 1px solid var(--surface-border) !important;
-      padding: 10px 14px !important;
-      text-align: left !important;
-      white-space: nowrap !important;
-      overflow: hidden !important;
-      text-overflow: ellipsis !important;
-      color: #ffffff !important;
-      font-weight: 700 !important;
-      font-size: 13.5px !important;
-      box-shadow: 4px 0 10px rgba(0,0,0,0.5);
+      position: sticky !important; left: 0 !important; z-index: 10 !important;
+      width: 200px !important; min-width: 200px !important; max-width: 200px !important;
+      background: #0d1a33 !important; border-right: 3px solid #0284c7 !important; border-bottom: 1px solid var(--surface-border) !important;
+      padding: 10px 12px !important; text-align: left !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;
+      color: #ffffff !important; font-weight: 700 !important; font-size: 13px !important; box-shadow: 4px 0 10px rgba(0,0,0,0.5);
     }
-
-    /* CASELLE GIORNI: LARGHEZZA UNIFORME E DEFINITA */
     table.plan-table th.day-col { 
-      background: #0b1528; 
-      color: var(--text-muted); 
-      font-size: 10.5px; 
-      text-transform: uppercase; 
-      text-align: center;
-      padding: 8px 0;
-      border-bottom: 1px solid var(--surface-border);
-      border-right: 1px solid rgba(255,255,255,0.06);
-      width: 40px !important;
-      min-width: 40px !important;
-      max-width: 40px !important;
+      background: #0b1528; color: var(--text-muted); font-size: 10.5px; text-transform: uppercase; text-align: center;
+      padding: 8px 0; border-bottom: 1px solid var(--surface-border); border-right: 1px solid rgba(255,255,255,0.06);
+      width: 40px !important; min-width: 40px !important; max-width: 40px !important;
     }
-
     table.plan-table td.day-cell { 
-      text-align: center; 
-      padding: 6px 0;
-      border-bottom: 1px solid var(--surface-border);
-      border-right: 1px solid rgba(255,255,255,0.06);
-      width: 40px !important;
-      min-width: 40px !important;
-      max-width: 40px !important;
+      text-align: center; padding: 6px 0; border-bottom: 1px solid var(--surface-border); border-right: 1px solid rgba(255,255,255,0.06);
+      width: 40px !important; min-width: 40px !important; max-width: 40px !important;
     }
 
     .plan-cell-interactive { cursor: pointer; transition: background 0.15s; user-select: none; }
@@ -266,7 +161,6 @@
     .cell-MAL { background: rgba(100, 116, 139, 0.25); color: #94a3b8; border: 1px solid rgba(100,116,139,0.4); }
     .cell-empty { color: #334155; font-size: 16px; line-height: 28px; }
 
-    /* Modali */
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(6px); }
     .modal { background: var(--surface); border: 1px solid var(--surface-border); border-radius: var(--radius); width: 100%; max-width: 500px; padding: 24px; box-shadow: 0 25px 30px -5px rgba(0, 0, 0, 0.6); }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
@@ -283,121 +177,124 @@
     #toast { position: fixed; bottom: 24px; right: 24px; background: #1e293b; color: #fff; padding: 14px 20px; border-radius: 10px; border-left: 4px solid var(--accent); display: none; align-items: center; gap: 10px; z-index: 200; font-size: 14px; }
   </style>
 
-  <script>
-    let pinInserito = "";
-    let setupFase = 1;
-    let pinTemporaneo = "";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref, onValue, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    function initLockScreen() {
-      const pinSalvato = localStorage.getItem("mirisa_admin_pin");
-      const titleEl = document.getElementById("lockTitle");
-      const instrEl = document.getElementById("pinInstruction");
+    const firebaseConfig = {
+      databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app"
+    };
 
-      if (!pinSalvato) {
-        titleEl.textContent = "Crea PIN Admin";
-        instrEl.textContent = "Scegli un PIN di 4 cifre per l'amministrazione";
-      } else {
-        titleEl.textContent = "Area Riservata Admin";
-        instrEl.textContent = "Inserisci PIN o usa l'impronta";
-        if (localStorage.getItem("mirisa_admin_bio") === "true") {
-          setTimeout(avviaBiometria, 400);
-        }
-      }
-    }
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
 
-    function digitaPin(cifra) {
-      if (pinInserito.length < 4) {
-        pinInserito += cifra;
-        aggiornaPinDisplay();
-      }
-      if (pinInserito.length === 4) {
-        setTimeout(processaPin, 100);
-      }
-    }
+    let quickPin = "";
 
-    function cancellaPin() {
-      pinInserito = pinInserito.slice(0, -1);
-      aggiornaPinDisplay();
-      document.getElementById("pinError").style.display = "none";
-    }
+    onAuthStateChanged(auth, (user) => {
+      const overlay = document.getElementById("auth-overlay");
+      const loginView = document.getElementById("view-login-form");
+      const quickView = document.getElementById("view-quick-unlock");
 
-    function aggiornaPinDisplay() {
-      document.getElementById("pinInput").value = "*".repeat(pinInserito.length);
-    }
-
-    function processaPin() {
-      const pinSalvato = localStorage.getItem("mirisa_admin_pin");
-      const errEl = document.getElementById("pinError");
-      const instrEl = document.getElementById("pinInstruction");
-
-      if (!pinSalvato) {
-        if (setupFase === 1) {
-          pinTemporaneo = pinInserito;
-          pinInserito = "";
-          setupFase = 2;
-          aggiornaPinDisplay();
-          instrEl.textContent = "Ripeti il PIN per conferma";
-          errEl.style.display = "none";
-        } else if (setupFase === 2) {
-          if (pinInserito === pinTemporaneo) {
-            localStorage.setItem("mirisa_admin_pin", pinInserito);
-            sessionStorage.setItem("admin_auth", "true");
-            proponiAttivazioneBiometria();
-          } else {
-            errEl.textContent = "I due PIN non coincidono. Riprova.";
-            errEl.style.display = "block";
-            setupFase = 1;
-            pinTemporaneo = "";
-            pinInserito = "";
-            instrEl.textContent = "Scegli un PIN di 4 cifre per l'amministrazione";
-            aggiornaPinDisplay();
+      if (user) {
+        const savedQuickPin = localStorage.getItem("admin_quick_pin");
+        if (savedQuickPin) {
+          loginView.style.display = "none";
+          quickView.style.display = "block";
+          if (localStorage.getItem("admin_bio_active") === "true") {
+            setTimeout(avviaBiometria, 300);
           }
+        } else {
+          const pinChoice = prompt("Accesso autorizzato! Imposta un PIN rapido a 4 cifre per i prossimi accessi:");
+          if (pinChoice && pinChoice.length === 4) {
+            localStorage.setItem("admin_quick_pin", pinChoice);
+            proponiBiometria();
+          }
+          sbloccaDashboard();
         }
       } else {
-        if (pinInserito === pinSalvato) {
-          sessionStorage.setItem("admin_auth", "true");
-          sbloccaDashboard();
-        } else {
-          errEl.textContent = "PIN errato. Riprova.";
-          errEl.style.display = "block";
-          pinInserito = "";
-          aggiornaPinDisplay();
-        }
+        loginView.style.display = "block";
+        quickView.style.display = "none";
+        overlay.style.display = "flex";
+        document.getElementById("main-container").style.display = "none";
       }
-    }
+    });
 
-    async function proponiAttivazioneBiometria() {
+    window.eseguiLoginFirebase = function() {
+      const email = document.getElementById("login-email").value.trim();
+      const pass = document.getElementById("login-password").value;
+      const errEl = document.getElementById("login-error");
+
+      if (!email || !pass) {
+        errEl.textContent = "Compila email e password";
+        errEl.style.display = "block";
+        return;
+      }
+
+      signInWithEmailAndPassword(auth, email, pass)
+        .then(() => { errEl.style.display = "none"; })
+        .catch(() => {
+          errEl.textContent = "Credenziali non valide o accesso negato.";
+          errEl.style.display = "block";
+        });
+    };
+
+    window.digitaQuickPin = function(cifra) {
+      const savedPin = localStorage.getItem("admin_quick_pin");
+      if (quickPin.length < 4) {
+        quickPin += cifra;
+        document.getElementById("quickPinInput").value = "*".repeat(quickPin.length);
+      }
+      if (quickPin.length === 4) {
+        setTimeout(() => {
+          if (quickPin === savedPin) {
+            sbloccaDashboard();
+          } else {
+            const err = document.getElementById("quick-pin-error");
+            err.textContent = "PIN rapido errato";
+            err.style.display = "block";
+            quickPin = "";
+            document.getElementById("quickPinInput").value = "";
+          }
+        }, 100);
+      }
+    };
+
+    window.cancellaQuickPin = function() {
+      quickPin = quickPin.slice(0, -1);
+      document.getElementById("quickPinInput").value = "*".repeat(quickPin.length);
+      document.getElementById("quick-pin-error").style.display = "none";
+    };
+
+    async function proponiBiometria() {
       if (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable) {
-        const disponibile = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-        if (disponibile && confirm("Vuoi abilitare l'impronta digitale per i prossimi accessi?")) {
+        const ok = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        if (ok && confirm("Vuoi abilitare lo sblocco con Impronta / Viso per accedere all'istante?")) {
           try {
             await registraBiometria();
-            localStorage.setItem("mirisa_admin_bio", "true");
-          } catch(e) {
-            console.log("Biometria non configurata", e);
-          }
+            localStorage.setItem("admin_bio_active", "true");
+          } catch(e) { console.log(e); }
         }
       }
-      sbloccaDashboard();
     }
 
     async function registraBiometria() {
       const challenge = new Uint8Array(32);
       window.crypto.getRandomValues(challenge);
-      const createOptions = {
+      await navigator.credentials.create({
         publicKey: {
           challenge: challenge,
-          rp: { name: "Mirisa Ceramiche Presenze" },
-          user: { id: new Uint8Array(16), name: "amministrazione@mirisa.it", displayName: "Nino - Mirisa" },
+          rp: { name: "Mirisa Ceramiche" },
+          user: { id: new Uint8Array(16), name: "dipierro.nino@gmail.com", displayName: "Nino - Mirisa" },
           pubKeyCredParams: [{ type: "public-key", alg: -7 }],
           authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
           timeout: 60000
         }
-      };
-      await navigator.credentials.create(createOptions);
+      });
     }
 
-    async function avviaBiometria() {
+    window.avviaBiometria = async function() {
       if (!window.PublicKeyCredential) return;
       try {
         const challenge = new Uint8Array(32);
@@ -405,95 +302,39 @@
         const assertion = await navigator.credentials.get({
           publicKey: { challenge: challenge, timeout: 60000, userVerification: "required" }
         });
-        if (assertion) {
-          sessionStorage.setItem("admin_auth", "true");
-          sbloccaDashboard();
-        }
-      } catch (err) {
-        console.log("Biometria annullata:", err);
+        if (assertion) sbloccaDashboard();
+      } catch(e) { console.log("Biometria non riuscita:", e); }
+    };
+
+    window.disconnettiAccount = function() {
+      if (confirm("Vuoi davvero disconnettere l'account da questo dispositivo?")) {
+        localStorage.removeItem("admin_quick_pin");
+        localStorage.removeItem("admin_bio_active");
+        signOut(auth).then(() => location.reload());
       }
-    }
+    };
 
     function sbloccaDashboard() {
-      document.getElementById("lock-screen").style.display = "none";
+      document.getElementById("auth-overlay").style.display = "none";
       document.getElementById("main-container").style.display = "block";
-      if (window.initFirebaseApp) window.initFirebaseApp();
+      avviaAscoltoDati();
     }
 
-    function bloccaDashboard() {
-      sessionStorage.removeItem("admin_auth");
-      location.reload();
-    }
+    let dipendentiData = {};
+    let presenzeData = {};
+    let editDipendenteId = null;
 
-    function resetPinAdmin() {
-      if (confirm("Vuoi reimpostare il PIN e le preferenze biometriche?")) {
-        localStorage.removeItem("mirisa_admin_pin");
-        localStorage.removeItem("mirisa_admin_bio");
-        sessionStorage.removeItem("admin_auth");
-        location.reload();
-      }
-    }
+    const monthInput = document.getElementById("meseSelezionato");
+    monthInput.value = new Date().toISOString().slice(0, 7);
 
-    window.addEventListener("DOMContentLoaded", () => {
-      initLockScreen();
-      if (sessionStorage.getItem("admin_auth") === "true") {
-        sbloccaDashboard();
-      }
-    });
-  </script>
+    const oggiStr = new Date().toISOString().split("T")[0];
+    document.getElementById("manual-date").value = oggiStr;
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, onValue, set, update, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    let adminPlanningMode = "month";
+    let adminDateCursor = new Date();
+    let activeQuickEdit = { dipendente: null, data: null };
 
-    window.initFirebaseApp = function() {
-      if (window.firebaseInitialized) return;
-      window.firebaseInitialized = true;
-
-      const firebaseConfig = {
-        databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app"
-      };
-
-      const app = initializeApp(firebaseConfig);
-      const db = getDatabase(app);
-
-      const monthInput = document.getElementById("meseSelezionato");
-      monthInput.value = new Date().toISOString().slice(0, 7);
-
-      let dipendentiData = {};
-      let presenzeData = {};
-      let editDipendenteId = null;
-
-      const oggiStr = new Date().toISOString().split("T")[0];
-      document.getElementById("manual-date").value = oggiStr;
-
-      let adminPlanningMode = "month";
-      let adminDateCursor = new Date();
-      let activeQuickEdit = { dipendente: null, data: null };
-
-      function showToast(msg, isSuccess = true) {
-        const toast = document.getElementById("toast");
-        toast.style.borderLeftColor = isSuccess ? "var(--success)" : "var(--danger)";
-        document.getElementById("toast-text").textContent = msg;
-        toast.style.display = "flex";
-        setTimeout(() => { toast.style.display = "none"; }, 3500);
-      }
-
-      function verificaPresenzaRessaVito(data) {
-        const esiste = Object.values(data).some(d => (d.nome || "").toLowerCase().includes("ressa vito"));
-        if (!esiste) {
-          const newId = "ressa_vito_" + Date.now();
-          set(ref(db, `dipendenti/${newId}`), {
-            nome: "Ressa Vito",
-            mansione: "Responsabile Magazzino",
-            tariffa: 0,
-            bonus: 0,
-            telefono: "-",
-            escludiPdf: true
-          });
-        }
-      }
-
+    function avviaAscoltoDati() {
       onValue(ref(db, "dipendenti"), (snapshot) => {
         dipendentiData = snapshot.val() || {};
         verificaPresenzaRessaVito(dipendentiData);
@@ -507,511 +348,533 @@
         aggiornaDashboard();
         renderAdminPlanning();
       });
+    }
 
-      function popolaTendineDipendenti() {
-        const selectManual = document.getElementById("manual-dipendente");
-        selectManual.innerHTML = "";
-        Object.keys(dipendentiData).forEach(id => {
-          const d = dipendentiData[id];
-          const opt = document.createElement("option");
-          opt.value = d.nome;
-          opt.textContent = `${d.nome} (${d.mansione || 'Dipendente'})`;
-          selectManual.appendChild(opt);
+    function showToast(msg, isSuccess = true) {
+      const toast = document.getElementById("toast");
+      toast.style.borderLeftColor = isSuccess ? "var(--success)" : "var(--danger)";
+      document.getElementById("toast-text").textContent = msg;
+      toast.style.display = "flex";
+      setTimeout(() => { toast.style.display = "none"; }, 3500);
+    }
+
+    function verificaPresenzaRessaVito(data) {
+      const esiste = Object.values(data).some(d => (d.nome || "").toLowerCase().includes("ressa vito"));
+      if (!esiste) {
+        const newId = "ressa_vito_" + Date.now();
+        set(ref(db, `dipendenti/${newId}`), {
+          nome: "Ressa Vito",
+          mansione: "Responsabile Magazzino",
+          tariffa: 0,
+          bonus: 0,
+          telefono: "-",
+          escludiPdf: true
         });
       }
+    }
 
-      window.switchMainTab = function(tabId, btn) {
-        document.querySelectorAll(".view-tab-btn").forEach(b => b.classList.remove("active"));
-        document.querySelectorAll(".view-content").forEach(c => c.classList.remove("active"));
-        btn.classList.add("active");
-        document.getElementById(tabId).classList.add("active");
-        if (tabId === "view-planning") renderAdminPlanning();
-      };
+    function popolaTendineDipendenti() {
+      const selectManual = document.getElementById("manual-dipendente");
+      selectManual.innerHTML = "";
+      Object.keys(dipendentiData).forEach(id => {
+        const d = dipendentiData[id];
+        const opt = document.createElement("option");
+        opt.value = d.nome;
+        opt.textContent = `${d.nome} (${d.mansione || 'Dipendente'})`;
+        selectManual.appendChild(opt);
+      });
+    }
 
-      function aggiornaDashboard() {
-        const mese = monthInput.value;
-        const searchFilter = document.getElementById("searchInput").value.toLowerCase();
-        let totIntere = 0, totMezze = 0, totAssenze = 0, totFerie = 0, totaleMeseStipendi = 0;
+    window.switchMainTab = function(tabId, btn) {
+      document.querySelectorAll(".view-tab-btn").forEach(b => b.classList.remove("active"));
+      document.querySelectorAll(".view-content").forEach(c => c.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(tabId).classList.add("active");
+      if (tabId === "view-planning") renderAdminPlanning();
+    };
 
-        const stats = {};
-        Object.keys(dipendentiData).forEach(id => {
-          stats[id] = {
-            id: id,
-            nome: dipendentiData[id].nome,
-            mansione: dipendentiData[id].mansione || "Lavoratore",
-            telefono: dipendentiData[id].telefono || "-",
-            tariffa: parseFloat(dipendentiData[id].tariffa || 0),
-            bonus: parseFloat(dipendentiData[id].bonus || 0),
-            escludiPdf: !!dipendentiData[id].escludiPdf,
-            intere: 0,
-            mezze: 0,
-            assenze: 0,
-            ferie: 0
-          };
-        });
+    function aggiornaDashboard() {
+      const mese = monthInput.value;
+      const searchFilter = document.getElementById("searchInput").value.toLowerCase();
+      let totIntere = 0, totMezze = 0, totAssenze = 0, totFerie = 0, totaleMeseStipendi = 0;
 
-        Object.keys(presenzeData).forEach(dataGiorno => {
-          if (dataGiorno.startsWith(mese)) {
-            const registro = presenzeData[dataGiorno];
-            Object.keys(registro).forEach(k => {
-              const entry = registro[k];
-              const targetId = Object.keys(stats).find(id => stats[id].nome.toLowerCase() === (entry.dipendente || "").toLowerCase());
-              
-              if (targetId) {
-                if (entry.stato === "Intera") { stats[targetId].intere++; totIntere++; }
-                else if (entry.stato === "Mattina" || entry.stato === "Pomeriggio") { stats[targetId].mezze++; totMezze++; }
-                else if (entry.stato === "Assente") { stats[targetId].assenze++; totAssenze++; }
-                else if (entry.stato === "Ferie" || entry.stato === "Malattia") { stats[targetId].ferie++; totFerie++; }
-              }
-            });
-          }
-        });
-
-        document.getElementById("kpi-intere").textContent = totIntere;
-        document.getElementById("kpi-mezze").textContent = totMezze;
-        document.getElementById("kpi-assenze").textContent = totAssenze;
-        document.getElementById("kpi-ferie").textContent = totFerie;
-
-        const tbody = document.getElementById("tabellaBody");
-        tbody.innerHTML = "";
-
-        Object.keys(stats).forEach(id => {
-          const item = stats[id];
-          const matchSearch = item.nome.toLowerCase().includes(searchFilter) || item.mansione.toLowerCase().includes(searchFilter);
-          const giorniEquiv = item.intere + (item.mezze * 0.5);
-          const compensoLordo = (giorniEquiv * item.tariffa) + item.bonus;
-          totaleMeseStipendi += compensoLordo;
-
-          if (!matchSearch) return;
-
-          const tr = document.createElement("tr");
-          tr.innerHTML = `
-            <td>
-              <div style="font-weight:700; color:#fff; font-size:14px;">
-                ${item.nome}
-                ${item.escludiPdf ? '<span style="font-size:10px; background:#475569; color:#f1f5f9; padding:2px 6px; border-radius:6px; margin-left:6px;"><i class="fa-solid fa-eye-slash"></i> NO PDF</span>' : ''}
-              </div>
-              <div style="font-size:12px; color:var(--text-muted);">${item.mansione} &bull; ${item.telefono}</div>
-            </td>
-            <td><span class="badge badge-full">${item.intere}</span></td>
-            <td><span class="badge badge-half">${item.mezze}</span></td>
-            <td><span class="badge badge-abs">${item.assenze}</span></td>
-            <td><span class="badge badge-leave">${item.ferie}</span></td>
-            <td><strong style="color:#fff;">${giorniEquiv.toFixed(1)} gg</strong></td>
-            <td>€ ${item.tariffa.toFixed(2)}</td>
-            <td><span style="color:${item.bonus >= 0 ? 'var(--accent)' : 'var(--danger)'};">€ ${item.bonus.toFixed(2)}</span></td>
-            <td><strong style="color:var(--success); font-size:14px;">€ ${compensoLordo.toFixed(2)}</strong></td>
-            <td>
-              <div style="display:flex; gap:6px;">
-                <button class="btn btn-secondary btn-icon" onclick="apriModificaDipendente('${id}')" title="Modifica"><i class="fa-solid fa-pen"></i></button>
-                <button class="btn btn-danger btn-icon" onclick="eliminaDipendente('${id}', '${item.nome}')" title="Rimuovi"><i class="fa-solid fa-trash"></i></button>
-              </div>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
-
-        document.getElementById("kpi-totale").textContent = `€ ${totaleMeseStipendi.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        window.cachedSummary = { stats: stats, mese: mese, totaleGlobale: totaleMeseStipendi };
-      }
-
-      monthInput.addEventListener("change", () => {
-        aggiornaDashboard();
-        const [y, m] = monthInput.value.split("-");
-        adminDateCursor = new Date(y, m - 1, 1);
-        renderAdminPlanning();
+      const stats = {};
+      Object.keys(dipendentiData).forEach(id => {
+        stats[id] = {
+          id: id,
+          nome: dipendentiData[id].nome,
+          mansione: dipendentiData[id].mansione || "Lavoratore",
+          telefono: dipendentiData[id].telefono || "-",
+          tariffa: parseFloat(dipendentiData[id].tariffa || 0),
+          bonus: parseFloat(dipendentiData[id].bonus || 0),
+          escludiPdf: !!dipendentiData[id].escludiPdf,
+          intere: 0, mezze: 0, assenze: 0, ferie: 0
+        };
       });
 
-      document.getElementById("searchInput").addEventListener("input", aggiornaDashboard);
-
-      window.setAdminPlanningMode = function(mode) {
-        adminPlanningMode = mode;
-        document.querySelectorAll(".btn-plan-toggle").forEach(b => b.classList.remove("active"));
-        document.getElementById(`btn-plan-${mode}`).classList.add("active");
-        renderAdminPlanning();
-      };
-
-      window.navAdminPlanning = function(direction) {
-        if (adminPlanningMode === "week") {
-          adminDateCursor.setDate(adminDateCursor.getDate() + (direction * 7));
-        } else {
-          adminDateCursor.setMonth(adminDateCursor.getMonth() + direction);
-        }
-        renderAdminPlanning();
-      };
-
-      function renderAdminPlanning() {
-        const thead = document.getElementById("admin-planning-head");
-        const tbody = document.getElementById("admin-planning-body");
-        const titleSpan = document.getElementById("admin-planning-title");
-        thead.innerHTML = "";
-        tbody.innerHTML = "";
-
-        const days = [];
-        const giorniNomi = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
-
-        if (adminPlanningMode === "week") {
-          const curr = new Date(adminDateCursor);
-          const dayOfWeek = curr.getDay();
-          const diffToMonday = curr.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-          const monday = new Date(curr.setDate(diffToMonday));
-
-          for (let i = 0; i < 7; i++) {
-            const d = new Date(monday);
-            d.setDate(monday.getDate() + i);
-            days.push(d);
-          }
-          titleSpan.textContent = `Settimana ${days[0].toLocaleDateString('it-IT', {day:'2-digit', month:'short'})} - ${days[6].toLocaleDateString('it-IT', {day:'2-digit', month:'short', year:'numeric'})}`;
-        } else {
-          const year = adminDateCursor.getFullYear();
-          const month = adminDateCursor.getMonth();
-          const totalDays = new Date(year, month + 1, 0).getDate();
-          for (let i = 1; i <= totalDays; i++) {
-            days.push(new Date(year, month, i));
-          }
-          titleSpan.textContent = adminDateCursor.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }).toUpperCase();
-        }
-
-        let headHtml = `<tr><th class="name-col">Collaboratore</th>`;
-        days.forEach(d => {
-          const isToday = d.toISOString().split("T")[0] === oggiStr;
-          const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-          headHtml += `<th class="day-col" style="${isToday ? 'border-bottom:2px solid var(--accent); color:var(--accent); background:rgba(56,189,248,0.12);' : ''} ${isWeekend ? 'color:#64748b;' : ''}">
-            <span style="font-size:9px;">${giorniNomi[d.getDay()]}</span><br><strong style="font-size:12px;">${d.getDate()}</strong>
-          </th>`;
-        });
-        headHtml += `</tr>`;
-        thead.innerHTML = headHtml;
-
-        Object.keys(dipendentiData).forEach(id => {
-          const nome = dipendentiData[id].nome;
-          let rowHtml = `<tr><td class="name-col" title="${nome}"><i class="fa-solid fa-user" style="font-size:11px; margin-right:6px; color:var(--accent);"></i>${nome}</td>`;
-
-          days.forEach(d => {
-            const iso = d.toISOString().split("T")[0];
-            const regGiorno = presenzeData[iso] || {};
+      Object.keys(presenzeData).forEach(dataGiorno => {
+        if (dataGiorno.startsWith(mese)) {
+          const registro = presenzeData[dataGiorno];
+          Object.keys(registro).forEach(k => {
+            const entry = registro[k];
+            const targetId = Object.keys(stats).find(id => stats[id].nome.toLowerCase() === (entry.dipendente || "").toLowerCase());
             
-            let stato = null;
-            Object.keys(regGiorno).forEach(k => {
-              if (regGiorno[k].dipendente && regGiorno[k].dipendente.toLowerCase() === nome.toLowerCase()) {
-                stato = regGiorno[k].stato;
-              }
-            });
+            if (targetId) {
+              if (entry.stato === "Intera") { stats[targetId].intere++; totIntere++; }
+              else if (entry.stato === "Mattina" || entry.stato === "Pomeriggio") { stats[targetId].mezze++; totMezze++; }
+              else if (entry.stato === "Assente") { stats[targetId].assenze++; totAssenze++; }
+              else if (entry.stato === "Ferie" || entry.stato === "Malattia") { stats[targetId].ferie++; totFerie++; }
+            }
+          });
+        }
+      });
 
-            if (!stato) {
-              rowHtml += `<td class="day-cell plan-cell-interactive" onclick="apriQuickEdit('${nome}', '${iso}', null)">
-                <span class="cell-empty">&bull;</span>
-              </td>`;
-            } else {
-              let sigla = "I";
-              let cClass = "cell-I";
-              if (stato === "Mattina") { sigla = "M"; cClass = "cell-M"; }
-              else if (stato === "Pomeriggio") { sigla = "P"; cClass = "cell-P"; }
-              else if (stato === "Assente") { sigla = "A"; cClass = "cell-A"; }
-              else if (stato === "Ferie") { sigla = "F"; cClass = "cell-F"; }
-              else if (stato === "Malattia") { sigla = "MAL"; cClass = "cell-MAL"; }
-              rowHtml += `<td class="day-cell plan-cell-interactive" onclick="apriQuickEdit('${nome}', '${iso}', '${stato}')">
-                <span class="cell-badge ${cClass}" title="${stato} (${iso})">${sigla}</span>
-              </td>`;
+      document.getElementById("kpi-intere").textContent = totIntere;
+      document.getElementById("kpi-mezze").textContent = totMezze;
+      document.getElementById("kpi-assenze").textContent = totAssenze;
+      document.getElementById("kpi-ferie").textContent = totFerie;
+
+      const tbody = document.getElementById("tabellaBody");
+      tbody.innerHTML = "";
+
+      Object.keys(stats).forEach(id => {
+        const item = stats[id];
+        const matchSearch = item.nome.toLowerCase().includes(searchFilter) || item.mansione.toLowerCase().includes(searchFilter);
+        const giorniEquiv = item.intere + (item.mezze * 0.5);
+        const compensoLordo = (giorniEquiv * item.tariffa) + item.bonus;
+        totaleMeseStipendi += compensoLordo;
+
+        if (!matchSearch) return;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>
+            <div style="font-weight:700; color:#fff; font-size:14px;">
+              ${item.nome}
+              ${item.escludiPdf ? '<span style="font-size:10px; background:#475569; color:#f1f5f9; padding:2px 6px; border-radius:6px; margin-left:6px;"><i class="fa-solid fa-eye-slash"></i> NO PDF</span>' : ''}
+            </div>
+            <div style="font-size:12px; color:var(--text-muted);">${item.mansione} &bull; ${item.telefono}</div>
+          </td>
+          <td><span class="badge badge-full">${item.intere}</span></td>
+          <td><span class="badge badge-half">${item.mezze}</span></td>
+          <td><span class="badge badge-abs">${item.assenze}</span></td>
+          <td><span class="badge badge-leave">${item.ferie}</span></td>
+          <td><strong style="color:#fff;">${giorniEquiv.toFixed(1)} gg</strong></td>
+          <td>€ ${item.tariffa.toFixed(2)}</td>
+          <td><span style="color:${item.bonus >= 0 ? 'var(--accent)' : 'var(--danger)'};">€ ${item.bonus.toFixed(2)}</span></td>
+          <td><strong style="color:var(--success); font-size:14px;">€ ${compensoLordo.toFixed(2)}</strong></td>
+          <td>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-secondary btn-icon" onclick="apriModificaDipendente('${id}')" title="Modifica"><i class="fa-solid fa-pen"></i></button>
+              <button class="btn btn-danger btn-icon" onclick="eliminaDipendente('${id}', '${item.nome}')" title="Rimuovi"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("kpi-totale").textContent = `€ ${totaleMeseStipendi.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+      window.cachedSummary = { stats: stats, mese: mese, totaleGlobale: totaleMeseStipendi };
+    }
+
+    monthInput.addEventListener("change", () => {
+      aggiornaDashboard();
+      const [y, m] = monthInput.value.split("-");
+      adminDateCursor = new Date(y, m - 1, 1);
+      renderAdminPlanning();
+    });
+
+    document.getElementById("searchInput").addEventListener("input", aggiornaDashboard);
+
+    window.setAdminPlanningMode = function(mode) {
+      adminPlanningMode = mode;
+      document.querySelectorAll(".btn-plan-toggle").forEach(b => b.classList.remove("active"));
+      document.getElementById(`btn-plan-${mode}`).classList.add("active");
+      renderAdminPlanning();
+    };
+
+    window.navAdminPlanning = function(direction) {
+      if (adminPlanningMode === "week") {
+        adminDateCursor.setDate(adminDateCursor.getDate() + (direction * 7));
+      } else {
+        adminDateCursor.setMonth(adminDateCursor.getMonth() + direction);
+      }
+      renderAdminPlanning();
+    };
+
+    function renderAdminPlanning() {
+      const thead = document.getElementById("admin-planning-head");
+      const tbody = document.getElementById("admin-planning-body");
+      const titleSpan = document.getElementById("admin-planning-title");
+      thead.innerHTML = "";
+      tbody.innerHTML = "";
+
+      const days = [];
+      const giorniNomi = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
+
+      if (adminPlanningMode === "week") {
+        const curr = new Date(adminDateCursor);
+        const dayOfWeek = curr.getDay();
+        const diffToMonday = curr.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
+        const monday = new Date(curr.setDate(diffToMonday));
+
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(monday);
+          d.setDate(monday.getDate() + i);
+          days.push(d);
+        }
+        titleSpan.textContent = `Settimana ${days[0].toLocaleDateString('it-IT', {day:'2-digit', month:'short'})} - ${days[6].toLocaleDateString('it-IT', {day:'2-digit', month:'short', year:'numeric'})}`;
+      } else {
+        const year = adminDateCursor.getFullYear();
+        const month = adminDateCursor.getMonth();
+        const totalDays = new Date(year, month + 1, 0).getDate();
+        for (let i = 1; i <= totalDays; i++) {
+          days.push(new Date(year, month, i));
+        }
+        titleSpan.textContent = adminDateCursor.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }).toUpperCase();
+      }
+
+      let headHtml = `<tr><th class="name-col">Collaboratore</th>`;
+      days.forEach(d => {
+        const isToday = d.toISOString().split("T")[0] === oggiStr;
+        const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+        headHtml += `<th class="day-col" style="${isToday ? 'border-bottom:2px solid var(--accent); color:var(--accent); background:rgba(56,189,248,0.12);' : ''} ${isWeekend ? 'color:#64748b;' : ''}">
+          <span style="font-size:9px;">${giorniNomi[d.getDay()]}</span><br><strong style="font-size:12px;">${d.getDate()}</strong>
+        </th>`;
+      });
+      headHtml += `</tr>`;
+      thead.innerHTML = headHtml;
+
+      Object.keys(dipendentiData).forEach(id => {
+        const nome = dipendentiData[id].nome;
+        let rowHtml = `<tr><td class="name-col" title="${nome}"><i class="fa-solid fa-user" style="font-size:11px; margin-right:6px; color:var(--accent);"></i>${nome}</td>`;
+
+        days.forEach(d => {
+          const iso = d.toISOString().split("T")[0];
+          const regGiorno = presenzeData[iso] || {};
+          
+          let stato = null;
+          Object.keys(regGiorno).forEach(k => {
+            if (regGiorno[k].dipendente && regGiorno[k].dipendente.toLowerCase() === nome.toLowerCase()) {
+              stato = regGiorno[k].stato;
             }
           });
 
-          rowHtml += `</tr>`;
-          tbody.innerHTML += rowHtml;
+          if (!stato) {
+            rowHtml += `<td class="day-cell plan-cell-interactive" onclick="apriQuickEdit('${nome}', '${iso}', null)">
+              <span class="cell-empty">&bull;</span>
+            </td>`;
+          } else {
+            let sigla = "I";
+            let cClass = "cell-I";
+            if (stato === "Mattina") { sigla = "M"; cClass = "cell-M"; }
+            else if (stato === "Pomeriggio") { sigla = "P"; cClass = "cell-P"; }
+            else if (stato === "Assente") { sigla = "A"; cClass = "cell-A"; }
+            else if (stato === "Ferie") { sigla = "F"; cClass = "cell-F"; }
+            else if (stato === "Malattia") { sigla = "MAL"; cClass = "cell-MAL"; }
+            rowHtml += `<td class="day-cell plan-cell-interactive" onclick="apriQuickEdit('${nome}', '${iso}', '${stato}')">
+              <span class="cell-badge ${cClass}" title="${stato} (${iso})">${sigla}</span>
+            </td>`;
+          }
         });
-      }
 
-      window.apriQuickEdit = function(dipendente, dataIso, statoAttuale) {
-        activeQuickEdit = { dipendente, data: dataIso };
-        document.getElementById("quick-nome").textContent = dipendente;
-        document.getElementById("quick-data").textContent = new Date(dataIso).toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
-        document.getElementById("modalQuickEdit").style.display = "flex";
-      };
+        rowHtml += `</tr>`;
+        tbody.innerHTML += rowHtml;
+      });
+    }
 
-      window.chiudiQuickEdit = function() {
-        document.getElementById("modalQuickEdit").style.display = "none";
-      };
+    window.apriQuickEdit = function(dipendente, dataIso, statoAttuale) {
+      activeQuickEdit = { dipendente, data: dataIso };
+      document.getElementById("quick-nome").textContent = dipendente;
+      document.getElementById("quick-data").textContent = new Date(dataIso).toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+      document.getElementById("modalQuickEdit").style.display = "flex";
+    };
 
-      window.applicaQuickStato = function(stato) {
-        if (!activeQuickEdit.dipendente || !activeQuickEdit.data) return;
-        const safeKey = activeQuickEdit.dipendente.replace(/[^a-zA-Z0-9]/g, "_");
-        
-        if (stato === "DELETE") {
-          remove(ref(db, `presenze/${activeQuickEdit.data}/${safeKey}`)).then(() => {
-            chiudiQuickEdit();
-            showToast(`Presenza rimossa per ${activeQuickEdit.dipendente}`);
-          });
-        } else {
-          set(ref(db, `presenze/${activeQuickEdit.data}/${safeKey}`), {
-            dipendente: activeQuickEdit.dipendente,
-            data: activeQuickEdit.data,
-            stato: stato,
-            orarioRegistrazione: new Date().toISOString(),
-            modificatoDa: "Admin (Planning)"
-          }).then(() => {
-            chiudiQuickEdit();
-            showToast(`${activeQuickEdit.dipendente}: ${stato}`);
-          });
-        }
-      };
+    window.chiudiQuickEdit = function() {
+      document.getElementById("modalQuickEdit").style.display = "none";
+    };
 
-      window.apriModaleNuovo = function() {
-        editDipendenteId = null;
-        document.getElementById("modalTitolo").textContent = "Nuovo Dipendente";
-        document.getElementById("form-nome").value = "";
-        document.getElementById("form-mansione").value = "";
-        document.getElementById("form-tariffa").value = "";
-        document.getElementById("form-bonus").value = "0";
-        document.getElementById("form-telefono").value = "";
-        document.getElementById("form-escludi-pdf").checked = false;
-        document.getElementById("modalDipendente").style.display = "flex";
-      };
-
-      window.apriModificaDipendente = function(id) {
-        editDipendenteId = id;
-        const d = dipendentiData[id];
-        document.getElementById("modalTitolo").textContent = `Modifica ${d.nome}`;
-        document.getElementById("form-nome").value = d.nome || "";
-        document.getElementById("form-mansione").value = d.mansione || "";
-        document.getElementById("form-tariffa").value = d.tariffa || 0;
-        document.getElementById("form-bonus").value = d.bonus || 0;
-        document.getElementById("form-telefono").value = d.telefono || "";
-        document.getElementById("form-escludi-pdf").checked = !!d.escludiPdf;
-        document.getElementById("modalDipendente").style.display = "flex";
-      };
-
-      window.chiudiModale = function() {
-        document.getElementById("modalDipendente").style.display = "none";
-      };
-
-      window.salvaDipendenteForm = function() {
-        const nome = document.getElementById("form-nome").value.trim();
-        const mansione = document.getElementById("form-mansione").value.trim() || "Collaboratore";
-        const tariffa = parseFloat(document.getElementById("form-tariffa").value) || 0;
-        const bonus = parseFloat(document.getElementById("form-bonus").value) || 0;
-        const telefono = document.getElementById("form-telefono").value.trim();
-        const escludiPdf = document.getElementById("form-escludi-pdf").checked;
-
-        if (!nome) return alert("Inserisci il nome e cognome");
-        const payload = { nome, mansione, tariffa, bonus, telefono, escludiPdf };
-
-        if (editDipendenteId) {
-          update(ref(db, `dipendenti/${editDipendenteId}`), payload).then(() => {
-            chiudiModale();
-            showToast("Dipendente aggiornato!");
-          });
-        } else {
-          const newId = Date.now().toString();
-          set(ref(db, `dipendenti/${newId}`), payload).then(() => {
-            chiudiModale();
-            showToast("Nuovo collaboratore salvato!");
-          });
-        }
-      };
-
-      window.eliminaDipendente = function(id, nome) {
-        if (confirm(`Confermi l'eliminazione definitiva di ${nome}?`)) {
-          remove(ref(db, `dipendenti/${id}`)).then(() => showToast("Collaboratore rimosso."));
-        }
-      };
-
-      window.salvaRettificaRapida = function() {
-        const data = document.getElementById("manual-date").value;
-        const dipendente = document.getElementById("manual-dipendente").value;
-        const stato = document.getElementById("manual-stato").value;
-
-        if (!data || !dipendente) return alert("Compila data e collaboratore");
-
-        const safeKey = dipendente.replace(/[^a-zA-Z0-9]/g, "_");
-        set(ref(db, `presenze/${data}/${safeKey}`), {
-          dipendente: dipendente,
-          data: data,
+    window.applicaQuickStato = function(stato) {
+      if (!activeQuickEdit.dipendente || !activeQuickEdit.data) return;
+      const safeKey = activeQuickEdit.dipendente.replace(/[^a-zA-Z0-9]/g, "_");
+      
+      if (stato === "DELETE") {
+        remove(ref(db, `presenze/${activeQuickEdit.data}/${safeKey}`)).then(() => {
+          chiudiQuickEdit();
+          showToast(`Presenza rimossa per ${activeQuickEdit.dipendente}`);
+        });
+      } else {
+        set(ref(db, `presenze/${activeQuickEdit.data}/${safeKey}`), {
+          dipendente: activeQuickEdit.dipendente,
+          data: activeQuickEdit.data,
           stato: stato,
           orarioRegistrazione: new Date().toISOString(),
-          modificatoDa: "Admin"
-        }).then(() => showToast("Presenza registrata con successo!"));
-      };
+          modificatoDa: "Admin (Planning)"
+        }).then(() => {
+          chiudiQuickEdit();
+          showToast(`${activeQuickEdit.dipendente}: ${stato}`);
+        });
+      }
+    };
 
-      window.applicaATuttiAdmin = function() {
-        const data = document.getElementById("manual-date").value;
-        const stato = document.getElementById("manual-stato").value;
-        const dipendenti = Object.values(dipendentiData).map(d => d.nome);
+    window.apriModaleNuovo = function() {
+      editDipendenteId = null;
+      document.getElementById("modalTitolo").textContent = "Nuovo Dipendente";
+      document.getElementById("form-nome").value = "";
+      document.getElementById("form-mansione").value = "";
+      document.getElementById("form-tariffa").value = "";
+      document.getElementById("form-bonus").value = "0";
+      document.getElementById("form-telefono").value = "";
+      document.getElementById("form-escludi-pdf").checked = false;
+      document.getElementById("modalDipendente").style.display = "flex";
+    };
 
-        if (!data) return alert("Inserisci una data valida!");
-        if (dipendenti.length === 0) return alert("Nessun dipendente presente nell'anagrafica!");
+    window.apriModificaDipendente = function(id) {
+      editDipendenteId = id;
+      const d = dipendentiData[id];
+      document.getElementById("modalTitolo").textContent = `Modifica ${d.nome}`;
+      document.getElementById("form-nome").value = d.nome || "";
+      document.getElementById("form-mansione").value = d.mansione || "";
+      document.getElementById("form-tariffa").value = d.tariffa || 0;
+      document.getElementById("form-bonus").value = d.bonus || 0;
+      document.getElementById("form-telefono").value = d.telefono || "";
+      document.getElementById("form-escludi-pdf").checked = !!d.escludiPdf;
+      document.getElementById("modalDipendente").style.display = "flex";
+    };
 
-        if (confirm(`Vuoi registrare la presenza "${stato}" per TUTTI i ${dipendenti.length} collaboratori in data ${data}?`)) {
-          const promises = dipendenti.map(nome => {
-            const safeKey = nome.replace(/[^a-zA-Z0-9]/g, "_");
-            return set(ref(db, `presenze/${data}/${safeKey}`), {
-              dipendente: nome,
-              data: data,
-              stato: stato,
-              orarioRegistrazione: new Date().toISOString(),
-              modificatoDa: "Admin (Squadra)"
-            });
+    window.chiudiModale = function() {
+      document.getElementById("modalDipendente").style.display = "none";
+    };
+
+    window.salvaDipendenteForm = function() {
+      const nome = document.getElementById("form-nome").value.trim();
+      const mansione = document.getElementById("form-mansione").value.trim() || "Collaboratore";
+      const tariffa = parseFloat(document.getElementById("form-tariffa").value) || 0;
+      const bonus = parseFloat(document.getElementById("form-bonus").value) || 0;
+      const telefono = document.getElementById("form-telefono").value.trim();
+      const escludiPdf = document.getElementById("form-escludi-pdf").checked;
+
+      if (!nome) return alert("Inserisci il nome e cognome");
+      const payload = { nome, mansione, tariffa, bonus, telefono, escludiPdf };
+
+      if (editDipendenteId) {
+        update(ref(db, `dipendenti/${editDipendenteId}`), payload).then(() => {
+          chiudiModale();
+          showToast("Dipendente aggiornato!");
+        });
+      } else {
+        const newId = Date.now().toString();
+        set(ref(db, `dipendenti/${newId}`), payload).then(() => {
+          chiudiModale();
+          showToast("Nuovo collaboratore salvato!");
+        });
+      }
+    };
+
+    window.eliminaDipendente = function(id, nome) {
+      if (confirm(`Confermi l'eliminazione definitiva di ${nome}?`)) {
+        remove(ref(db, `dipendenti/${id}`)).then(() => showToast("Collaboratore rimosso."));
+      }
+    };
+
+    window.salvaRettificaRapida = function() {
+      const data = document.getElementById("manual-date").value;
+      const dipendente = document.getElementById("manual-dipendente").value;
+      const stato = document.getElementById("manual-stato").value;
+
+      if (!data || !dipendente) return alert("Compila data e collaboratore");
+
+      const safeKey = dipendente.replace(/[^a-zA-Z0-9]/g, "_");
+      set(ref(db, `presenze/${data}/${safeKey}`), {
+        dipendente: dipendente, data: data, stato: stato,
+        orarioRegistrazione: new Date().toISOString(), modificatoDa: "Admin"
+      }).then(() => showToast("Presenza registrata con successo!"));
+    };
+
+    window.applicaATuttiAdmin = function() {
+      const data = document.getElementById("manual-date").value;
+      const stato = document.getElementById("manual-stato").value;
+      const dipendenti = Object.values(dipendentiData).map(d => d.nome);
+
+      if (!data) return alert("Inserisci una data valida!");
+      if (dipendenti.length === 0) return alert("Nessun dipendente presente nell'anagrafica!");
+
+      if (confirm(`Vuoi registrare la presenza "${stato}" per TUTTI i ${dipendenti.length} collaboratori in data ${data}?`)) {
+        const promises = dipendenti.map(nome => {
+          const safeKey = nome.replace(/[^a-zA-Z0-9]/g, "_");
+          return set(ref(db, `presenze/${data}/${safeKey}`), {
+            dipendente: nome, data: data, stato: stato,
+            orarioRegistrazione: new Date().toISOString(), modificatoDa: "Admin (Squadra)"
           });
-
-          Promise.all(promises).then(() => showToast(`Registrato "${stato}" per l'intera squadra!`));
-        }
-      };
-
-      function creaDocumentoPDF() {
-        const summary = window.cachedSummary;
-        if (!summary) return null;
-
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-        const meseFormat = summary.mese;
-
-        const tableRows = [];
-        let totaleConsulente = 0;
-
-        Object.keys(summary.stats).forEach(id => {
-          const item = summary.stats[id];
-          if (item.escludiPdf) return;
-
-          const ggEq = item.intere + (item.mezze * 0.5);
-          const compenso = (ggEq * item.tariffa) + item.bonus;
-          totaleConsulente += compenso;
-
-          tableRows.push([
-            item.nome,
-            item.mansione,
-            item.intere,
-            item.mezze,
-            item.assenze,
-            item.ferie,
-            `${ggEq.toFixed(1)} gg`,
-            `€ ${item.tariffa.toFixed(2)}`,
-            `€ ${item.bonus.toFixed(2)}`,
-            `€ ${compenso.toFixed(2)}`
-          ]);
         });
 
-        doc.autoTable({
-          startY: 54,
-          head: [["Collaboratore", "Mansione", "Int.", "Mezze", "Ass.", "Ferie", "Totale", "Tariffa", "Extra", "Netto Stim."]],
-          body: tableRows,
-          theme: "striped",
-          headStyles: { fillColor: [15, 27, 51], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
-          styles: { fontSize: 8, cellPadding: 3.5, textColor: [15, 23, 42] },
-          alternateRowStyles: { fillColor: [248, 250, 252] },
-          foot: [["TOTALE GENERALE", "", "", "", "", "", "", "", "", `€ ${totaleConsulente.toFixed(2)}`]],
-          footStyles: { fillColor: [226, 232, 240], textColor: [15, 23, 42], fontStyle: "bold", fontSize: 9 },
-          willDrawPage: function() {
-            doc.saveGraphicsState();
-            doc.setFontSize(48);
-            doc.setTextColor(240, 244, 248);
-            doc.setFont("helvetica", "bold");
-            doc.text("MIRISA CERAMICHE", 28, 175, { angle: 45 });
-            doc.restoreGraphicsState();
-          },
-          didDrawPage: function() {
-            doc.setFontSize(18);
-            doc.setTextColor(15, 23, 42);
-            doc.setFont("helvetica", "bold");
-            doc.text("MIRISA CERAMICHE S.R.L.", 14, 22);
+        Promise.all(promises).then(() => showToast(`Registrato "${stato}" per l'intera squadra!`));
+      }
+    };
 
-            doc.setFontSize(9);
-            doc.setTextColor(100, 116, 139);
-            doc.setFont("helvetica", "normal");
-            doc.text("Prospetto Presenze, Straordinari e Spettanze Mensili", 14, 28);
-            doc.text(`Periodo di Competenza: ${meseFormat}`, 14, 33);
-            doc.text("Documento Ufficiale per lo Studio del Consulente del Lavoro", 14, 38);
+    function creaDocumentoPDF() {
+      const summary = window.cachedSummary;
+      if (!summary) return null;
 
-            doc.setDrawColor(203, 213, 225);
-            doc.line(14, 43, 196, 43);
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const meseFormat = summary.mese;
 
-            const pageStr = `Pagina ${doc.internal.getNumberOfPages()}`;
-            doc.setFontSize(8);
-            doc.setTextColor(148, 163, 184);
-            doc.text(pageStr, 196, 288, { align: "right" });
-            doc.text("Mirisa Ceramiche S.r.l. - Dati verificati da Direzione Generale", 14, 288);
-          }
-        });
+      const tableRows = [];
+      let totaleConsulente = 0;
 
-        const finalY = doc.lastAutoTable.finalY + 20;
-        if (finalY < 260) {
+      Object.keys(summary.stats).forEach(id => {
+        const item = summary.stats[id];
+        if (item.escludiPdf) return;
+
+        const ggEq = item.intere + (item.mezze * 0.5);
+        const compenso = (ggEq * item.tariffa) + item.bonus;
+        totaleConsulente += compenso;
+
+        tableRows.push([
+          item.nome, item.mansione, item.intere, item.mezze, item.assenze, item.ferie,
+          `${ggEq.toFixed(1)} gg`, `€ ${item.tariffa.toFixed(2)}`, `€ ${item.bonus.toFixed(2)}`, `€ ${compenso.toFixed(2)}`
+        ]);
+      });
+
+      doc.autoTable({
+        startY: 54,
+        head: [["Collaboratore", "Mansione", "Int.", "Mezze", "Ass.", "Ferie", "Totale", "Tariffa", "Extra", "Netto Stim."]],
+        body: tableRows,
+        theme: "striped",
+        headStyles: { fillColor: [15, 27, 51], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
+        styles: { fontSize: 8, cellPadding: 3.5, textColor: [15, 23, 42] },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        foot: [["TOTALE GENERALE", "", "", "", "", "", "", "", "", `€ ${totaleConsulente.toFixed(2)}`]],
+        footStyles: { fillColor: [226, 232, 240], textColor: [15, 23, 42], fontStyle: "bold", fontSize: 9 },
+        willDrawPage: function() {
+          doc.saveGraphicsState();
+          doc.setFontSize(48);
+          doc.setTextColor(240, 244, 248);
+          doc.setFont("helvetica", "bold");
+          doc.text("MIRISA CERAMICHE", 28, 175, { angle: 45 });
+          doc.restoreGraphicsState();
+        },
+        didDrawPage: function() {
+          doc.setFontSize(18);
+          doc.setTextColor(15, 23, 42);
+          doc.setFont("helvetica", "bold");
+          doc.text("MIRISA CERAMICHE S.R.L.", 14, 22);
+
           doc.setFontSize(9);
+          doc.setTextColor(100, 116, 139);
           doc.setFont("helvetica", "normal");
-          doc.setTextColor(71, 85, 105);
-          doc.text("Note per lo Studio Paghe: ____________________________________________________", 14, finalY);
-          doc.text("Firma Amministrazione: ___________________________", 14, finalY + 14);
-          doc.text("Ricevuto Consulente: ___________________________", 115, finalY + 14);
-        }
+          doc.text("Prospetto Presenze, Straordinari e Spettanze Mensili", 14, 28);
+          doc.text(`Periodo di Competenza: ${meseFormat}`, 14, 33);
+          doc.text("Documento Ufficiale per lo Studio del Consulente del Lavoro", 14, 38);
 
-        return { doc, filename: `Prospetto_Mirisa_${meseFormat}.pdf`, mese: meseFormat, totale: totaleConsulente };
+          doc.setDrawColor(203, 213, 225);
+          doc.line(14, 43, 196, 43);
+
+          const pageStr = `Pagina ${doc.internal.getNumberOfPages()}`;
+          doc.setFontSize(8);
+          doc.setTextColor(148, 163, 184);
+          doc.text(pageStr, 196, 288, { align: "right" });
+          doc.text("Mirisa Ceramiche S.r.l. - Dati verificati da Direzione Generale", 14, 288);
+        }
+      });
+
+      const finalY = doc.lastAutoTable.finalY + 20;
+      if (finalY < 260) {
+        doc.setFontSize(9);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(71, 85, 105);
+        doc.text("Note per lo Studio Paghe: ____________________________________________________", 14, finalY);
+        doc.text("Firma Amministrazione: ___________________________", 14, finalY + 14);
+        doc.text("Ricevuto Consulente: ___________________________", 115, finalY + 14);
       }
 
-      window.stampaReportPDF = function() {
-        const res = creaDocumentoPDF();
-        if (!res) return alert("Nessun dato disponibile");
-        res.doc.save(res.filename);
-        showToast("Download del PDF completato!");
-      };
+      return { doc, filename: `Prospetto_Mirisa_${meseFormat}.pdf`, mese: meseFormat, totale: totaleConsulente };
+    }
 
-      window.condividiWhatsApp = async function() {
-        const res = creaDocumentoPDF();
-        if (!res) return alert("Nessun dato disponibile");
+    window.stampaReportPDF = function() {
+      const res = creaDocumentoPDF();
+      if (!res) return alert("Nessun dato disponibile");
+      res.doc.save(res.filename);
+      showToast("Download del PDF completato!");
+    };
 
-        const blob = res.doc.output("blob");
-        const file = new File([blob], res.filename, { type: "application/pdf" });
-        const messaggio = `*MIRISA CERAMICHE S.R.L.*\nSi trasmette il prospetto riepilogativo delle presenze per il mese di *${res.mese}* per l'elaborazione dei cedolini paga.\n\nTotale lordo stimato: *€ ${res.totale.toFixed(2)}*`;
+    window.condividiWhatsApp = async function() {
+      const res = creaDocumentoPDF();
+      if (!res) return alert("Nessun dato disponibile");
 
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          try {
-            await navigator.share({
-              files: [file],
-              title: `Presenze Mirisa ${res.mese}`,
-              text: messaggio
-            });
-            showToast("Inviato su WhatsApp!");
-            return;
-          } catch (err) {
-            if (err.name !== "AbortError") console.error(err);
-          }
+      const blob = res.doc.output("blob");
+      const file = new File([blob], res.filename, { type: "application/pdf" });
+      const messaggio = `*MIRISA CERAMICHE S.R.L.*\nSi trasmette il prospetto riepilogativo delle presenze per il mese di *${res.mese}* per l'elaborazione dei cedolini paga.\n\nTotale lordo stimato: *€ ${res.totale.toFixed(2)}*`;
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: `Presenze Mirisa ${res.mese}`, text: messaggio });
+          showToast("Inviato su WhatsApp!");
+          return;
+        } catch (err) {
+          if (err.name !== "AbortError") console.error(err);
         }
+      }
 
-        res.doc.save(res.filename);
-        const encodedMsg = encodeURIComponent(`${messaggio}\n\n(Il file ${res.filename} è stato scaricato nei tuoi download, allegalo a questa chat)`);
-        window.open(`https://api.whatsapp.com/send?text=${encodedMsg}`, "_blank");
-        showToast("PDF scaricato. Invia su WhatsApp!", true);
-      };
+      res.doc.save(res.filename);
+      const encodedMsg = encodeURIComponent(`${messaggio}\n\n(Il file ${res.filename} è stato scaricato nei tuoi download, allegalo a questa chat)`);
+      window.open(`https://api.whatsapp.com/send?text=${encodedMsg}`, "_blank");
+      showToast("PDF scaricato. Invia su WhatsApp!", true);
     };
   </script>
 </head>
 <body>
 
-  <!-- SCHERMATA BLOCCO BIOMETRICA / PIN ADMIN -->
-  <div id="lock-screen">
-    <div class="lock-box">
-      <div class="lock-icon"><i class="fa-solid fa-fingerprint"></i></div>
-      <h2 id="lockTitle" style="margin: 0; font-size: 20px; font-weight: 800; color: #fff;">Area Riservata</h2>
-      <p id="pinInstruction" class="pin-instruction"></p>
+  <!-- MODALE AUTENTICAZIONE / SBLOCCO ADMIN -->
+  <div id="auth-overlay">
+    <div class="auth-box" id="view-login-form" style="display: none;">
+      <div class="auth-icon"><i class="fa-solid fa-lock"></i></div>
+      <h2 style="margin:0 0 6px; font-size:20px; font-weight:800; color:#fff;">Accesso Amministrazione</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:18px;">Autenticati con le tue credenziali Firebase</p>
       
-      <input type="password" id="pinInput" class="pin-display" readonly placeholder="----">
+      <input type="email" id="login-email" class="auth-input" placeholder="dipierro.nino@gmail.com">
+      <input type="password" id="login-password" class="auth-input" placeholder="Password account">
       
+      <button class="btn btn-primary" onclick="eseguiLoginFirebase()" style="width:100%; justify-content:center; padding:12px; font-size:14px; font-weight:700;">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> Accedi al Portale
+      </button>
+
+      <div id="login-error" class="auth-error"></div>
+    </div>
+
+    <div class="auth-box" id="view-quick-unlock" style="display: none;">
+      <div class="auth-icon"><i class="fa-solid fa-fingerprint"></i></div>
+      <h2 style="margin:0 0 6px; font-size:20px; font-weight:800; color:#fff;">Sblocco Rapido</h2>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:10px;">Tocca l'impronta o digita il PIN</p>
+
+      <input type="password" id="quickPinInput" class="pin-display" readonly placeholder="----">
+
       <div class="pin-keypad">
-        <button class="pin-btn" onclick="digitaPin('1')">1</button>
-        <button class="pin-btn" onclick="digitaPin('2')">2</button>
-        <button class="pin-btn" onclick="digitaPin('3')">3</button>
-        <button class="pin-btn" onclick="digitaPin('4')">4</button>
-        <button class="pin-btn" onclick="digitaPin('5')">5</button>
-        <button class="pin-btn" onclick="digitaPin('6')">6</button>
-        <button class="pin-btn" onclick="digitaPin('7')">7</button>
-        <button class="pin-btn" onclick="digitaPin('8')">8</button>
-        <button class="pin-btn" onclick="digitaPin('9')">9</button>
-        <button class="pin-btn" style="color: var(--danger); font-size: 16px;" onclick="cancellaPin()"><i class="fa-solid fa-delete-left"></i></button>
-        <button class="pin-btn" onclick="digitaPin('0')">0</button>
-        <button class="pin-btn pin-btn-bio" onclick="avviaBiometria()" title="Sblocca con Impronta"><i class="fa-solid fa-fingerprint"></i></button>
+        <button class="pin-btn" onclick="digitaQuickPin('1')">1</button>
+        <button class="pin-btn" onclick="digitaQuickPin('2')">2</button>
+        <button class="pin-btn" onclick="digitaQuickPin('3')">3</button>
+        <button class="pin-btn" onclick="digitaQuickPin('4')">4</button>
+        <button class="pin-btn" onclick="digitaQuickPin('5')">5</button>
+        <button class="pin-btn" onclick="digitaQuickPin('6')">6</button>
+        <button class="pin-btn" onclick="digitaQuickPin('7')">7</button>
+        <button class="pin-btn" onclick="digitaQuickPin('8')">8</button>
+        <button class="pin-btn" onclick="digitaQuickPin('9')">9</button>
+        <button class="pin-btn" style="color:var(--danger);" onclick="cancellaQuickPin()"><i class="fa-solid fa-delete-left"></i></button>
+        <button class="pin-btn" onclick="digitaQuickPin('0')">0</button>
+        <button class="pin-btn pin-btn-bio" onclick="avviaBiometria()"><i class="fa-solid fa-fingerprint"></i></button>
       </div>
 
-      <div id="pinError" class="pin-error"></div>
+      <div id="quick-pin-error" class="auth-error"></div>
+      
+      <div style="margin-top:16px;">
+        <button onclick="disconnettiAccount()" style="background:transparent; border:none; color:var(--text-muted); font-size:12px; cursor:pointer; text-decoration:underline;">
+          Cambia account o disconnetti
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- PANNELLO PRINCIPALE AMMINISTRAZIONE -->
   <div class="container" id="main-container">
     <header>
       <div class="brand">
@@ -1029,16 +892,12 @@
         <button class="btn btn-whatsapp" onclick="condividiWhatsApp()">
           <i class="fa-brands fa-whatsapp" style="font-size:18px;"></i> Invia WhatsApp
         </button>
-        <button class="btn btn-secondary btn-icon" onclick="resetPinAdmin()" title="Reimposta PIN / Impronta">
-          <i class="fa-solid fa-key"></i>
-        </button>
-        <button class="btn btn-danger btn-icon" onclick="bloccaDashboard()" title="Disconnetti e Blocca">
-          <i class="fa-solid fa-lock"></i>
+        <button class="btn btn-danger btn-icon" onclick="disconnettiAccount()" title="Disconnetti Sessione">
+          <i class="fa-solid fa-power-off"></i>
         </button>
       </div>
     </header>
 
-    <!-- KPI Globali -->
     <div class="kpi-grid">
       <div class="kpi-card kpi-green">
         <div class="kpi-title">Giornate Piene <i class="fa-solid fa-check" style="color:var(--success);"></i></div>
@@ -1062,7 +921,6 @@
       </div>
     </div>
 
-    <!-- Selezione Vista -->
     <div class="view-tabs">
       <button class="view-tab-btn active" onclick="switchMainTab('view-registro', this)">
         <i class="fa-solid fa-file-invoice-dollar"></i> Registro Compensi & Buste Paga
@@ -1072,7 +930,6 @@
       </button>
     </div>
 
-    <!-- VISTA 1: REGISTRO COMPENSI -->
     <div id="view-registro" class="view-content active">
       <div class="card">
         <div class="card-header">
@@ -1141,7 +998,6 @@
       </div>
     </div>
 
-    <!-- VISTA 2: PLANNING CALENDARIO BLINDATO -->
     <div id="view-planning" class="view-content">
       <div class="card" style="padding: 16px;">
         <div class="planning-nav">
@@ -1178,7 +1034,6 @@
     </div>
   </div>
 
-  <!-- POPUP MODIFICA RAPIDA DA PLANNING -->
   <div class="modal-backdrop" id="modalQuickEdit">
     <div class="modal" style="max-width: 420px;">
       <div class="modal-header">
@@ -1218,7 +1073,6 @@
     </div>
   </div>
 
-  <!-- Modal Dipendente -->
   <div class="modal-backdrop" id="modalDipendente">
     <div class="modal">
       <div class="modal-header">
