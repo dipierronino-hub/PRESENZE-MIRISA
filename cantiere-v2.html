@@ -97,7 +97,7 @@
 
     <div class="card">
       <div style="margin-bottom: 14px;">
-        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione attiva</label>
+        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione di riferimento</label>
         <input type="date" id="selected-date" style="width: 100%; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 14px; outline: none;">
       </div>
 
@@ -112,7 +112,7 @@
 
     <div class="card" id="preview-box">
       <h3 style="margin: 0 0 12px; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 8px;">
-        <i class="fa-solid fa-list-check"></i> Presenze Rilevate (puoi correggerle prima di salvare):
+        <i class="fa-solid fa-list-check"></i> Registrazioni Rilevate:
       </h3>
       <div id="preview-list"></div>
       
@@ -138,15 +138,21 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Imposta data odierna locale senza conversioni UTC
     function pad(n) { return String(n).padStart(2, '0'); }
+
+    // Calcolo esatto della chiave data che admin.html genera per quel dato giorno
+    // In admin.html: days.push(new Date(year, month, i)); const iso = d.toISOString().split("T")[0];
+    function getAdminKeyForDay(year, month1Based, day) {
+      const d = new Date(year, month1Based - 1, day);
+      return d.toISOString().split("T")[0];
+    }
+
     const oggi = new Date();
     document.getElementById("selected-date").value = `${oggi.getFullYear()}-${pad(oggi.getMonth() + 1)}-${pad(oggi.getDate())}`;
 
     let catalogoDipendenti = [];
-    window.presenzeProposte = [];
+    window.operazioniProposte = [];
 
-    // Lettura anagrafica identica ad admin.html
     onValue(ref(db, "dipendenti"), (snap) => {
       const data = snap.val() || {};
       catalogoDipendenti = [];
@@ -161,7 +167,7 @@
         });
       });
 
-      document.getElementById("mic-status").textContent = `Pronto! ${catalogoDipendenti.length} dipendenti sincronizzati.`;
+      document.getElementById("mic-status").textContent = `Pronto! ${catalogoDipendenti.length} dipendenti pronti.`;
     });
 
     function showToast(msg) {
@@ -214,42 +220,71 @@
       }
     };
 
-    // Parser data rigoroso
-    function analizzaData(testo) {
+    // Parser di date multiple e singole
+    function estraiTuttiIGiorni(testo) {
       const t = testo.toLowerCase();
-      const ref = new Date();
+      const refDate = new Date();
+      let anno = refDate.getFullYear();
+      let mese = refDate.getMonth() + 1;
 
-      if (t.includes("l'altro ieri") || t.includes("l altro ieri") || t.includes("altroieri")) {
-        ref.setDate(ref.getDate() - 2);
-        return `${ref.getFullYear()}-${pad(ref.getMonth() + 1)}-${pad(ref.getDate())}`;
-      }
-      if (t.includes("ieri")) {
-        ref.setDate(ref.getDate() - 1);
-        return `${ref.getFullYear()}-${pad(ref.getMonth() + 1)}-${pad(ref.getDate())}`;
-      }
-      if (t.includes("oggi")) {
-        return `${ref.getFullYear()}-${pad(ref.getMonth() + 1)}-${pad(ref.getDate())}`;
-      }
-
-      const mesi = {
+      const mesiMap = {
         "gennaio": 1, "febbraio": 2, "marzo": 3, "aprile": 4,
         "maggio": 5, "giugno": 6, "luglio": 7, "agosto": 8,
         "settembre": 9, "ottobre": 10, "novembre": 11, "dicembre": 12
       };
 
-      const match = t.match(/(\b\d{1,2}\b)\s*(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\s*(\d{4})?/i);
-      if (match) {
-        const g = parseInt(match[1], 10);
-        const m = mesi[match[2].toLowerCase()];
-        const a = match[3] ? parseInt(match[3], 10) : ref.getFullYear();
-        return `${a}-${pad(m)}-${pad(g)}`;
+      Object.keys(mesiMap).forEach(mStr => {
+        if (t.includes(mStr)) mese = mesiMap[mStr];
+      });
+
+      const mAnno = t.match(/\b(202[4-9])\b/);
+      if (mAnno) anno = parseInt(mAnno[1], 10);
+
+      let giorni = [];
+
+      // Intervallo: "dal 2 al 4"
+      const matchRange = t.match(/(?:dal|da)\s+(\d{1,2})\s+(?:al|fino\s+al)\s+(\d{1,2})/);
+      if (matchRange) {
+        const start = parseInt(matchRange[1], 10);
+        const end = parseInt(matchRange[2], 10);
+        for (let g = start; g <= end; g++) giorni.push(g);
+      } else {
+        // Numeri di giorni citati: es. "il 2 settembre il 3 settembre ed il 4 settembre"
+        const regexGiorno = /(?:il|del|giorno|\b)\s*(\b\d{1,2}\b)/g;
+        let match;
+        while ((match = regexGiorno.exec(t)) !== null) {
+          const val = parseInt(match[1], 10);
+          if (val >= 1 && val <= 31 && !giorni.includes(val)) {
+            giorni.push(val);
+          }
+        }
       }
 
-      return null;
+      if (giorni.length === 0) {
+        if (t.includes("l'altro ieri") || t.includes("l altro ieri") || t.includes("altroieri")) {
+          const d = new Date(refDate);
+          d.setDate(d.getDate() - 2);
+          giorni.push(d.getDate());
+          mese = d.getMonth() + 1;
+          anno = d.getFullYear();
+        } else if (t.includes("ieri")) {
+          const d = new Date(refDate);
+          d.setDate(d.getDate() - 1);
+          giorni.push(d.getDate());
+          mese = d.getMonth() + 1;
+          anno = d.getFullYear();
+        } else if (t.includes("oggi")) {
+          giorni.push(refDate.getDate());
+          mese = refDate.getMonth() + 1;
+          anno = refDate.getFullYear();
+        }
+      }
+
+      return { anno, mese, giorni };
     }
 
-    // Parser stato rigoroso: assenza verificata per prima
-    function analizzaStato(testo) {
+    // STATO RIGOROSO: "assente" ha priorità assoluta su tutto
+    function estraiStatoRigoroso(testo) {
       const t = testo.toLowerCase();
       if (t.includes("assent") || t.includes("manc") || t.includes("non c'è") || t.includes("non ce") || t.includes("assenza")) {
         return "Assente";
@@ -264,79 +299,85 @@
     function elaboraFrase(frase) {
       document.getElementById("mic-status").textContent = "Elaborazione...";
 
-      const d = analizzaData(frase);
-      if (d) {
-        document.getElementById("selected-date").value = d;
-      }
-
+      const infoData = estraiTuttiIGiorni(frase);
+      const statoGlobale = estraiStatoRigoroso(frase);
       const t = frase.toLowerCase();
-      let lista = [];
+
+      // Riconoscimento dipendenti
+      let dipendentiCoinvolti = [];
 
       if (t.includes("tutt") || t.includes("squadra")) {
-        const baseStato = analizzaStato(t.split(/tranne|eccetto|meno/)[0]);
-        lista = catalogoDipendenti.map(dip => ({
-          nome: dip.nome,
-          stato: baseStato
-        }));
-
-        if (t.includes("tranne") || t.includes("eccetto") || t.includes("meno")) {
-          const excPart = t.split(/tranne|eccetto|meno/)[1];
-          const excStato = analizzaStato(excPart) === baseStato ? (baseStato === "Intera" ? "Assente" : "Intera") : analizzaStato(excPart);
-
-          catalogoDipendenti.forEach(dip => {
-            if (dip.tokens.some(tok => excPart.includes(tok))) {
-              const idx = lista.findIndex(x => x.nome === dip.nome);
-              if (idx !== -1) lista[idx].stato = excStato;
-            }
-          });
-        }
+        dipendentiCoinvolti = catalogoDipendenti.map(d => d.nome);
       } else {
-        const statoTrovato = analizzaStato(t);
-        let candidati = [];
-
+        let punteggi = [];
         catalogoDipendenti.forEach(dip => {
           let score = 0;
           dip.tokens.forEach(tok => {
             if (t.includes(tok)) score += 5;
           });
 
-          // Punteggi dedicati
-          if (t.includes("bulicko") && dip.nome.toLowerCase().includes("bulicko")) score += 20;
-          if (t.includes("davide") && dip.nome.toLowerCase().includes("davide")) score += 10;
-          if (t.includes("scarano") && dip.nome.toLowerCase().includes("scarano")) score += 20;
-          if (t.includes("margherita") && dip.nome.toLowerCase().includes("margherita")) score += 10;
-          if (t.includes("loschiavone") && dip.nome.toLowerCase().includes("loschiavone")) score += 20;
-          if (t.includes("isabella") && dip.nome.toLowerCase().includes("isabella")) score += 10;
-          if (t.includes("pellump") && dip.nome.toLowerCase().includes("pellump")) score += 20;
-          if (t.includes("gongo") && dip.nome.toLowerCase().includes("gongo")) score += 10;
-          if (t.includes("ressa") && dip.nome.toLowerCase().includes("ressa")) score += 20;
-          if (t.includes("vito") && dip.nome.toLowerCase().includes("vito")) score += 10;
-          if (t.includes("campobasso") && dip.nome.toLowerCase().includes("campobasso")) score += 20;
-          if ((t.includes("dipierro") || t.includes("di piero")) && dip.nome.toLowerCase().includes("dipierro")) score += 20;
+          // Pesi speciali prioritari sui singoli nomi
+          if (t.includes("ressa") && dip.nome.toLowerCase().includes("ressa")) score += 25;
+          if (t.includes("vito") && dip.nome.toLowerCase().includes("vito")) score += 15;
+          if (t.includes("bulicko") && dip.nome.toLowerCase().includes("bulicko")) score += 25;
+          if (t.includes("davide") && dip.nome.toLowerCase().includes("davide")) score += 15;
+          if (t.includes("scarano") && dip.nome.toLowerCase().includes("scarano")) score += 25;
+          if (t.includes("margherita") && dip.nome.toLowerCase().includes("margherita")) score += 15;
+          if (t.includes("loschiavone") && dip.nome.toLowerCase().includes("loschiavone")) score += 25;
+          if (t.includes("isabella") && dip.nome.toLowerCase().includes("isabella")) score += 15;
+          if (t.includes("pellump") && dip.nome.toLowerCase().includes("pellump")) score += 25;
+          if (t.includes("campobasso") && dip.nome.toLowerCase().includes("campobasso")) score += 25;
+          if ((t.includes("dipierro") || t.includes("di piero")) && dip.nome.toLowerCase().includes("dipierro")) score += 25;
 
-          if (score > 0) candidati.push({ dip, score });
+          if (score > 0) punteggi.push({ nome: dip.nome, score });
         });
 
-        if (candidati.length > 0) {
-          candidati.sort((a, b) => b.score - a.score);
-          lista.push({
-            nome: candidati[0].dip.nome,
-            stato: statoTrovato
-          });
+        if (punteggi.length > 0) {
+          punteggi.sort((a, b) => b.score - a.score);
+          dipendentiCoinvolti.push(punteggi[0].nome);
         }
       }
 
-      if (lista.length > 0) {
-        window.presenzeProposte = lista;
+      // Se non ha trovato giorni specifici nel parlato, usa la data del selettore
+      let giorniFinali = infoData.giorni;
+      let annoFinale = infoData.anno;
+      let meseFinale = infoData.mese;
+
+      if (giorniFinali.length === 0) {
+        const selVal = document.getElementById("selected-date").value;
+        const [a, m, g] = selVal.split("-");
+        annoFinale = parseInt(a, 10);
+        meseFinale = parseInt(m, 10);
+        giorniFinali = [parseInt(g, 10)];
+      }
+
+      // Creazione elenco operazioni
+      window.operazioniProposte = [];
+      dipendentiCoinvolti.forEach(nomeDip => {
+        giorniFinali.forEach(giorno => {
+          // CHIAVE CALCOLATA SULL'OFFSET ESATTO DI ADMIN.HTML
+          const adminKey = getAdminKeyForDay(annoFinale, meseFinale, giorno);
+          window.operazioniProposte.push({
+            nome: nomeDip,
+            giorno: giorno,
+            mese: meseFinale,
+            anno: annoFinale,
+            adminKey: adminKey,
+            stato: statoGlobale
+          });
+        });
+      });
+
+      if (window.operazioniProposte.length > 0) {
         renderizzaAnteprima();
-        document.getElementById("mic-status").textContent = `Riconosciuto! Controlla e salva.`;
+        document.getElementById("mic-status").textContent = `Riconosciute ${window.operazioniProposte.length} registrazioni. Controlla e salva.`;
       } else {
-        document.getElementById("mic-status").textContent = "Nessun collaboratore riconosciuto. Riprova.";
+        document.getElementById("mic-status").textContent = "Nessun collaboratore riconosciuto. Riprova chiaramente.";
       }
     }
 
     window.cambiaStatoManuale = function(index, nuovoStato) {
-      window.presenzeProposte[index].stato = nuovoStato;
+      window.operazioniProposte[index].stato = nuovoStato;
       renderizzaAnteprima();
     };
 
@@ -345,13 +386,13 @@
       const list = document.getElementById("preview-list");
       list.innerHTML = "";
 
-      window.presenzeProposte.forEach((item, idx) => {
+      window.operazioniProposte.forEach((item, idx) => {
         const div = document.createElement("div");
         div.className = "preview-item";
         div.innerHTML = `
           <div class="preview-header">
-            <strong>${item.nome}</strong>
-            <span style="font-size:12px; font-weight:700; color:var(--accent);">${item.stato}</span>
+            <strong>${item.nome} &bull; ${item.giorno}/${item.mese}/${item.anno}</strong>
+            <span style="font-size:12px; font-weight:800; color:${item.stato === 'Assente' ? 'var(--danger)' : 'var(--success)'};">${item.stato}</span>
           </div>
           <div class="status-selector">
             <button class="btn-opt ${item.stato === 'Intera' ? 'active-intera' : ''}" onclick="cambiaStatoManuale(${idx}, 'Intera')">Intera</button>
@@ -372,22 +413,21 @@
       box.style.display = "block";
     }
 
-    // SALVATAGGIO ESATTO: Esegue la stessa chiamata che fa il pulsante Salva di admin.html
+    // SALVATAGGIO DIRETTO NEI NODI ESATTI
     window.confermaSalvataggio = async function() {
-      const dataSel = document.getElementById("selected-date").value;
-      if (!dataSel || window.presenzeProposte.length === 0) return;
+      if (!window.operazioniProposte || window.operazioniProposte.length === 0) return;
 
       const btn = document.getElementById("btn-salva");
       btn.classList.add("loading");
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Salvataggio...</span>`;
       btn.disabled = true;
 
-      const promises = window.presenzeProposte.map(item => {
+      const promises = window.operazioniProposte.map(item => {
         const safeKey = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
-        // Scrive ESATTAMENTE nel percorso atteso da admin.html: presenze/YYYY-MM-DD/SafeKey
-        return set(ref(db, `presenze/${dataSel}/${safeKey}`), {
+        // Scrittura sincronizzata con admin.html: presenze/{adminKey}/{safeKey}
+        return set(ref(db, `presenze/${item.adminKey}/${safeKey}`), {
           dipendente: item.nome,
-          data: dataSel,
+          data: item.adminKey,
           stato: item.stato,
           orarioRegistrazione: new Date().toISOString(),
           modificatoDa: "Voice App"
@@ -399,20 +439,20 @@
 
         btn.classList.remove("loading");
         btn.classList.add("success");
-        btn.innerHTML = `<i class="fa-solid fa-check"></i> <span>Salvato!</span>`;
+        btn.innerHTML = `<i class="fa-solid fa-check"></i> <span>Presenze Registrate con Successo!</span>`;
 
-        showToast(`Presenze salvate per il ${dataSel}!`);
+        showToast(`Salvate con successo!`);
 
         setTimeout(() => {
           document.getElementById("preview-box").style.display = "none";
           document.getElementById("transcript").textContent = "In attesa della tua voce...";
-          window.presenzeProposte = [];
+          window.operazioniProposte = [];
         }, 1500);
 
       } catch (err) {
         btn.classList.remove("loading");
-        btn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <span>Errore</span>`;
-        alert("Errore: " + err.message);
+        btn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <span>Errore di Salvataggio</span>`;
+        alert("Errore salvataggio: " + err.message);
         btn.disabled = false;
       }
     };
