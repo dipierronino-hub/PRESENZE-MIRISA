@@ -75,14 +75,8 @@
       transition: all 0.3s ease;
     }
     .btn-confirm:active { transform: scale(0.98); }
-    .btn-confirm.loading {
-      background: #0284c7 !important;
-      cursor: wait;
-    }
-    .btn-confirm.success {
-      background: #059669 !important;
-      box-shadow: 0 0 20px rgba(16, 185, 129, 0.6);
-    }
+    .btn-confirm.loading { background: #0284c7 !important; cursor: wait; }
+    .btn-confirm.success { background: #059669 !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.6); }
 
     #toast { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #1e293b; color: #fff; padding: 12px 18px; border-radius: 10px; border-left: 4px solid var(--success); display: none; text-align: center; font-size: 14px; font-weight: 600; z-index: 200; }
   </style>
@@ -139,7 +133,6 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // Formattazione data pura senza dipendenza dal fuso orario UTC
     function formatYMD(year, month, day) {
       const y = String(year);
       const m = String(month).padStart(2, '0');
@@ -153,22 +146,14 @@
     let catalogoDipendenti = [];
     let presenzeProposte = [];
 
-    // Mappatura esatta ID e nomi dal database Firebase
+    // Caricamento dei dipendenti sincronizzato con admin.html
     onValue(ref(db, "dipendenti"), (snap) => {
       const data = snap.val() || {};
       catalogoDipendenti = [];
 
       Object.keys(data).forEach(idChiave => {
         const val = data[idChiave];
-        let nomeVisual = "";
-        if (typeof val === "string") {
-          nomeVisual = val;
-        } else if (val && typeof val === "object") {
-          nomeVisual = val.nome || val.nominativo || (val.nome && val.cognome ? `${val.cognome} ${val.nome}` : "") || idChiave;
-        } else {
-          nomeVisual = idChiave;
-        }
-
+        const nomeVisual = (typeof val === "string") ? val : (val.nome || val.nominativo || idChiave);
         const parole = nomeVisual.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter(p => p.length >= 3);
 
         catalogoDipendenti.push({
@@ -231,7 +216,6 @@
       }
     };
 
-    // Parser Date Locale (zero disallineamenti di fuso orario)
     function estraiDataDaTesto(testo) {
       const t = testo.toLowerCase();
       const oggi = new Date();
@@ -267,17 +251,17 @@
       return null;
     }
 
-    // STATI RIGIDI: Assenza e Ferie verificate con priorità assoluta
-    function rilevaSiglaStato(testo) {
+    // Identificazione stato coerente con admin.html
+    function rilevaStatoEsatto(testo) {
       const t = testo.toLowerCase();
       if (t.includes("assent") || t.includes("manc") || t.includes("non c'è") || t.includes("non ce") || t.includes("assenza")) {
-        return { sigla: "A", label: "Assente" };
+        return "Assente";
       }
-      if (t.includes("feri")) return { sigla: "F", label: "Ferie" };
-      if (t.includes("malatt") || t.includes("indispost")) return { sigla: "MAL", label: "Malattia" };
-      if (t.includes("pomerigg")) return { sigla: "P", label: "Pomeriggio" };
-      if (t.includes("mezz") || t.includes("mattin")) return { sigla: "M", label: "Mattina" };
-      return { sigla: "I", label: "Intera" };
+      if (t.includes("feri")) return "Ferie";
+      if (t.includes("malatt") || t.includes("indispost")) return "Malattia";
+      if (t.includes("pomerigg")) return "Pomeriggio";
+      if (t.includes("mezz") || t.includes("mattin")) return "Mattina";
+      return "Intera";
     }
 
     function elaboraFrase(frase) {
@@ -291,35 +275,30 @@
       const text = frase.toLowerCase();
       let risultati = [];
 
-      // 1. Squadra completa ("tutti", "squadra")
       if (text.includes("tutt") || text.includes("squadra")) {
-        const statoObj = rilevaSiglaStato(text.split(/tranne|eccetto|meno/)[0]);
+        const statoBase = rilevaStatoEsatto(text.split(/tranne|eccetto|meno/)[0]);
         risultati = catalogoDipendenti.map(d => ({
           id: d.id,
           nome: d.nome,
-          statoSigla: statoObj.sigla,
-          statoLabel: statoObj.label
+          stato: statoBase
         }));
 
         if (text.includes("tranne") || text.includes("eccetto") || text.includes("meno")) {
           const parteEccezioni = text.split(/tranne|eccetto|meno/)[1];
-          const eccObj = rilevaSiglaStato(parteEccezioni);
-          const siglaApplicare = eccObj.sigla === statoObj.sigla ? (statoObj.sigla === "I" ? "A" : "I") : eccObj.sigla;
-          const labelApplicare = siglaApplicare === "A" ? "Assente" : (siglaApplicare === "I" ? "Intera" : eccObj.label);
+          const eccStato = rilevaStatoEsatto(parteEccezioni);
+          const statoFinale = (eccStato === statoBase) ? (statoBase === "Intera" ? "Assente" : "Intera") : eccStato;
 
           catalogoDipendenti.forEach(d => {
             if (d.parole.some(p => parteEccezioni.includes(p))) {
               const idx = risultati.findIndex(r => r.id === d.id);
               if (idx !== -1) {
-                risultati[idx].statoSigla = siglaApplicare;
-                risultati[idx].statoLabel = labelApplicare;
+                risultati[idx].stato = statoFinale;
               }
             }
           });
         }
       } else {
-        // 2. Singoli nominativi con punteggio selettivo
-        const statoObj = rilevaSiglaStato(text);
+        const statoTrovato = rilevaStatoEsatto(text);
         let candidati = [];
 
         catalogoDipendenti.forEach(d => {
@@ -328,17 +307,18 @@
             if (text.includes(p)) score += 3;
           });
 
-          // Punteggi dedicati per ciascun cognome
-          if (text.includes("scarano") && d.nome.toLowerCase().includes("scarano")) score += 10;
-          if (text.includes("margherita") && d.nome.toLowerCase().includes("margherita")) score += 10;
-          if (text.includes("loschiavone") && d.nome.toLowerCase().includes("loschiavone")) score += 10;
-          if (text.includes("isabella") && d.nome.toLowerCase().includes("isabella")) score += 10;
-          if (text.includes("pellump") && d.nome.toLowerCase().includes("pellump")) score += 10;
-          if (text.includes("gongo") && d.nome.toLowerCase().includes("gongo")) score += 10;
-          if (text.includes("ressa") && d.nome.toLowerCase().includes("ressa")) score += 10;
-          if (text.includes("vito") && d.nome.toLowerCase().includes("vito")) score += 5;
-          if (text.includes("campobasso") && d.nome.toLowerCase().includes("campobasso")) score += 10;
-          if ((text.includes("dipierro") || text.includes("di piero")) && d.nome.toLowerCase().includes("dipierro")) score += 10;
+          if (text.includes("bulicko") && d.nome.toLowerCase().includes("bulicko")) score += 12;
+          if (text.includes("davide") && d.nome.toLowerCase().includes("davide")) score += 8;
+          if (text.includes("scarano") && d.nome.toLowerCase().includes("scarano")) score += 12;
+          if (text.includes("margherita") && d.nome.toLowerCase().includes("margherita")) score += 8;
+          if (text.includes("loschiavone") && d.nome.toLowerCase().includes("loschiavone")) score += 12;
+          if (text.includes("isabella") && d.nome.toLowerCase().includes("isabella")) score += 8;
+          if (text.includes("pellump") && d.nome.toLowerCase().includes("pellump")) score += 12;
+          if (text.includes("gongo") && d.nome.toLowerCase().includes("gongo")) score += 8;
+          if (text.includes("ressa") && d.nome.toLowerCase().includes("ressa")) score += 12;
+          if (text.includes("vito") && d.nome.toLowerCase().includes("vito")) score += 6;
+          if (text.includes("campobasso") && d.nome.toLowerCase().includes("campobasso")) score += 12;
+          if ((text.includes("dipierro") || text.includes("di piero")) && d.nome.toLowerCase().includes("dipierro")) score += 12;
 
           if (score > 0) {
             candidati.push({ dip: d, score: score });
@@ -347,12 +327,11 @@
 
         if (candidati.length > 0) {
           candidati.sort((a, b) => b.score - a.score);
-          const scelto = candidati[0].dip;
+          const top = candidati[0].dip;
           risultati.push({
-            id: scelto.id,
-            nome: scelto.nome,
-            statoSigla: statoObj.sigla,
-            statoLabel: statoObj.label
+            id: top.id,
+            nome: top.nome,
+            stato: statoTrovato
           });
         }
       }
@@ -363,7 +342,7 @@
         const dataAttiva = document.getElementById("selected-date").value;
         document.getElementById("mic-status").textContent = `Presenze pronte per: ${dataAttiva}`;
       } else {
-        document.getElementById("mic-status").textContent = "Nessun collaboratore riconosciuto chiaramente. Riprova.";
+        document.getElementById("mic-status").textContent = "Nessun collaboratore riconosciuto. Riprova.";
       }
     }
 
@@ -374,15 +353,15 @@
 
       elenco.forEach(item => {
         let badgeClass = "badge-intera";
-        if (item.statoSigla === "M" || item.statoSigla === "P") badgeClass = "badge-mezza";
-        if (item.statoSigla === "A" || item.statoSigla === "MAL") badgeClass = "badge-assente";
-        if (item.statoSigla === "F") badgeClass = "badge-ferie";
+        if (item.stato === "Mattina" || item.stato === "Pomeriggio") badgeClass = "badge-mezza";
+        if (item.stato === "Assente") badgeClass = "badge-assente";
+        if (item.stato === "Ferie" || item.stato === "Malattia") badgeClass = "badge-ferie";
 
         const div = document.createElement("div");
         div.className = "preview-item";
         div.innerHTML = `
           <span><strong>${item.nome}</strong></span>
-          <span class="badge-preview ${badgeClass}">${item.statoLabel} (${item.statoSigla})</span>
+          <span class="badge-preview ${badgeClass}">${item.stato}</span>
         `;
         list.appendChild(div);
       });
@@ -395,9 +374,9 @@
       box.style.display = "block";
     }
 
-    // SALVATAGGIO SUL PLANNING (senza slittamenti di data)
+    // Salvataggio conforme alla logica di admin.html
     window.confermaSalvataggio = async function() {
-      const dataSel = document.getElementById("selected-date").value; // "YYYY-MM-DD" esatto
+      const dataSel = document.getElementById("selected-date").value; // es: "2026-09-02"
       if (!dataSel || presenzeProposte.length === 0) return;
 
       const btn = document.getElementById("btn-salva");
@@ -405,31 +384,36 @@
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Salvataggio in corso...</span>`;
       btn.disabled = true;
 
-      // Estrazione pura di stringhe senza conversioni Timezone
-      const parti = dataSel.split("-");
-      const anno = parti[0];
-      const mese = parti[1];
-      const giornoStr = parti[2];
-      const meseAnno = `${anno}-${mese}`;       // es: "2026-09"
-      const giornoNum = parseInt(giornoStr, 10);  // es: 15 (senza zero)
+      const [anno, mese, giorno] = dataSel.split("-");
+      const giornoNum = parseInt(giorno, 10);
+      const giornoMeno1 = giornoNum > 1 ? String(giornoNum - 1).padStart(2, '0') : null;
+      const dataOffsetMeno1 = giornoMeno1 ? `${anno}-${mese}-${giornoMeno1}` : null;
 
       const updates = {};
 
       presenzeProposte.forEach(item => {
-        const idReale = item.id;
-        const sigla = item.statoSigla;
+        const safeKey = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
 
-        // Scrive esattamente sotto presenze/2026-09/15/ID = "A"
-        updates[`presenze/${meseAnno}/${giornoNum}/${idReale}`] = sigla;
-
-        // Registro storico giornaliero
-        updates[`presenze/${dataSel}/${idReale}`] = {
+        const record = {
           dipendente: item.nome,
           data: dataSel,
-          stato: sigla,
-          statoEsteso: item.statoLabel,
-          orario: new Date().toISOString()
+          stato: item.stato,
+          orarioRegistrazione: new Date().toISOString(),
+          modificatoDa: "Voice App (Cantiere)"
         };
+
+        // 1. Scrittura primaria letta da admin.html: presenze/YYYY-MM-DD/Nome_Dipendente
+        updates[`presenze/${dataSel}/${safeKey}`] = record;
+        updates[`presenze/${dataSel}/${item.id}`] = record;
+
+        // 2. Allineamento anti-offset (risolve la discrepanza UTC di toISOString in admin.html)
+        if (dataOffsetMeno1) {
+          updates[`presenze/${dataOffsetMeno1}/${safeKey}`] = record;
+        }
+
+        // 3. Compatibilità con il formato a sigle
+        const sigla = (item.stato === "Assente") ? "A" : (item.stato === "Mattina" ? "M" : (item.stato === "Pomeriggio" ? "P" : (item.stato === "Ferie" ? "F" : (item.stato === "Malattia" ? "MAL" : "I"))));
+        updates[`presenze/${anno}-${mese}/${giornoNum}/${item.id}`] = sigla;
       });
 
       try {
@@ -439,7 +423,7 @@
         btn.classList.add("success");
         btn.innerHTML = `<i class="fa-solid fa-check"></i> <span>Presenze Registrate!</span>`;
 
-        showToast(`Presenze salvate per il giorno ${giornoNum}/${mese}!`);
+        showToast(`Presenze registrate per il ${dataSel}!`);
 
         setTimeout(() => {
           document.getElementById("preview-box").style.display = "none";
