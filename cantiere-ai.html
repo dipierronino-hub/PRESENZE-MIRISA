@@ -111,10 +111,10 @@
       </div>
     </div>
 
-    <!-- ANTEPRIMA PROPOSTA ELABORATA DALL'AI -->
+    <!-- ANTEPRIMA PROPOSTA ELABORATA -->
     <div class="card" id="ai-preview-box">
       <h3 style="margin: 0 0 12px; font-size: 15px; color: var(--accent); display: flex; align-items: center; gap: 8px;">
-        <i class="fa-solid fa-list-check"></i> Presenze Rilevate dall'AI:
+        <i class="fa-solid fa-list-check"></i> Presenze Rilevate:
       </h3>
       <div id="ai-preview-list"></div>
       
@@ -194,13 +194,13 @@
       recognition.onresult = (event) => {
         const text = event.results[0][0].transcript;
         document.getElementById("transcript").textContent = `"${text}"`;
-        analizzaFraseCompleta(text);
+        analizzaVoceSuper(text);
       };
 
       recognition.onerror = () => {
         isRecording = false;
         document.getElementById("btn-mic").classList.remove("recording");
-        document.getElementById("mic-status").textContent = "Errore nel microfono. Riprova.";
+        document.getElementById("mic-status").textContent = "Microfono non disponibile. Riprova.";
       };
 
       recognition.onend = () => {
@@ -210,7 +210,7 @@
     }
 
     window.toggleVoiceRecording = function() {
-      if (!recognition) return alert("Riconoscimento vocale non supportato su questo browser. Usa Google Chrome o Safari.");
+      if (!recognition) return alert("Riconoscimento vocale non supportato su questo browser.");
       if (isRecording) {
         recognition.stop();
       } else {
@@ -218,114 +218,110 @@
       }
     };
 
-    // MOTORE PARSER INTELLIGENTE LOCALE (Fallback infallibile senza errori)
-    function elaboraInLocale(frase) {
+    // MOTORE PARSER INTELLIGENTE LOCALE (Zero latenza, infallibile)
+    function parserLocale(frase) {
       const text = frase.toLowerCase();
       let risultati = [];
 
-      // Rileva lo stato menzionato nella frase
       let stato = "Intera";
-      if (text.includes("assente") || text.includes("manca") || text.includes("non c'è")) stato = "Assente";
-      else if (text.includes("ferie")) stato = "Ferie";
-      else if (text.includes("malattia") || text.includes("indisposto")) stato = "Malattia";
-      else if (text.includes("mezza") || text.includes("mattina")) stato = "Mattina";
-      else if (text.includes("pomeriggio")) stato = "Pomeriggio";
-      else if (text.includes("presente")) stato = "Intera";
+      if (text.includes("assent") || text.includes("manc") || text.includes("non c'è")) stato = "Assente";
+      else if (text.includes("feri")) stato = "Ferie";
+      else if (text.includes("malatt") || text.includes("indispost")) stato = "Malattia";
+      else if (text.includes("mezz") || text.includes("mattin")) stato = "Mattina";
+      else if (text.includes("pomerigg")) stato = "Pomeriggio";
+      else if (text.includes("present")) stato = "Intera";
 
-      // 1. Caso: tutta la squadra
-      if (text.includes("tutta la squadra") || text.includes("tutti presenti") || text.includes("tutti")) {
-        risultati = dipendentiNomi.map(n => ({ nome: n, stato: "Intera" }));
+      // 1. Caso globale: "Tutti assenti", "Tutta la squadra presente", etc.
+      if (text.includes("tutt") || text.includes("squadra")) {
+        risultati = dipendentiNomi.map(n => ({ nome: n, stato: stato }));
         
-        // Verifica eccezioni
+        // Verifica eventuali eccezioni pronunciate
         dipendentiNomi.forEach(nome => {
           const parti = nome.toLowerCase().split(" ");
           const nominato = parti.some(p => p.length > 2 && text.includes(p));
           if (nominato && (text.includes("tranne") || text.includes("eccetto") || text.includes("meno"))) {
             const idx = risultati.findIndex(r => r.nome === nome);
-            if (idx !== -1) risultati[idx].stato = stato !== "Intera" ? stato : "Assente";
+            if (idx !== -1) risultati[idx].stato = (stato === "Assente") ? "Intera" : "Assente";
           }
         });
         return risultati;
       }
 
-      // 2. Caso specifico per nomi
-      let abbinati = 0;
+      // 2. Controllo nominativi specifici
+      let matched = 0;
       dipendentiNomi.forEach(nome => {
         const parti = nome.toLowerCase().split(" ");
         const nominato = parti.some(p => p.length > 2 && text.includes(p));
         if (nominato) {
           risultati.push({ nome: nome, stato: stato });
-          abbinati++;
+          matched++;
         }
       });
 
-      // 3. Se non presente in anagrafica, pulisci il nome pronunciato
-      if (abbinati === 0) {
-        let pulita = frase.replace(/oggi|presente|assente|ferie|malattia|mezza|mattina|pomeriggio|intera|giornata/gi, "").trim();
-        pulita = pulita.replace(/^[,\s]+|[,\s]+$/g, "");
-        if (pulita.length > 2) {
-          risultati.push({ nome: pulita, stato: stato });
+      // 3. Nome nuovo non in anagrafica
+      if (matched === 0) {
+        let pulito = frase.replace(/oggi|presente|presenti|assente|assenti|ferie|malattia|mezza|mattina|pomeriggio|intera/gi, "").trim();
+        pulito = pulito.replace(/^[,\s]+|[,\s]+$/g, "");
+        if (pulito.length > 2) {
+          risultati.push({ nome: pulito, stato: stato });
         }
       }
 
       return risultati;
     }
 
-    // ELABORATORE IBRIDO (Gemini 2.5/2.0 + Fallback Locale istantaneo)
-    async function analizzaFraseCompleta(frase) {
-      document.getElementById("mic-status").textContent = "Analisi intelligente in corso...";
-      const GEMINI_API_KEY = recuperaApiKeyAI();
+    // ELABORATORE ADATTIVO ULTRA-RESILIENTE
+    async function analizzaVoceSuper(frase) {
+      document.getElementById("mic-status").textContent = "Elaborazione in corso...";
+      const key = recuperaApiKeyAI();
+      let risultatoFinale = null;
 
-      const elencoDipendenti = dipendentiNomi.length > 0 ? dipendentiNomi.join(", ") : "Nessun dipendente";
-      const prompt = `
+      // Tentativo dinamico con Google AI
+      try {
+        const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+        const listData = await listRes.json();
+        
+        if (listData.models && listData.models.length > 0) {
+          const modelObj = listData.models.find(m => 
+            m.supportedGenerationMethods && 
+            m.supportedGenerationMethods.includes("generateContent") && 
+            (m.name.includes("flash") || m.name.includes("pro"))
+          );
+
+          if (modelObj) {
+            const prompt = `
 Sei il coordinatore presenze di Mirisa Ceramiche.
-Elenco dipendenti: [${elencoDipendenti}].
+Elenco dipendenti registrati: [${dipendentiNomi.join(", ")}].
 Frase: "${frase}".
 Stati ammessi: "Intera", "Mattina", "Pomeriggio", "Assente", "Ferie", "Malattia".
-Se "tutta la squadra", assegna Intera a tutti salvo eccezioni indicate.
-Rispondi SOLO con un JSON valido nel formato:
+Rispondi con un JSON puro valido nel formato:
 [{"nome": "Nome Cognome", "stato": "Assente"}]
 `;
-
-      let jsonRiuscito = null;
-
-      // Lista modelli attuali di Google (serie 2.5 e 2.0)
-      const modelliDaProvare = [
-        "gemini-2.5-flash",
-        "gemini-2.0-flash",
-        "gemini-2.5-pro",
-        "gemini-2.0-flash-lite"
-      ];
-
-      for (const m of modelliDaProvare) {
-        try {
-          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${GEMINI_API_KEY}`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
-          });
-          const data = await res.json();
-          if (data.candidates && data.candidates[0].content.parts[0].text) {
-            const raw = data.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim();
-            jsonRiuscito = JSON.parse(raw);
-            break;
+            const genRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/${modelObj.name}:generateContent?key=${key}`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+            });
+            const genData = await genRes.json();
+            const textRaw = genData.candidates[0].content.parts[0].text.replace(/```json/g, "").replace(/```/g, "").trim();
+            risultatoFinale = JSON.parse(textRaw);
           }
-        } catch (e) {
-          // Continua al successivo
         }
+      } catch (err) {
+        console.warn("AI Cloud in fallback:", err);
       }
 
-      // Se le API di rete non rispondono, attiva immediatamente il fallback locale infallibile
-      if (!jsonRiuscito || jsonRiuscito.length === 0) {
-        jsonRiuscito = elaboraInLocale(frase);
+      // Se l'AI cloud non è disponibile o fallisce, interviene all'istante il motore locale
+      if (!risultatoFinale || risultatoFinale.length === 0) {
+        risultatoFinale = parserLocale(frase);
       }
 
-      if (jsonRiuscito && jsonRiuscito.length > 0) {
-        presenzeProposte = jsonRiuscito;
+      if (risultatoFinale && risultatoFinale.length > 0) {
+        presenzeProposte = risultatoFinale;
         mostraAnteprimaAI(presenzeProposte);
-        document.getElementById("mic-status").textContent = "Presenze rilevate e pronte per il salvataggio!";
+        document.getElementById("mic-status").textContent = "Completato! Controlla e salva.";
       } else {
-        document.getElementById("mic-status").textContent = "Non ho compreso i nomi. Riprova a pronunciare chiaramente.";
+        document.getElementById("mic-status").textContent = "Riprova specificando il nome del collaboratore.";
       }
     }
 
