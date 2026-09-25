@@ -140,11 +140,10 @@
 
     function pad(n) { return String(n).padStart(2, '0'); }
 
-    // Calcolo esatto della chiave data che admin.html genera per quel dato giorno
-    // In admin.html: days.push(new Date(year, month, i)); const iso = d.toISOString().split("T")[0];
+    // CALIBRAZIONE ESATTA: centratura precisa sulla colonna visualizzata da admin.html
     function getAdminKeyForDay(year, month1Based, day) {
-      const d = new Date(year, month1Based - 1, day);
-      return d.toISOString().split("T")[0];
+      const d = new Date(year, month1Based - 1, day - 1);
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     }
 
     const oggi = new Date();
@@ -220,7 +219,6 @@
       }
     };
 
-    // Parser di date multiple e singole
     function estraiTuttiIGiorni(testo) {
       const t = testo.toLowerCase();
       const refDate = new Date();
@@ -242,14 +240,12 @@
 
       let giorni = [];
 
-      // Intervallo: "dal 2 al 4"
       const matchRange = t.match(/(?:dal|da)\s+(\d{1,2})\s+(?:al|fino\s+al)\s+(\d{1,2})/);
       if (matchRange) {
         const start = parseInt(matchRange[1], 10);
         const end = parseInt(matchRange[2], 10);
         for (let g = start; g <= end; g++) giorni.push(g);
       } else {
-        // Numeri di giorni citati: es. "il 2 settembre il 3 settembre ed il 4 settembre"
         const regexGiorno = /(?:il|del|giorno|\b)\s*(\b\d{1,2}\b)/g;
         let match;
         while ((match = regexGiorno.exec(t)) !== null) {
@@ -283,7 +279,6 @@
       return { anno, mese, giorni };
     }
 
-    // STATO RIGOROSO: "assente" ha priorità assoluta su tutto
     function estraiStatoRigoroso(testo) {
       const t = testo.toLowerCase();
       if (t.includes("assent") || t.includes("manc") || t.includes("non c'è") || t.includes("non ce") || t.includes("assenza")) {
@@ -303,7 +298,6 @@
       const statoGlobale = estraiStatoRigoroso(frase);
       const t = frase.toLowerCase();
 
-      // Riconoscimento dipendenti
       let dipendentiCoinvolti = [];
 
       if (t.includes("tutt") || t.includes("squadra")) {
@@ -316,7 +310,6 @@
             if (t.includes(tok)) score += 5;
           });
 
-          // Pesi speciali prioritari sui singoli nomi
           if (t.includes("ressa") && dip.nome.toLowerCase().includes("ressa")) score += 25;
           if (t.includes("vito") && dip.nome.toLowerCase().includes("vito")) score += 15;
           if (t.includes("bulicko") && dip.nome.toLowerCase().includes("bulicko")) score += 25;
@@ -338,7 +331,6 @@
         }
       }
 
-      // Se non ha trovato giorni specifici nel parlato, usa la data del selettore
       let giorniFinali = infoData.giorni;
       let annoFinale = infoData.anno;
       let meseFinale = infoData.mese;
@@ -351,11 +343,9 @@
         giorniFinali = [parseInt(g, 10)];
       }
 
-      // Creazione elenco operazioni
       window.operazioniProposte = [];
       dipendentiCoinvolti.forEach(nomeDip => {
         giorniFinali.forEach(giorno => {
-          // CHIAVE CALCOLATA SULL'OFFSET ESATTO DI ADMIN.HTML
           const adminKey = getAdminKeyForDay(annoFinale, meseFinale, giorno);
           window.operazioniProposte.push({
             nome: nomeDip,
@@ -372,7 +362,7 @@
         renderizzaAnteprima();
         document.getElementById("mic-status").textContent = `Riconosciute ${window.operazioniProposte.length} registrazioni. Controlla e salva.`;
       } else {
-        document.getElementById("mic-status").textContent = "Nessun collaboratore riconosciuto. Riprova chiaramente.";
+        document.getElementById("mic-status").textContent = "Nessun collaboratore riconosciuto. Riprova.";
       }
     }
 
@@ -413,7 +403,6 @@
       box.style.display = "block";
     }
 
-    // SALVATAGGIO DIRETTO NEI NODI ESATTI
     window.confermaSalvataggio = async function() {
       if (!window.operazioniProposte || window.operazioniProposte.length === 0) return;
 
@@ -424,7 +413,6 @@
 
       const promises = window.operazioniProposte.map(item => {
         const safeKey = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
-        // Scrittura sincronizzata con admin.html: presenze/{adminKey}/{safeKey}
         return set(ref(db, `presenze/${item.adminKey}/${safeKey}`), {
           dipendente: item.nome,
           data: item.adminKey,
