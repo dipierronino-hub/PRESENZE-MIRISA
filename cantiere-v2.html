@@ -97,7 +97,7 @@
 
     <div class="card">
       <div style="margin-bottom: 14px;">
-        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione attiva</label>
+        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione di riferimento</label>
         <input type="date" id="selected-date" style="width: 100%; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 14px; outline: none;">
       </div>
 
@@ -140,12 +140,12 @@
 
     function pad(n) { return String(n).padStart(2, '0'); }
 
-    // CORREZIONE DEFINITIVA OFFSET:
-    // admin.html converte new Date(Y, M, Giorno) con toISOString(), sottraendo 2 ore di fuso orario locale.
-    // Quindi per colorare la colonna 'Giorno', la chiave su Firebase deve essere esattamente 'Giorno - 1'!
+    // Allineamento 1:1 con il nuovo admin.html online
     function getAdminKeyForDay(year, month1Based, day) {
-      const d = new Date(year, month1Based - 1, day - 1);
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const y = String(year);
+      const m = pad(month1Based);
+      const d = pad(day);
+      return `${y}-${m}-${d}`;
     }
 
     const oggi = new Date();
