@@ -97,7 +97,7 @@
 
     <div class="card">
       <div style="margin-bottom: 14px;">
-        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione attiva</label>
+        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione di riferimento</label>
         <input type="date" id="selected-date" style="width: 100%; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 14px; outline: none;">
       </div>
 
@@ -139,6 +139,11 @@
     const db = getDatabase(app);
 
     function pad(n) { return String(n).padStart(2, '0'); }
+
+    // DATA DIRETTA IDENTICA A QUELLA CHE SCRIVE ADMIN.HTML CON IL CLICK
+    function formattaChiaveDiretta(year, month1Based, day) {
+      return `${year}-${pad(month1Based)}-${pad(day)}`;
+    }
 
     const dOggi = new Date();
     document.getElementById("selected-date").value = `${dOggi.getFullYear()}-${pad(dOggi.getMonth() + 1)}-${pad(dOggi.getDate())}`;
@@ -363,11 +368,11 @@
       window.operazioniProposte = [];
       dipendentiCoinvolti.forEach(nomeDip => {
         giorniFinali.forEach(giorno => {
-          // DATA SOLARE PURA 1:1 SENZA ALCUNA SOTTRAZIONE O OFFSET
-          const dataEsatta = `${annoFinale}-${pad(meseFinale)}-${pad(giorno)}`;
+          // SCRITTURA IDENTICA AL CLICK DEL MOUSE SU ADMIN.HTML
+          const chiaveEsatta = formattaChiaveDiretta(annoFinale, meseFinale, giorno);
           window.operazioniProposte.push({
             nome: nomeDip,
-            dataIso: dataEsatta,
+            chiaveEsatta: chiaveEsatta,
             giorno: giorno,
             mese: meseFinale,
             anno: annoFinale,
@@ -421,7 +426,7 @@
       box.style.display = "block";
     }
 
-    // SALVATAGGIO DIRETTO 1:1 SULLA DATA EFFETTIVA
+    // SALVATAGGIO IDENTICO AL GESTIONALE ADMIN.HTML
     window.confermaSalvataggio = async function() {
       if (!window.operazioniProposte || window.operazioniProposte.length === 0) return;
 
@@ -432,10 +437,10 @@
 
       const promises = window.operazioniProposte.map(item => {
         const safeKey = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
-        // Scrittura diretta su presenze/YYYY-MM-DD/SafeKey
-        return set(ref(db, `presenze/${item.dataIso}/${safeKey}`), {
+        // Scrive la stessa cartella e gli stessi campi di admin.html
+        return set(ref(db, `presenze/${item.chiaveEsatta}/${safeKey}`), {
           dipendente: item.nome,
-          data: item.dataIso,
+          data: item.chiaveEsatta,
           stato: item.stato,
           orarioRegistrazione: new Date().toISOString(),
           modificatoDa: "Voice App"
