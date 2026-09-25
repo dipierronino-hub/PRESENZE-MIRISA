@@ -186,70 +186,85 @@
     .inline-editor { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)) auto auto; gap: 10px; align-items: end; background: #081120; padding: 16px; border-radius: var(--radius); border: 1px solid var(--surface-border); }
 
     /* ==============================================================
-       STRUTTURA ANTI-SOVRAPPOSIZIONE PLANNING (PC & MOBILE)
+       STRUTTURA BLINDATA PLANNING: NOMI BLOCCATI E SEPARATI
        ============================================================== */
     .planning-nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
     
+    .planning-container {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+    }
+
     table.plan-table { 
       border-collapse: separate; 
       border-spacing: 0;
       table-layout: fixed; 
-      width: 100%;
-      min-width: 1200px; /* Assicura che i 31 giorni non si schiaccino mai */
+      width: max-content;
+      min-width: 100%;
+      background: #081120;
     }
     
-    /* COLONNA COLLABORATORE BLOCCATA E INDIPENDENTE */
+    /* COLONNA COLLABORATORE: LARGHEZZA RIGIDA 220PX */
     table.plan-table th.name-col,
     table.plan-table td.name-col { 
-      position: sticky; 
-      left: 0; 
-      z-index: 5;
-      width: 190px !important; 
-      min-width: 190px !important; 
-      max-width: 190px !important; 
-      background: #0b1528 !important; 
-      border-right: 2px solid var(--surface-border) !important;
-      border-bottom: 1px solid var(--surface-border);
-      padding: 10px 12px;
-      text-align: left;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap; /* Non va mai a capo sfondando le righe */
-      color: #fff;
-      font-weight: 700;
-      font-size: 13px;
+      position: sticky !important; 
+      left: 0 !important; 
+      z-index: 10 !important;
+      width: 220px !important; 
+      min-width: 220px !important; 
+      max-width: 220px !important; 
+      background: #0d1a33 !important; 
+      border-right: 3px solid #0284c7 !important;
+      border-bottom: 1px solid var(--surface-border) !important;
+      padding: 10px 14px !important;
+      text-align: left !important;
+      white-space: nowrap !important;
+      overflow: hidden !important;
+      text-overflow: ellipsis !important;
+      color: #ffffff !important;
+      font-weight: 700 !important;
+      font-size: 13.5px !important;
+      box-shadow: 4px 0 10px rgba(0,0,0,0.5);
     }
 
-    table.plan-table th { 
-      background: #081120; 
+    /* CASELLE GIORNI: LARGHEZZA UNIFORME E DEFINITA */
+    table.plan-table th.day-col { 
+      background: #0b1528; 
       color: var(--text-muted); 
-      font-size: 10px; 
+      font-size: 10.5px; 
       text-transform: uppercase; 
       text-align: center;
-      padding: 8px 2px;
+      padding: 8px 0;
       border-bottom: 1px solid var(--surface-border);
-      border-right: 1px solid rgba(255,255,255,0.05);
-      width: 32px;
+      border-right: 1px solid rgba(255,255,255,0.06);
+      width: 40px !important;
+      min-width: 40px !important;
+      max-width: 40px !important;
     }
 
-    table.plan-table td { 
+    table.plan-table td.day-cell { 
       text-align: center; 
-      padding: 6px 2px;
+      padding: 6px 0;
       border-bottom: 1px solid var(--surface-border);
-      border-right: 1px solid rgba(255,255,255,0.05);
-      width: 32px;
+      border-right: 1px solid rgba(255,255,255,0.06);
+      width: 40px !important;
+      min-width: 40px !important;
+      max-width: 40px !important;
     }
 
     .plan-cell-interactive { cursor: pointer; transition: background 0.15s; user-select: none; }
     .plan-cell-interactive:hover { background: rgba(56, 189, 248, 0.15) !important; }
 
-    .cell-badge { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 6px; font-size: 10.5px; font-weight: 800; }
-    .cell-I { background: rgba(16, 185, 129, 0.25); color: var(--success); }
-    .cell-M, .cell-P { background: rgba(245, 158, 11, 0.25); color: var(--warning); }
-    .cell-A { background: rgba(239, 68, 68, 0.25); color: var(--danger); }
-    .cell-F { background: rgba(139, 92, 246, 0.25); color: var(--purple); }
-    .cell-MAL { background: rgba(100, 116, 139, 0.25); color: #94a3b8; }
-    .cell-empty { color: #334155; font-size: 14px; }
+    .cell-badge { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; font-size: 11px; font-weight: 800; }
+    .cell-I { background: rgba(16, 185, 129, 0.25); color: var(--success); border: 1px solid rgba(16,185,129,0.4); }
+    .cell-M, .cell-P { background: rgba(245, 158, 11, 0.25); color: var(--warning); border: 1px solid rgba(245,158,11,0.4); }
+    .cell-A { background: rgba(239, 68, 68, 0.25); color: var(--danger); border: 1px solid rgba(239,68,68,0.4); }
+    .cell-F { background: rgba(139, 92, 246, 0.25); color: var(--purple); border: 1px solid rgba(139,92,246,0.4); }
+    .cell-MAL { background: rgba(100, 116, 139, 0.25); color: #94a3b8; border: 1px solid rgba(100,116,139,0.4); }
+    .cell-empty { color: #334155; font-size: 16px; line-height: 28px; }
 
     /* Modali */
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.75); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(6px); }
@@ -452,15 +467,9 @@
       const oggiStr = new Date().toISOString().split("T")[0];
       document.getElementById("manual-date").value = oggiStr;
 
-      // Apertura predefinita Mese su PC, Settimana su Mobile
-      const isPcScreen = window.innerWidth >= 1024;
-      let adminPlanningMode = isPcScreen ? "month" : "week";
+      let adminPlanningMode = "month";
       let adminDateCursor = new Date();
       let activeQuickEdit = { dipendente: null, data: null };
-
-      document.querySelectorAll(".btn-plan-toggle").forEach(b => b.classList.remove("active"));
-      const initialToggleBtn = document.getElementById(isPcScreen ? "btn-plan-month" : "btn-plan-week");
-      if (initialToggleBtn) initialToggleBtn.classList.add("active");
 
       function showToast(msg, isSuccess = true) {
         const toast = document.getElementById("toast");
@@ -667,7 +676,7 @@
         days.forEach(d => {
           const isToday = d.toISOString().split("T")[0] === oggiStr;
           const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-          headHtml += `<th style="${isToday ? 'border-bottom:2px solid var(--accent); color:var(--accent); background:rgba(56,189,248,0.08);' : ''} ${isWeekend ? 'color:#64748b;' : ''}">
+          headHtml += `<th class="day-col" style="${isToday ? 'border-bottom:2px solid var(--accent); color:var(--accent); background:rgba(56,189,248,0.12);' : ''} ${isWeekend ? 'color:#64748b;' : ''}">
             <span style="font-size:9px;">${giorniNomi[d.getDay()]}</span><br><strong style="font-size:12px;">${d.getDate()}</strong>
           </th>`;
         });
@@ -676,7 +685,7 @@
 
         Object.keys(dipendentiData).forEach(id => {
           const nome = dipendentiData[id].nome;
-          let rowHtml = `<tr><td class="name-col" title="${nome}"><i class="fa-solid fa-user" style="font-size:10px; margin-right:6px; color:var(--accent);"></i>${nome}</td>`;
+          let rowHtml = `<tr><td class="name-col" title="${nome}"><i class="fa-solid fa-user" style="font-size:11px; margin-right:6px; color:var(--accent);"></i>${nome}</td>`;
 
           days.forEach(d => {
             const iso = d.toISOString().split("T")[0];
@@ -690,7 +699,7 @@
             });
 
             if (!stato) {
-              rowHtml += `<td class="plan-cell-interactive" onclick="apriQuickEdit('${nome}', '${iso}', null)">
+              rowHtml += `<td class="day-cell plan-cell-interactive" onclick="apriQuickEdit('${nome}', '${iso}', null)">
                 <span class="cell-empty">&bull;</span>
               </td>`;
             } else {
@@ -701,7 +710,7 @@
               else if (stato === "Assente") { sigla = "A"; cClass = "cell-A"; }
               else if (stato === "Ferie") { sigla = "F"; cClass = "cell-F"; }
               else if (stato === "Malattia") { sigla = "MAL"; cClass = "cell-MAL"; }
-              rowHtml += `<td class="plan-cell-interactive" onclick="apriQuickEdit('${nome}', '${iso}', '${stato}')">
+              rowHtml += `<td class="day-cell plan-cell-interactive" onclick="apriQuickEdit('${nome}', '${iso}', '${stato}')">
                 <span class="cell-badge ${cClass}" title="${stato} (${iso})">${sigla}</span>
               </td>`;
             }
@@ -1132,7 +1141,7 @@
       </div>
     </div>
 
-    <!-- VISTA 2: PLANNING CALENDARIO ANTI-SOVRAPPOSIZIONE -->
+    <!-- VISTA 2: PLANNING CALENDARIO BLINDATO -->
     <div id="view-planning" class="view-content">
       <div class="card" style="padding: 16px;">
         <div class="planning-nav">
@@ -1142,7 +1151,7 @@
             <button onclick="navAdminPlanning(1)" style="background:#081120; border:1px solid var(--surface-border); color:#fff; padding:8px 14px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-chevron-right"></i></button>
           </div>
           <div style="display:flex; gap:8px;">
-            <button class="btn btn-secondary btn-plan-toggle" id="btn-plan-month" onclick="setAdminPlanningMode('month')" style="padding:8px 14px; font-size:13px;">Mese Intero</button>
+            <button class="btn btn-secondary btn-plan-toggle active" id="btn-plan-month" onclick="setAdminPlanningMode('month')" style="padding:8px 14px; font-size:13px;">Mese Intero</button>
             <button class="btn btn-secondary btn-plan-toggle" id="btn-plan-week" onclick="setAdminPlanningMode('week')" style="padding:8px 14px; font-size:13px;">Vista Settimana</button>
           </div>
         </div>
@@ -1159,7 +1168,7 @@
           <span style="color:var(--accent); font-weight:600;"><i class="fa-solid fa-hand-pointer"></i> Clicca su qualsiasi casella per modificare</span>
         </div>
 
-        <div class="table-responsive">
+        <div class="planning-container">
           <table class="plan-table">
             <thead id="admin-planning-head"></thead>
             <tbody id="admin-planning-body"></tbody>
