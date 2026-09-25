@@ -97,7 +97,7 @@
 
     <div class="card">
       <div style="margin-bottom: 14px;">
-        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione di riferimento</label>
+        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione attiva</label>
         <input type="date" id="selected-date" style="width: 100%; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 14px; outline: none;">
       </div>
 
@@ -140,20 +140,13 @@
 
     function pad(n) { return String(n).padStart(2, '0'); }
 
-    // Allineamento 1:1 con il nuovo admin.html online
-    function getAdminKeyForDay(year, month1Based, day) {
-      const y = String(year);
-      const m = pad(month1Based);
-      const d = pad(day);
-      return `${y}-${m}-${d}`;
-    }
-
-    const oggi = new Date();
-    document.getElementById("selected-date").value = `${oggi.getFullYear()}-${pad(oggi.getMonth() + 1)}-${pad(oggi.getDate())}`;
+    const dOggi = new Date();
+    document.getElementById("selected-date").value = `${dOggi.getFullYear()}-${pad(dOggi.getMonth() + 1)}-${pad(dOggi.getDate())}`;
 
     let catalogoDipendenti = [];
     window.operazioniProposte = [];
 
+    // Ascolto anagrafica da Firebase
     onValue(ref(db, "dipendenti"), (snap) => {
       const data = snap.val() || {};
       catalogoDipendenti = [];
@@ -168,7 +161,7 @@
         });
       });
 
-      document.getElementById("mic-status").textContent = `Pronto! ${catalogoDipendenti.length} dipendenti pronti.`;
+      document.getElementById("mic-status").textContent = `Pronto! ${catalogoDipendenti.length} dipendenti sincronizzati.`;
     });
 
     function showToast(msg) {
@@ -350,13 +343,13 @@
       window.operazioniProposte = [];
       dipendentiCoinvolti.forEach(nomeDip => {
         giorniFinali.forEach(giorno => {
-          const adminKey = getAdminKeyForDay(annoFinale, meseFinale, giorno);
+          const dataIso = `${annoFinale}-${pad(meseFinale)}-${pad(giorno)}`;
           window.operazioniProposte.push({
             nome: nomeDip,
+            dataIso: dataIso,
             giorno: giorno,
             mese: meseFinale,
             anno: annoFinale,
-            adminKey: adminKey,
             stato: statoGlobale
           });
         });
@@ -364,7 +357,7 @@
 
       if (window.operazioniProposte.length > 0) {
         renderizzaAnteprima();
-        document.getElementById("mic-status").textContent = `Riconosciute ${window.operazioniProposte.length} presenze per il giorno ${giorniFinali.join(', ')}!`;
+        document.getElementById("mic-status").textContent = `Riconosciute ${window.operazioniProposte.length} registrazioni!`;
       } else {
         document.getElementById("mic-status").textContent = "Nessun collaboratore riconosciuto. Riprova.";
       }
@@ -385,7 +378,7 @@
         div.className = "preview-item";
         div.innerHTML = `
           <div class="preview-header">
-            <strong>${item.nome} &bull; Giorno ${item.giorno}/${item.mese}/${item.anno}</strong>
+            <strong>${item.nome} &bull; ${item.giorno}/${item.mese}/${item.anno}</strong>
             <span style="font-size:12px; font-weight:800; color:${item.stato === 'Assente' ? 'var(--danger)' : 'var(--success)'};">${item.stato}</span>
           </div>
           <div class="status-selector">
@@ -407,6 +400,7 @@
       box.style.display = "block";
     }
 
+    // SALVATAGGIO DIRETTO NEL NODO ESATTO ATTESO DA ADMIN.HTML
     window.confermaSalvataggio = async function() {
       if (!window.operazioniProposte || window.operazioniProposte.length === 0) return;
 
@@ -417,9 +411,10 @@
 
       const promises = window.operazioniProposte.map(item => {
         const safeKey = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
-        return set(ref(db, `presenze/${item.adminKey}/${safeKey}`), {
+        // Scrive su presenze/YYYY-MM-DD/SafeKey
+        return set(ref(db, `presenze/${item.dataIso}/${safeKey}`), {
           dipendente: item.nome,
-          data: item.adminKey,
+          data: item.dataIso,
           stato: item.stato,
           orarioRegistrazione: new Date().toISOString(),
           modificatoDa: "Voice App"
