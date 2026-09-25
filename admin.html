@@ -494,6 +494,11 @@
 
     let quickPin = "";
 
+    function padZero(n) { return String(n).padStart(2, '0'); }
+    function toLocalISO(d) {
+      return `${d.getFullYear()}-${padZero(d.getMonth() + 1)}-${padZero(d.getDate())}`;
+    }
+
     document.getElementById("btn-login-action").addEventListener("click", () => {
       const email = document.getElementById("login-email").value.trim();
       const pass = document.getElementById("login-password").value;
@@ -630,9 +635,10 @@
     let editDipendenteId = null;
 
     const monthInput = document.getElementById("meseSelezionato");
-    monthInput.value = new Date().toISOString().slice(0, 7);
+    const dNow = new Date();
+    monthInput.value = `${dNow.getFullYear()}-${padZero(dNow.getMonth() + 1)}`;
 
-    const oggiStr = new Date().toISOString().split("T")[0];
+    const oggiStr = toLocalISO(new Date());
     document.getElementById("manual-date").value = oggiStr;
 
     let adminPlanningMode = "month";
@@ -785,7 +791,7 @@
     monthInput.addEventListener("change", () => {
       aggiornaDashboard();
       const [y, m] = monthInput.value.split("-");
-      adminDateCursor = new Date(y, m - 1, 1);
+      adminDateCursor = new Date(y, m - 1, 1, 12, 0, 0);
       renderAdminPlanning();
     });
 
@@ -821,11 +827,10 @@
         const curr = new Date(adminDateCursor);
         const dayOfWeek = curr.getDay();
         const diffToMonday = curr.getDate() - dayOfWeek + (dayOfWeek === 0 ? -6 : 1);
-        const monday = new Date(curr.setDate(diffToMonday));
+        const monday = new Date(curr.getFullYear(), curr.getMonth(), diffToMonday, 12, 0, 0);
 
         for (let i = 0; i < 7; i++) {
-          const d = new Date(monday);
-          d.setDate(monday.getDate() + i);
+          const d = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i, 12, 0, 0);
           days.push(d);
         }
         titleSpan.textContent = `Settimana ${days[0].toLocaleDateString('it-IT', {day:'2-digit', month:'short'})} - ${days[6].toLocaleDateString('it-IT', {day:'2-digit', month:'short', year:'numeric'})}`;
@@ -834,14 +839,15 @@
         const month = adminDateCursor.getMonth();
         const totalDays = new Date(year, month + 1, 0).getDate();
         for (let i = 1; i <= totalDays; i++) {
-          days.push(new Date(year, month, i));
+          days.push(new Date(year, month, i, 12, 0, 0));
         }
         titleSpan.textContent = adminDateCursor.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }).toUpperCase();
       }
 
       let headHtml = `<tr><th class="name-col">Collaboratore</th>`;
       days.forEach(d => {
-        const isToday = d.toISOString().split("T")[0] === oggiStr;
+        const iso = toLocalISO(d);
+        const isToday = iso === oggiStr;
         const isWeekend = d.getDay() === 0 || d.getDay() === 6;
         headHtml += `<th class="day-col" style="${isToday ? 'border-bottom:2px solid var(--accent); color:var(--accent); background:rgba(56,189,248,0.12);' : ''} ${isWeekend ? 'color:#64748b;' : ''}">
           <span style="font-size:9px;">${giorniNomi[d.getDay()]}</span><br><strong style="font-size:12px;">${d.getDate()}</strong>
@@ -855,7 +861,7 @@
         let rowHtml = `<tr><td class="name-col" title="${nome}"><i class="fa-solid fa-user" style="font-size:11px; margin-right:6px; color:var(--accent);"></i>${nome}</td>`;
 
         days.forEach(d => {
-          const iso = d.toISOString().split("T")[0];
+          const iso = toLocalISO(d);
           const regGiorno = presenzeData[iso] || {};
           
           let stato = null;
@@ -891,7 +897,9 @@
     window.apriQuickEdit = function(dipendente, dataIso, statoAttuale) {
       activeQuickEdit = { dipendente, data: dataIso };
       document.getElementById("quick-nome").textContent = dipendente;
-      document.getElementById("quick-data").textContent = new Date(dataIso).toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+      const [y, m, g] = dataIso.split("-");
+      const dVisual = new Date(y, m - 1, g, 12, 0, 0);
+      document.getElementById("quick-data").textContent = dVisual.toLocaleDateString('it-IT', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
       document.getElementById("modalQuickEdit").style.display = "flex";
     };
 
