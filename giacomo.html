@@ -111,7 +111,7 @@
       display: none;
     }
 
-    .container { max-width: 900px; margin: 0 auto; display: none; }
+    .container { max-width: 1400px; margin: 0 auto; display: none; }
 
     .brand { text-align: center; margin-bottom: 20px; position: relative; }
     .brand h1 { margin: 0; font-size: 22px; font-weight: 800; color: #fff; }
@@ -149,24 +149,35 @@
     .check-item { display: flex; align-items: center; gap: 10px; padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 14px; cursor: pointer; }
     .check-item input[type="checkbox"] { width: 18px; height: 18px; accent-color: #0284c7; }
 
-    /* Planning Table */
+    /* Planning Table Responsive */
     .planning-controls { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 14px; flex-wrap: wrap; }
     .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-    table.plan-table { width: 100%; border-collapse: collapse; min-width: 600px; font-size: 13px; text-align: center; }
-    table.plan-table th, table.plan-table td { padding: 8px 4px; border: 1px solid var(--surface-border); }
-    table.plan-table th { background: #081120; color: var(--text-muted); font-size: 11px; text-transform: uppercase; }
-    table.plan-table td.name-col { text-align: left; font-weight: 700; background: #0b1528; position: sticky; left: 0; z-index: 2; padding-left: 10px; min-width: 130px; }
+    table.plan-table { width: 100%; border-collapse: collapse; text-align: center; }
+    table.plan-table th, table.plan-table td { padding: 6px 2px; border: 1px solid var(--surface-border); }
+    table.plan-table th { background: #081120; color: var(--text-muted); font-size: 10px; text-transform: uppercase; line-height: 1.2; }
+    table.plan-table td.name-col { text-align: left; font-weight: 700; background: #0b1528; position: sticky; left: 0; z-index: 2; padding-left: 10px; min-width: 120px; font-size: 12px; }
     
     .plan-cell-interactive { cursor: pointer; user-select: none; }
     .plan-cell-interactive:active { background: rgba(56, 189, 248, 0.2) !important; }
 
-    .cell-badge { display: inline-block; width: 28px; height: 28px; line-height: 28px; border-radius: 6px; font-size: 11px; font-weight: 800; }
+    .cell-badge { display: inline-block; width: 24px; height: 24px; line-height: 24px; border-radius: 6px; font-size: 10px; font-weight: 800; margin: auto; }
     .cell-I { background: rgba(16, 185, 129, 0.25); color: var(--success); }
     .cell-M, .cell-P { background: rgba(245, 158, 11, 0.25); color: var(--warning); }
     .cell-A { background: rgba(239, 68, 68, 0.25); color: var(--danger); }
     .cell-F { background: rgba(139, 92, 246, 0.25); color: var(--purple); }
     .cell-MAL { background: rgba(100, 116, 139, 0.25); color: #94a3b8; }
-    .cell-empty { color: #334155; font-size: 16px; }
+    .cell-empty { color: #334155; font-size: 14px; }
+
+    @media (min-width: 1024px) {
+      table.plan-table { table-layout: fixed; width: 100%; min-width: 950px; }
+      table.plan-table td.name-col { width: 150px; min-width: 150px; font-size: 13px; }
+      table.plan-table th { font-size: 11px; padding: 8px 3px; }
+      .cell-badge { width: 26px; height: 26px; line-height: 26px; font-size: 11px; }
+    }
+
+    @media (max-width: 1023px) {
+      table.plan-table { min-width: 680px; }
+    }
 
     /* Modal Popup Modifica Rapida */
     .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; justify-content: center; align-items: center; z-index: 100; backdrop-filter: blur(4px); padding: 16px; }
@@ -284,16 +295,9 @@
         publicKey: {
           challenge: challenge,
           rp: { name: "Terminale Presenze Mirisa" },
-          user: {
-            id: new Uint8Array(16),
-            name: "giacomo@mirisa.it",
-            displayName: "Giacomo - Mirisa Cantiere"
-          },
+          user: { id: new Uint8Array(16), name: "giacomo@mirisa.it", displayName: "Giacomo - Mirisa" },
           pubKeyCredParams: [{ type: "public-key", alg: -7 }],
-          authenticatorSelection: {
-            authenticatorAttachment: "platform",
-            userVerification: "required"
-          },
+          authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
           timeout: 60000
         }
       };
@@ -306,11 +310,7 @@
         const challenge = new Uint8Array(32);
         window.crypto.getRandomValues(challenge);
         const assertion = await navigator.credentials.get({
-          publicKey: {
-            challenge: challenge,
-            timeout: 60000,
-            userVerification: "required"
-          }
+          publicKey: { challenge: challenge, timeout: 60000, userVerification: "required" }
         });
         if (assertion) {
           sessionStorage.setItem("giacomo_auth", "true");
@@ -373,9 +373,15 @@
       document.getElementById("data-singola").value = oggiStr;
       document.getElementById("data-collettiva").value = oggiStr;
 
-      let planningMode = "week";
+      // REGOLA RESPONSIVE: Mese Intero su PC, Settimana su Mobile
+      const isPcScreen = window.innerWidth >= 1024;
+      let planningMode = isPcScreen ? "month" : "week";
       let currentDateCursor = new Date();
       let activeQuickEdit = { dipendente: null, data: null };
+
+      document.querySelectorAll(".btn-giacomo-toggle").forEach(b => b.classList.remove("active"));
+      const initialToggleBtn = document.getElementById(isPcScreen ? "btn-g-plan-month" : "btn-g-plan-week");
+      if (initialToggleBtn) initialToggleBtn.classList.add("active");
 
       function showToast(msg, ok = true) {
         const t = document.getElementById("toast");
@@ -486,9 +492,10 @@
         document.querySelectorAll(".chk-team").forEach(cb => cb.checked = check);
       };
 
-      // Planning Engine
       window.setPlanningMode = function(mode) {
         planningMode = mode;
+        document.querySelectorAll(".btn-giacomo-toggle").forEach(b => b.classList.remove("active"));
+        document.getElementById(`btn-g-plan-${mode}`).classList.add("active");
         renderPlanning();
       };
 
@@ -536,7 +543,7 @@
         let headHtml = `<tr><th class="name-col">Collaboratore</th>`;
         days.forEach(d => {
           const isToday = d.toISOString().split("T")[0] === oggiStr;
-          headHtml += `<th style="${isToday ? 'border-bottom:2px solid var(--accent); color:var(--accent);' : ''}">${giorniNomi[d.getDay()]}<br><strong>${d.getDate()}</strong></th>`;
+          headHtml += `<th style="${isToday ? 'border-bottom:2px solid var(--accent); color:var(--accent);' : ''}"><span style="font-size:9px;">${giorniNomi[d.getDay()]}</span><br><strong style="font-size:12px;">${d.getDate()}</strong></th>`;
         });
         headHtml += `</tr>`;
         thead.innerHTML = headHtml;
@@ -613,7 +620,7 @@
 </head>
 <body>
 
-  <!-- SCHERMATA BLOCCO BIOMETRICA PER GIACOMO -->
+  <!-- BLOCCO BIOMETRICO GIACOMO -->
   <div id="lock-screen">
     <div class="lock-box">
       <div class="lock-icon"><i class="fa-solid fa-fingerprint"></i></div>
@@ -641,7 +648,7 @@
     </div>
   </div>
 
-  <!-- PANNELLO PRINCIPALE DI GIACOMO -->
+  <!-- PANNELLO PRINCIPALE GIACOMO -->
   <div class="container" id="main-container">
     <div class="brand">
       <div class="btn-top-lock">
@@ -759,7 +766,7 @@
 
     <!-- 3. PLANNING INTERATTIVO -->
     <div id="tab-planning" class="tab-content">
-      <div class="card">
+      <div class="card" style="padding: 16px;">
         <div class="planning-controls">
           <div>
             <button onclick="navPlanning(-1)" style="background:#081120; border:1px solid var(--surface-border); color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-chevron-left"></i></button>
@@ -767,8 +774,8 @@
             <button onclick="navPlanning(1)" style="background:#081120; border:1px solid var(--surface-border); color:#fff; padding:8px 12px; border-radius:8px; cursor:pointer;"><i class="fa-solid fa-chevron-right"></i></button>
           </div>
           <div style="display:flex; gap:6px;">
-            <button class="tab-btn active" style="padding:6px 12px; font-size:12px;" onclick="setPlanningMode('week')">Settimana</button>
-            <button class="tab-btn" style="padding:6px 12px; font-size:12px;" onclick="setPlanningMode('month')">Mese</button>
+            <button class="tab-btn btn-giacomo-toggle" id="btn-g-plan-week" style="padding:6px 12px; font-size:12px;" onclick="setPlanningMode('week')">Settimana</button>
+            <button class="tab-btn btn-giacomo-toggle" id="btn-g-plan-month" style="padding:6px 12px; font-size:12px;" onclick="setPlanningMode('month')">Mese</button>
           </div>
         </div>
 
