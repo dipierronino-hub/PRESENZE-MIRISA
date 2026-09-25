@@ -140,14 +140,7 @@
 
     function pad(n) { return String(n).padStart(2, '0'); }
 
-    // COMPENSAZIONE +1 GIORNO:
-    // Poiché scrivere il giorno X fa cadere la casella sul giorno X-1 in admin.html,
-    // scriviamo (day + 1) così la casella sul planning si illumina esattamente sul giorno pronunciato!
-    function formattaChiaveCompensata(year, month1Based, day) {
-      const d = new Date(year, month1Based - 1, day + 1);
-      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    }
-
+    // Impostazione data odierna
     const dOggi = new Date();
     document.getElementById("selected-date").value = `${dOggi.getFullYear()}-${pad(dOggi.getMonth() + 1)}-${pad(dOggi.getDate())}`;
 
@@ -364,21 +357,25 @@
         annoFinale = parseInt(a, 10);
         meseFinale = parseInt(m, 10);
         giorniFinali = [parseInt(g, 10)];
-      } else {
-        document.getElementById("selected-date").value = `${annoFinale}-${pad(meseFinale)}-${pad(giorniFinali[0])}`;
       }
 
       window.operazioniProposte = [];
       dipendentiCoinvolti.forEach(nomeDip => {
         giorniFinali.forEach(giorno => {
-          // COMPENSAZIONE: scrive giorno+1 per far cadere il dato esattamente sul giorno pronunciato
-          const chiaveCompensata = formattaChiaveCompensata(annoFinale, meseFinale, giorno);
+          // CALCOLO CHIAVE CON COMPENSAZIONE CALCOLATA SUL CALENDARIO:
+          // Se diciamo giorno 14, admin.html legge da (14 + 1) = 15
+          const targetDateObj = new Date(annoFinale, meseFinale - 1, giorno + 1, 12, 0, 0);
+          const aKey = targetDateObj.getFullYear();
+          const mKey = pad(targetDateObj.getMonth() + 1);
+          const gKey = pad(targetDateObj.getDate());
+          const chiaveFirebase = `${aKey}-${mKey}-${gKey}`;
+
           window.operazioniProposte.push({
             nome: nomeDip,
-            chiaveEsatta: chiaveCompensata,
-            giorno: giorno,
-            mese: meseFinale,
-            anno: annoFinale,
+            chiaveFirebase: chiaveFirebase,
+            giornoDichiarato: giorno,
+            meseDichiarato: meseFinale,
+            annoDichiarato: annoFinale,
             stato: statoGlobale
           });
         });
@@ -407,7 +404,7 @@
         div.className = "preview-item";
         div.innerHTML = `
           <div class="preview-header">
-            <strong>${item.nome} &bull; Giorno ${item.giorno}/${item.mese}/${item.anno}</strong>
+            <strong>${item.nome} &bull; Giorno ${item.giornoDichiarato}/${item.meseDichiarato}/${item.annoDichiarato}</strong>
             <span style="font-size:12px; font-weight:800; color:${item.stato === 'Assente' ? 'var(--danger)' : 'var(--success)'};">${item.stato}</span>
           </div>
           <div class="status-selector">
@@ -439,9 +436,9 @@
 
       const promises = window.operazioniProposte.map(item => {
         const safeKey = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
-        return set(ref(db, `presenze/${item.chiaveEsatta}/${safeKey}`), {
+        return set(ref(db, `presenze/${item.chiaveFirebase}/${safeKey}`), {
           dipendente: item.nome,
-          data: item.chiaveEsatta,
+          data: item.chiaveFirebase,
           stato: item.stato,
           orarioRegistrazione: new Date().toISOString(),
           modificatoDa: "Voice App"
