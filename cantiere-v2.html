@@ -82,14 +82,14 @@
 
   <div class="container">
     <div class="brand">
-      <div class="ai-badge"><i class="fa-solid fa-bolt"></i> Motore Vocale Attivo</div>
+      <div class="ai-badge"><i class="fa-solid fa-bolt"></i> Motore Vocale Intelligente</div>
       <h1>MIRISA <span>CERAMICHE</span></h1>
-      <p>Registrazione Presenze Vocale Diretta</p>
+      <p>Registrazione Presenze Vocale con Riconoscimento Date</p>
     </div>
 
     <div class="card">
       <div style="margin-bottom: 14px;">
-        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione</label>
+        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione attiva</label>
         <input type="date" id="selected-date" style="width: 100%; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 14px; outline: none;">
       </div>
 
@@ -97,7 +97,7 @@
         <button id="btn-mic" class="mic-button" onclick="toggleVoiceRecording()">
           <i class="fa-solid fa-microphone"></i>
         </button>
-        <div id="mic-status" class="voice-hint">Tocca il microfono e parla</div>
+        <div id="mic-status" class="voice-hint">Tocca il microfono e parla liberamente</div>
         <div id="transcript" class="speech-transcript">In attesa della tua voce...</div>
       </div>
     </div>
@@ -130,10 +130,14 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    const oggi = new Date().toISOString().split("T")[0];
-    document.getElementById("selected-date").value = oggi;
+    // Imposta data iniziale su oggi in formato locale YYYY-MM-DD
+    const dOggi = new Date();
+    const annoOggi = dOggi.getFullYear();
+    const meseOggi = String(dOggi.getMonth() + 1).padStart(2, '0');
+    const giornoOggi = String(dOggi.getDate()).padStart(2, '0');
+    document.getElementById("selected-date").value = `${annoOggi}-${meseOggi}-${giornoOggi}`;
 
-    // Squadra base precaricata
+    // Squadra base predefinita
     let dipendentiNomi = [
       "Errede Francesca",
       "Antonio Campobasso",
@@ -150,7 +154,7 @@
 
     let presenzeProposte = [];
 
-    // Aggiornamento dinamico da Firebase
+    // Aggiornamento dinamico continuo da Firebase
     onValue(ref(db, "dipendenti"), (snap) => {
       const data = snap.val();
       if (data) {
@@ -211,6 +215,55 @@
       }
     };
 
+    // MOTORE PARSER DATE ITALIANO (Relativo e Assoluto)
+    function estraiDataDaTesto(testo) {
+      const t = testo.toLowerCase();
+      const refDate = new Date();
+
+      // 1. Termini relativi
+      if (t.includes("l'altro ieri") || t.includes("l altro ieri") || t.includes("altroieri")) {
+        refDate.setDate(refDate.getDate() - 2);
+        return formattaDataISO(refDate);
+      }
+      if (t.includes("ieri")) {
+        refDate.setDate(refDate.getDate() - 1);
+        return formattaDataISO(refDate);
+      }
+      if (t.includes("oggi")) {
+        return formattaDataISO(refDate);
+      }
+
+      // 2. Riconoscimento date espresse a parole (es. "20 settembre 2026" o "20 settembre")
+      const mesi = {
+        "gennaio": 1, "febbraio": 2, "marzo": 3, "aprile": 4,
+        "maggio": 5, "giugno": 6, "luglio": 7, "agosto": 8,
+        "settembre": 9, "ottobre": 10, "novembre": 11, "dicembre": 12
+      };
+
+      const regexData = /(\b\d{1,2}\b)\s*(gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre)\s*(\d{4})?/i;
+      const match = t.match(regexData);
+
+      if (match) {
+        const giorno = parseInt(match[1], 10);
+        const mese = mesi[match[2].toLowerCase()];
+        const anno = match[3] ? parseInt(match[3], 10) : refDate.getFullYear();
+
+        const dataCalcolata = new Date(anno, mese - 1, giorno);
+        if (!isNaN(dataCalcolata.getTime())) {
+          return formattaDataISO(dataCalcolata);
+        }
+      }
+
+      return null;
+    }
+
+    function formattaDataISO(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
     function rilevaStato(testo) {
       const t = testo.toLowerCase();
       if (t.includes("assent") || t.includes("manc") || t.includes("non c'è") || t.includes("non ce")) return "Assente";
@@ -223,15 +276,21 @@
 
     function elaboraFrase(frase) {
       document.getElementById("mic-status").textContent = "Elaborazione...";
+      
+      // Controllo se è stata pronunciata una data specifica
+      const dataRilevata = estraiDataDaTesto(frase);
+      if (dataRilevata) {
+        document.getElementById("selected-date").value = dataRilevata;
+      }
+
       const text = frase.toLowerCase();
       let risultati = [];
 
-      // 1. Comando Collettivo ("tutti", "squadra")
+      // 1. Comando di squadra collettivo ("tutti", "squadra")
       if (text.includes("tutt") || text.includes("squadra")) {
         const statoBase = rilevaStato(text.split(/tranne|eccetto|meno/)[0]);
         risultati = dipendentiNomi.map(n => ({ nome: n, stato: statoBase }));
 
-        // Gestione delle eccezioni pronunciate
         if (text.includes("tranne") || text.includes("eccetto") || text.includes("meno")) {
           const parteEccezioni = text.split(/tranne|eccetto|meno/)[1];
           const statoEccezione = rilevaStato(parteEccezioni);
@@ -247,7 +306,7 @@
           });
         }
       } else {
-        // 2. Nominativi singoli o multipli
+        // 2. Singoli nominativi
         const statoGenerale = rilevaStato(text);
         let trovati = 0;
 
@@ -260,9 +319,9 @@
           }
         });
 
-        // 3. Fallback se il nome non è nell'elenco predefinito
+        // 3. Fallback se nome non censito
         if (trovati === 0) {
-          let pulito = frase.replace(/oggi|presente|presenti|assente|assenti|ferie|malattia|mezza|mattina|pomeriggio|intera/gi, "").trim();
+          let pulito = frase.replace(/ieri|oggi|l'altro ieri|presente|presenti|assente|assenti|ferie|malattia|mezza|mattina|pomeriggio|intera|gennaio|febbraio|marzo|aprile|maggio|giugno|luglio|agosto|settembre|ottobre|novembre|dicembre|\d{1,2}|\d{4}/gi, "").trim();
           pulito = pulito.replace(/^[,\s]+|[,\s]+$/g, "");
           if (pulito.length > 1) {
             risultati.push({ nome: pulito, stato: statoGenerale });
@@ -273,7 +332,8 @@
       if (risultati.length > 0) {
         presenzeProposte = risultati;
         mostraAnteprima(presenzeProposte);
-        document.getElementById("mic-status").textContent = "Presenze pronte per la registrazione!";
+        const dataAttiva = document.getElementById("selected-date").value;
+        document.getElementById("mic-status").textContent = `Presenze pronte per la data: ${dataAttiva}!`;
       } else {
         document.getElementById("mic-status").textContent = "Nessun dato riconosciuto. Riprova.";
       }
