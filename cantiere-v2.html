@@ -140,9 +140,12 @@
 
     function pad(n) { return String(n).padStart(2, '0'); }
 
-    // DATA DIRETTA IDENTICA A QUELLA CHE SCRIVE ADMIN.HTML CON IL CLICK
-    function formattaChiaveDiretta(year, month1Based, day) {
-      return `${year}-${pad(month1Based)}-${pad(day)}`;
+    // COMPENSAZIONE +1 GIORNO:
+    // Poiché scrivere il giorno X fa cadere la casella sul giorno X-1 in admin.html,
+    // scriviamo (day + 1) così la casella sul planning si illumina esattamente sul giorno pronunciato!
+    function formattaChiaveCompensata(year, month1Based, day) {
+      const d = new Date(year, month1Based - 1, day + 1);
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     }
 
     const dOggi = new Date();
@@ -368,11 +371,11 @@
       window.operazioniProposte = [];
       dipendentiCoinvolti.forEach(nomeDip => {
         giorniFinali.forEach(giorno => {
-          // SCRITTURA IDENTICA AL CLICK DEL MOUSE SU ADMIN.HTML
-          const chiaveEsatta = formattaChiaveDiretta(annoFinale, meseFinale, giorno);
+          // COMPENSAZIONE: scrive giorno+1 per far cadere il dato esattamente sul giorno pronunciato
+          const chiaveCompensata = formattaChiaveCompensata(annoFinale, meseFinale, giorno);
           window.operazioniProposte.push({
             nome: nomeDip,
-            chiaveEsatta: chiaveEsatta,
+            chiaveEsatta: chiaveCompensata,
             giorno: giorno,
             mese: meseFinale,
             anno: annoFinale,
@@ -426,7 +429,6 @@
       box.style.display = "block";
     }
 
-    // SALVATAGGIO IDENTICO AL GESTIONALE ADMIN.HTML
     window.confermaSalvataggio = async function() {
       if (!window.operazioniProposte || window.operazioniProposte.length === 0) return;
 
@@ -437,7 +439,6 @@
 
       const promises = window.operazioniProposte.map(item => {
         const safeKey = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
-        // Scrive la stessa cartella e gli stessi campi di admin.html
         return set(ref(db, `presenze/${item.chiaveEsatta}/${safeKey}`), {
           dipendente: item.nome,
           data: item.chiaveEsatta,
