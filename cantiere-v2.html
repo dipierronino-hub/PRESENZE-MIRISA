@@ -97,7 +97,7 @@
 
     <div class="card">
       <div style="margin-bottom: 14px;">
-        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione di riferimento</label>
+        <label style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 6px;">Data registrazione attiva</label>
         <input type="date" id="selected-date" style="width: 100%; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px 12px; border-radius: 8px; font-size: 14px; outline: none;">
       </div>
 
@@ -213,7 +213,6 @@
       }
     };
 
-    // PARSER DATA BLINDATO: Riconosce con precisione numeri e parole
     function estraiTuttiIGiorni(testo) {
       const t = testo.toLowerCase();
       const refDate = new Date();
@@ -230,10 +229,8 @@
         if (t.includes(mStr)) mese = mesiMap[mStr];
       });
 
-      // Rimuove l'anno prima di cercare i giorni per evitare falsi positivi
       let tSenzaAnno = t.replace(/\b202[0-9]\b/g, "");
 
-      // Mappa numeri a parole
       const numeriParole = {
         "primo": 1, "uno": 1, "due": 2, "tre": 3, "quattro": 4, "cinque": 5,
         "sei": 6, "sette": 7, "otto": 8, "nove": 9, "dieci": 10,
@@ -246,14 +243,12 @@
 
       let giorni = [];
 
-      // Controllo intervallo "dal ... al ..."
       const matchRange = tSenzaAnno.match(/(?:dal|da)\s+(\d{1,2})\s+(?:al|fino\s+al)\s+(\d{1,2})/);
       if (matchRange) {
         const start = parseInt(matchRange[1], 10);
         const end = parseInt(matchRange[2], 10);
         for (let g = start; g <= end; g++) giorni.push(g);
       } else {
-        // Cerca cifre numeriche isolate (es. "1 settembre", "il 9")
         const regexGiorno = /(?:il|del|giorno|\b)\s*(\b[1-9]\b|\b[12][0-9]\b|\b3[01]\b)(?!\s*euro)/g;
         let match;
         while ((match = regexGiorno.exec(tSenzaAnno)) !== null) {
@@ -263,7 +258,6 @@
           }
         }
 
-        // Cerca numeri scritti a parole se non trovati numerici
         if (giorni.length === 0) {
           Object.keys(numeriParole).forEach(parola => {
             const regexP = new RegExp(`\\b${parola}\\b`);
@@ -329,7 +323,6 @@
             if (t.includes(tok)) score += 5;
           });
 
-          // Pesi dedicati per ogni nome
           if (t.includes("sansone") && dip.nome.toLowerCase().includes("sansone")) score += 30;
           if (t.includes("andrea") && dip.nome.toLowerCase().includes("andrea")) score += 20;
           if (t.includes("ressa") && dip.nome.toLowerCase().includes("ressa")) score += 30;
@@ -370,9 +363,11 @@
       window.operazioniProposte = [];
       dipendentiCoinvolti.forEach(nomeDip => {
         giorniFinali.forEach(giorno => {
-          // La colonna Giorno sul tuo admin cerca sempre la chiave corrispondente
+          // DATA SOLARE PURA 1:1 SENZA ALCUNA SOTTRAZIONE O OFFSET
+          const dataEsatta = `${annoFinale}-${pad(meseFinale)}-${pad(giorno)}`;
           window.operazioniProposte.push({
             nome: nomeDip,
+            dataIso: dataEsatta,
             giorno: giorno,
             mese: meseFinale,
             anno: annoFinale,
@@ -426,7 +421,7 @@
       box.style.display = "block";
     }
 
-    // SALVATAGGIO CALIBRATO AL MILLIMETRO SUL TUO ADMIN
+    // SALVATAGGIO DIRETTO 1:1 SULLA DATA EFFETTIVA
     window.confermaSalvataggio = async function() {
       if (!window.operazioniProposte || window.operazioniProposte.length === 0) return;
 
@@ -435,26 +430,16 @@
       btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Salvataggio...</span>`;
       btn.disabled = true;
 
-      const promises = [];
-
-      window.operazioniProposte.forEach(item => {
+      const promises = window.operazioniProposte.map(item => {
         const safeKey = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
-
-        // Calcoliamo la chiave del planning di admin (giorno solare esatto)
-        const dataSolare = `${item.anno}-${pad(item.mese)}-${pad(item.giorno)}`;
-        
-        // E la chiave calibrata (giorno - 1) che accende la colonna specifica nel file di admin
-        const dMinus = new Date(item.anno, item.mese - 1, item.giorno - 1);
-        const dataPlanningAdmin = `${dMinus.getFullYear()}-${pad(dMinus.getMonth() + 1)}-${pad(dMinus.getDate())}`;
-
-        // Scriviamo esattamente la chiave attesa da admin.html
-        promises.push(set(ref(db, `presenze/${dataPlanningAdmin}/${safeKey}`), {
+        // Scrittura diretta su presenze/YYYY-MM-DD/SafeKey
+        return set(ref(db, `presenze/${item.dataIso}/${safeKey}`), {
           dipendente: item.nome,
-          data: dataPlanningAdmin,
+          data: item.dataIso,
           stato: item.stato,
           orarioRegistrazione: new Date().toISOString(),
           modificatoDa: "Voice App"
-        }));
+        });
       });
 
       try {
