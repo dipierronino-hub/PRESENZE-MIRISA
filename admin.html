@@ -6,7 +6,6 @@
   <title>Mirisa Ceramiche - Cruscotto Direzionale Presenze & Buste Paga</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   
-  <!-- Librerie Elaborazione PDF e Creazione ZIP -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -30,6 +29,26 @@
 
     * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; min-height: 100vh; }
+
+    #auth-overlay {
+      position: fixed; inset: 0; background: rgba(7, 13, 25, 0.95);
+      display: flex; align-items: center; justify-content: center; z-index: 9999;
+    }
+    .auth-modal {
+      background: var(--surface); border: 1px solid var(--surface-border);
+      border-radius: var(--radius); padding: 32px; width: 100%; max-width: 380px;
+      text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+    }
+    .auth-modal h2 { margin: 0 0 8px; font-size: 20px; color: #fff; }
+    .auth-modal p { margin: 0 0 20px; font-size: 13px; color: var(--text-muted); }
+    .auth-input {
+      width: 100%; background: #081120; border: 1px solid var(--surface-border);
+      color: #fff; padding: 10px 14px; border-radius: 8px; font-size: 14px; margin-bottom: 12px; outline: none;
+    }
+    .auth-btn {
+      width: 100%; background: var(--accent); color: #04101e; border: none;
+      padding: 12px; border-radius: 8px; font-weight: 800; font-size: 14px; cursor: pointer;
+    }
     
     header {
       display: flex; justify-content: space-between; align-items: center;
@@ -59,7 +78,6 @@
       padding: 8px 12px; border-radius: 6px; font-size: 14px; outline: none;
     }
 
-    /* Tabella Planning */
     .table-container { overflow-x: auto; max-width: 100%; border-radius: 8px; border: 1px solid var(--surface-border); }
     table { width: 100%; border-collapse: collapse; text-align: center; font-size: 12px; }
     th, td { padding: 8px 6px; border: 1px solid var(--surface-border); }
@@ -75,7 +93,6 @@
     .st-pomeriggio { background: rgba(245, 158, 11, 0.25); color: var(--warning); }
     .st-ferie { background: rgba(139, 92, 246, 0.25); color: var(--purple); }
 
-    /* Area Buste Paga */
     .dropzone {
       border: 2px dashed var(--accent); background: rgba(56, 189, 248, 0.04);
       border-radius: var(--radius); padding: 30px; text-align: center; transition: all 0.2s;
@@ -95,18 +112,38 @@
       display: flex; justify-content: space-between; align-items: center;
     }
 
-    #toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: #fff; padding: 12px 20px; border-radius: 8px; border-left: 4px solid var(--success); display: none; z-index: 1000; }
+    #toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: #fff; padding: 12px 20px; border-radius: 8px; border-left: 4px solid var(--success); display: none; z-index: 10000; }
   </style>
 </head>
 <body>
+
+  <!-- MODAL AUTENTICAZIONE RISERVATA -->
+  <div id="auth-overlay" style="display: flex;">
+    <div class="auth-modal">
+      <div style="font-size: 34px; color: var(--accent); margin-bottom: 10px;"><i class="fa-solid fa-lock"></i></div>
+      <h2>Area Amministrazione</h2>
+      <p>Accedi con il tuo account autorizzato</p>
+      
+      <input type="email" id="auth-email" class="auth-input" placeholder="dipierro.nino@gmail.com">
+      <input type="password" id="auth-pass" class="auth-input" placeholder="Password">
+      
+      <button class="auth-btn" onclick="window.accediAmministrazione()">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> Accedi
+      </button>
+      <div id="auth-err" style="color: var(--danger); font-size: 12px; font-weight: 700; margin-top: 12px; display: none;"></div>
+    </div>
+  </div>
 
   <header>
     <div class="brand">
       <h1>MIRISA <span>CERAMICHE</span></h1>
       <p>Cruscotto Presenze, Spettanze & Buste Paga</p>
     </div>
-    <div style="font-size: 13px; color: var(--text-muted);">
-      <i class="fa-solid fa-cloud-check" style="color: var(--success);"></i> Database Firebase Connesso
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <span id="label-operatore" style="font-size: 13px; color: var(--accent); font-weight: 600;"></span>
+      <button onclick="window.disconnetti()" style="background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
+        Esci
+      </button>
     </div>
   </header>
 
@@ -116,7 +153,7 @@
     <button class="nav-btn" onclick="mostraTab('anagrafica', event)"><i class="fa-solid fa-users"></i> Gestione Dipendenti & CF</button>
   </div>
 
-  <!-- TAB 1: PLANNING PRESENZE -->
+  <!-- TAB 1: PLANNING -->
   <div id="tab-planning" class="tab-content">
     <div class="card">
       <div class="toolbar">
@@ -139,14 +176,13 @@
           <span><span style="color: var(--purple); font-weight: 800;">F</span> Ferie</span>
         </div>
       </div>
-
       <div class="table-container">
         <table id="tabella-planning"></table>
       </div>
     </div>
   </div>
 
-  <!-- TAB 2: DIVISIONE BUSTE PAGA PDF -->
+  <!-- TAB 2: BUSTE PAGA -->
   <div id="tab-buste" class="tab-content" style="display: none;">
     <div class="card">
       <div class="dropzone" id="drop-zone">
@@ -176,11 +212,11 @@
     </div>
   </div>
 
-  <!-- TAB 3: GESTIONE ANAGRAFICA DIPENDENTI & MODIFICA CF -->
+  <!-- TAB 3: ANAGRAFICA & CF -->
   <div id="tab-anagrafica" class="tab-content" style="display: none;">
     <div class="card">
       <h3 id="form-titolo" style="margin-top: 0; font-size: 16px; color: var(--accent);">
-        <i class="fa-solid fa-user-plus"></i> Inserisci Nuovo Collaboratore o Modifica Esistente
+        <i class="fa-solid fa-user-plus"></i> Inserisci / Modifica Collaboratore
       </h3>
       
       <input type="hidden" id="edit-dip-id" value="">
@@ -216,6 +252,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref, set, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
@@ -226,6 +263,7 @@
     };
 
     const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
     const db = getDatabase(app);
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -235,6 +273,70 @@
     let dipendenti = [];
     let presenzeMese = {};
     let cedoliniElaborati = [];
+    let dataListenersAttivi = false;
+
+    // Gestione persistenza sessione locale: rimane loggato
+    setPersistence(auth, browserLocalPersistence);
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        document.getElementById("auth-overlay").style.display = "none";
+        document.getElementById("label-operatore").innerHTML = `<i class="fa-solid fa-user-check"></i> ${user.email}`;
+        if (!dataListenersAttivi) {
+          attivaAscoltoDati();
+          dataListenersAttivi = true;
+        }
+      } else {
+        document.getElementById("auth-overlay").style.display = "flex";
+        dataListenersAttivi = false;
+      }
+    });
+
+    window.accediAmministrazione = async function() {
+      const email = document.getElementById("auth-email").value.trim();
+      const pass = document.getElementById("auth-pass").value.trim();
+      const errBox = document.getElementById("auth-err");
+
+      if (!email || !pass) {
+        errBox.textContent = "Inserisci email e password.";
+        errBox.style.display = "block";
+        return;
+      }
+
+      try {
+        errBox.style.display = "none";
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch (err) {
+        errBox.textContent = "Errore di accesso: " + err.message;
+        errBox.style.display = "block";
+      }
+    };
+
+    window.disconnetti = function() {
+      signOut(auth);
+    };
+
+    function attivaAscoltoDati() {
+      onValue(ref(db, "dipendenti"), (snap) => {
+        const data = snap.val() || {};
+        dipendenti = [];
+        Object.keys(data).forEach(id => {
+          const item = data[id];
+          if (typeof item === "string") {
+            dipendenti.push({ id, nome: item, cf: "" });
+          } else {
+            dipendenti.push({ id, nome: item.nome || id, cf: item.cf || "" });
+          }
+        });
+        renderizzaAnagrafica();
+        window.caricaTabellaPlanning();
+      });
+
+      onValue(ref(db, "presenze"), (snap) => {
+        presenzeMese = snap.val() || {};
+        renderizzaPlanning();
+      });
+    }
 
     window.mostraTab = function(tabId, evt) {
       document.querySelectorAll(".tab-content").forEach(el => el.style.display = "none");
@@ -249,28 +351,6 @@
       t.style.display = "block";
       setTimeout(() => t.style.display = "none", 3000);
     }
-
-    // Ascolto Dipendenti
-    onValue(ref(db, "dipendenti"), (snap) => {
-      const data = snap.val() || {};
-      dipendenti = [];
-      Object.keys(data).forEach(id => {
-        const item = data[id];
-        if (typeof item === "string") {
-          dipendenti.push({ id, nome: item, cf: "" });
-        } else {
-          dipendenti.push({ id, nome: item.nome || id, cf: item.cf || "" });
-        }
-      });
-      renderizzaAnagrafica();
-      window.caricaTabellaPlanning();
-    });
-
-    // Ascolto Presenze
-    onValue(ref(db, "presenze"), (snap) => {
-      presenzeMese = snap.val() || {};
-      renderizzaPlanning();
-    });
 
     window.avviaModificaDipendente = function(id, nome, cf) {
       document.getElementById("edit-dip-id").value = id;
@@ -289,7 +369,7 @@
       document.getElementById("nuovo-nome").value = "";
       document.getElementById("nuovo-cf").value = "";
       
-      document.getElementById("form-titolo").innerHTML = `<i class="fa-solid fa-user-plus"></i> Inserisci Nuovo Collaboratore o Modifica Esistente`;
+      document.getElementById("form-titolo").innerHTML = `<i class="fa-solid fa-user-plus"></i> Inserisci / Modifica Collaboratore`;
       document.getElementById("btn-salva-testo").textContent = "Salva";
       document.getElementById("btn-salva-dip").style.background = "var(--accent)";
       document.getElementById("btn-annulla-edit").style.display = "none";
@@ -323,7 +403,7 @@
         await update(ref(db, `dipendenti/${id}`), { nome: nomeAttuale, cf: cfPulito });
         showToast(`Codice Fiscale per ${nomeAttuale} aggiornato!`);
       } catch (err) {
-        alert("Errore aggiornamento: " + err.message);
+        alert("Errore salvataggio CF: " + err.message);
       }
     };
 
