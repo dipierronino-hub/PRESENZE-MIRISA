@@ -62,6 +62,8 @@
       background: var(--surface); border: 1px solid var(--surface-border);
       border-radius: var(--radius); padding: 16px 24px; margin-bottom: 24px;
     }
+    .brand-container { display: flex; align-items: center; gap: 16px; }
+    .logo-img { width: 55px; height: 55px; object-fit: contain; border-radius: 8px; background: #fff; padding: 4px; }
     .brand h1 { margin: 0; font-size: 22px; font-weight: 800; }
     .brand h1 span { color: var(--accent); }
     .brand p { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); }
@@ -69,7 +71,7 @@
     .nav-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
     .nav-btn {
       background: var(--surface); border: 1px solid var(--surface-border); color: var(--text-muted);
-      padding: 10px 18px; border-radius: 8px; font-weight: 700; font-size: 14px; cursor: pointer;
+      padding: 10px 16px; border-radius: 8px; font-weight: 700; font-size: 13px; cursor: pointer;
       display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;
     }
     .nav-btn.active { background: var(--accent); color: #04101e; border-color: var(--accent); }
@@ -165,9 +167,12 @@
   </div>
 
   <header>
-    <div class="brand">
-      <h1>MIRISA <span>CERAMICHE</span></h1>
-      <p>Cruscotto Direzionale Presenze, Spettanze & Buste Paga</p>
+    <div class="brand-container">
+      <img src="https://i.ibb.co/1G08x22/logo-mirisa.jpg" alt="Logo Mirisa Ceramiche" class="logo-img" onerror="this.src='https://via.placeholder.com/55?text=MIRISA'">
+      <div class="brand">
+        <h1>MIRISA <span>CERAMICHE</span></h1>
+        <p>Cruscotto Direzionale Presenze, Spettanze & Buste Paga</p>
+      </div>
     </div>
     <div style="display: flex; align-items: center; gap: 14px;">
       <span id="label-operatore" style="font-size: 13px; color: var(--accent); font-weight: 600;">
@@ -180,18 +185,25 @@
   </header>
 
   <div class="nav-tabs">
-    <button class="nav-btn active" id="tab-btn-planning"><i class="fa-solid fa-calendar-days"></i> Planning Presenze Mensile</button>
-    <button class="nav-btn" id="tab-btn-buste"><i class="fa-solid fa-file-invoice-dollar"></i> Divisione Buste Paga & Contabilità</button>
-    <button class="nav-btn" id="tab-btn-storico"><i class="fa-solid fa-chart-line"></i> Storico Annuale Pagamenti</button>
-    <button class="nav-btn" id="tab-btn-anagrafica"><i class="fa-solid fa-users"></i> Gestione Dipendenti, CF, WhatsApp & Email</button>
+    <button class="nav-btn active" id="tab-btn-planning"><i class="fa-solid fa-calendar-days"></i> Planning Presenze</button>
+    <button class="nav-btn" id="tab-btn-buste"><i class="fa-solid fa-file-invoice-dollar"></i> Divisione Buste Paga</button>
+    <button class="nav-btn" id="tab-btn-pagamenti-mensile"><i class="fa-solid fa-money-bill-wave"></i> Planning Pagamenti Mensile</button>
+    <button class="nav-btn" id="tab-btn-storico"><i class="fa-solid fa-chart-line"></i> Storico Annuale Dipendente</button>
+    <button class="nav-btn" id="tab-btn-anagrafica"><i class="fa-solid fa-users"></i> Gestione Dipendenti</button>
   </div>
 
-  <!-- TAB 1: PLANNING MENSILE -->
+  <!-- TAB 1: PLANNING PRESENZE (MENSILE O SETTIMANALE) -->
   <div id="tab-planning" class="tab-content">
     <div class="card">
       <div class="toolbar">
-        <div>
-          <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Seleziona Periodo:</label>
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Visualizzazione:</label>
+          <select id="select-vista-presenze" style="background: #0f1b33; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 14px;">
+            <option value="mensile" selected>Mensile</option>
+            <option value="settimanale">Settimanale</option>
+          </select>
+
+          <label style="font-size: 13px; color: var(--text-muted); font-weight: 600; margin-left: 10px;">Mese:</label>
           <select id="select-mese">
             <option value="0">Gennaio</option><option value="1">Febbraio</option><option value="2">Marzo</option>
             <option value="3">Aprile</option><option value="4">Maggio</option><option value="5">Giugno</option>
@@ -204,7 +216,7 @@
         </div>
         <div style="font-size: 12px; color: var(--text-muted); display: flex; gap: 14px;">
           <span><span style="color: var(--success); font-weight: 800;">P</span> Intera</span>
-          <span><span style="color: var(--warning); font-weight: 800;">½</span> Mezza (M/P)</span>
+          <span><span style="color: var(--warning); font-weight: 800;">½</span> Mezza</span>
           <span><span style="color: var(--danger); font-weight: 800;">A</span> Assente</span>
           <span><span style="color: var(--purple); font-weight: 800;">F</span> Ferie</span>
         </div>
@@ -217,7 +229,7 @@
     </div>
   </div>
 
-  <!-- TAB 2: DIVISIONE BUSTE PAGA & CONTABILITA -->
+  <!-- TAB 2: DIVISIONE BUSTE PAGA -->
   <div id="tab-buste" class="tab-content" style="display: none;">
     <div class="card">
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; background: #081120; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--surface-border);">
@@ -266,12 +278,50 @@
     </div>
   </div>
 
-  <!-- TAB 3: STORICO ANNUALE PAGAMENTI -->
+  <!-- TAB 3: PLANNING PAGAMENTI MENSILE -->
+  <div id="tab-pagamenti-mensile" class="tab-content" style="display: none;">
+    <div class="card">
+      <div class="toolbar">
+        <div>
+          <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Mese di Competenza:</label>
+          <select id="pag-mensile-mese" style="background: #0f1b33; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 14px; margin-right: 15px;">
+            <option value="Gennaio">Gennaio</option><option value="Febbraio">Febbraio</option><option value="Marzo">Marzo</option>
+            <option value="Aprile">Aprile</option><option value="Maggio">Maggio</option><option value="Giugno">Giugno</option>
+            <option value="Luglio">Luglio</option><option value="Agosto" selected>Agosto</option><option value="Settembre">Settembre</option>
+            <option value="Ottobre">Ottobre</option><option value="Novembre">Novembre</option><option value="Dicembre">Dicembre</option>
+          </select>
+
+          <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Anno:</label>
+          <select id="pag-mensile-anno" style="background: #0f1b33; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 14px;">
+            <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: left; padding-left: 14px;">Collaboratore</th>
+              <th>Acconto (€)</th>
+              <th>Bonifico Saldo (€)</th>
+              <th>Totale Mese (€)</th>
+              <th>Data Esecuzione</th>
+              <th>Banca di Accredito</th>
+            </tr>
+          </thead>
+          <tbody id="pagamenti-mensile-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB 4: STORICO ANNUALE DIPENDENTE -->
   <div id="tab-storico" class="tab-content" style="display: none;">
     <div class="card">
       <div class="toolbar">
         <div>
-          <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Seleziona Collaboratore:</label>
+          <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Collaboratore:</label>
           <select id="storico-select-dip" style="background: #0f1b33; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 14px; margin-right: 15px;"></select>
           
           <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Anno:</label>
@@ -288,9 +338,9 @@
               <th style="text-align: left; padding-left: 14px;">Mese di Competenza</th>
               <th>Acconto (€)</th>
               <th>Bonifico Saldo (€)</th>
+              <th>Totale Mese (€)</th>
               <th>Data Esecuzione</th>
               <th>Banca di Accredito</th>
-              <th>Stato Contabile</th>
             </tr>
           </thead>
           <tbody id="storico-tbody"></tbody>
@@ -299,7 +349,7 @@
     </div>
   </div>
 
-  <!-- TAB 4: ANAGRAFICA -->
+  <!-- TAB 5: ANAGRAFICA -->
   <div id="tab-anagrafica" class="tab-content" style="display: none;">
     <div class="card">
       <h3 id="form-titolo" style="margin-top: 0; font-size: 16px; color: var(--accent);">
@@ -423,9 +473,11 @@
       document.getElementById(`tab-${tabId}`).style.display = "block";
       document.getElementById(`tab-btn-${tabId}`).classList.add("active");
       if (tabId === 'storico') popolaStoricoAnnuale();
+      if (tabId === 'pagamenti-mensile') popolaPagamentiMensile();
     }
     document.getElementById("tab-btn-planning").addEventListener("click", () => vaiATab("planning"));
     document.getElementById("tab-btn-buste").addEventListener("click", () => vaiATab("buste"));
+    document.getElementById("tab-btn-pagamenti-mensile").addEventListener("click", () => vaiATab("pagamenti-mensile"));
     document.getElementById("tab-btn-storico").addEventListener("click", () => vaiATab("storico"));
     document.getElementById("tab-btn-anagrafica").addEventListener("click", () => vaiATab("anagrafica"));
 
@@ -453,6 +505,7 @@
         renderizzaAnagrafica();
         rigeneraPlanning();
         popolaSelectStoricoDipendenti();
+        popolaPagamentiMensile();
       });
 
       onValue(dbRef(db, "presenze"), (snap) => {
@@ -468,12 +521,16 @@
         if (document.getElementById("tab-storico").style.display === "block") {
           popolaStoricoAnnuale();
         }
+        if (document.getElementById("tab-pagamenti-mensile").style.display === "block") {
+          popolaPagamentiMensile();
+        }
       });
     }
 
     function rigeneraPlanning() {
       const table = document.getElementById("tabella-planning");
       const loader = document.getElementById("loading-state");
+      const tipoVista = document.getElementById("select-vista-presenze").value;
 
       if (dipendenti.length === 0) {
         loader.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> In attesa dei dati...`;
@@ -488,24 +545,44 @@
 
       const selMese = parseInt(document.getElementById("select-mese").value, 10);
       const selAnno = parseInt(document.getElementById("select-anno").value, 10);
-      const numGiorni = new Date(selAnno, selMese + 1, 0).getDate();
+
+      let giorniDaMostrare = [];
+      const giorniSettimanaNomi = ["DOM", "LUN", "MAR", "MER", "GIO", "VEN", "SAB"];
+
+      if (tipoVista === "mensile") {
+        const numGiorni = new Date(selAnno, selMese + 1, 0).getDate();
+        for (let g = 1; g <= numGiorni; g++) {
+          const dObj = new Date(selAnno, selMese, g);
+          giorniDaMostrare.push({ giornoNum: g, dataIso: `${selAnno}-${pad(selMese + 1)}-${pad(g)}`, etichetta: pad(g), settimana: giorniSettimanaNomi[dObj.getDay()], weekend: (dObj.getDay() === 0 || dObj.getDay() === 6) });
+        }
+      } else {
+        // Vista settimanale (ultimi 7 giorni a partire da oggi o inizio settimana corrente)
+        const oggi = new Date();
+        for (let i = 6; i >= 0; i--) {
+          const dObj = new Date(oggi);
+          dObj.setDate(oggi.getDate() - i);
+          giorniDaMostrare.push({
+            giornoNum: dObj.getDate(),
+            dataIso: `${dObj.getFullYear()}-${pad(dObj.getMonth() + 1)}-${pad(dObj.getDate())}`,
+            etichetta: `${pad(dObj.getDate())}/${pad(dObj.getMonth() + 1)}`,
+            settimana: giorniSettimanaNomi[dObj.getDay()],
+            weekend: (dObj.getDay() === 0 || dObj.getDay() === 6)
+          });
+        }
+      }
 
       const thead = document.createElement("thead");
       const rigaHeader = document.createElement("tr");
       rigaHeader.innerHTML = `<th class="dip-header">Collaboratore</th>`;
 
-      const giorniSettimana = ["DOM", "LUN", "MAR", "MER", "GIO", "VEN", "SAB"];
-      for (let g = 1; g <= numGiorni; g++) {
-        const dataObj = new Date(selAnno, selMese, g);
-        const nomeGiorno = giorniSettimana[dataObj.getDay()];
-        const isWeekend = (dataObj.getDay() === 0 || dataObj.getDay() === 6);
+      giorniDaMostrare.forEach(g => {
         rigaHeader.innerHTML += `
-          <th style="${isWeekend ? 'background: #13223f; color: #64748b;' : ''}">
-            <div style="font-size: 10px;">${nomeGiorno}</div>
-            <div>${pad(g)}</div>
+          <th style="${g.weekend ? 'background: #13223f; color: #64748b;' : ''}">
+            <div style="font-size: 10px;">${g.settimana}</div>
+            <div>${g.etichetta}</div>
           </th>
         `;
-      }
+      });
       thead.appendChild(rigaHeader);
       table.appendChild(thead);
 
@@ -514,11 +591,9 @@
         const tr = document.createElement("tr");
         tr.innerHTML = `<td class="dip-cell">${dip.nome}</td>`;
 
-        for (let g = 1; g <= numGiorni; g++) {
-          const chiaveGiorno = `${selAnno}-${pad(selMese + 1)}-${pad(g)}`;
+        giorniDaMostrare.forEach(g => {
           const safeKey = dip.nome.replace(/[^a-zA-Z0-9]/g, "_");
-
-          const recordGiorno = presenzeTutte[chiaveGiorno] || {};
+          const recordGiorno = presenzeTutte[g.dataIso] || {};
           const recDip = recordGiorno[safeKey];
           const statoDip = recDip ? recDip.stato : "";
 
@@ -534,15 +609,16 @@
           const td = document.createElement("td");
           td.className = `day-cell ${classeStato}`;
           td.textContent = sigla;
-          td.addEventListener("click", () => cambiaStatoPlanning(chiaveGiorno, safeKey, dip.nome, statoDip));
+          td.addEventListener("click", () => cambiaStatoPlanning(g.dataIso, safeKey, dip.nome, statoDip));
           tr.appendChild(td);
-        }
+        });
         tbody.appendChild(tr);
       });
 
       table.appendChild(tbody);
     }
 
+    document.getElementById("select-vista-presenze").addEventListener("change", rigeneraPlanning);
     document.getElementById("select-mese").addEventListener("change", rigeneraPlanning);
     document.getElementById("select-anno").addEventListener("change", rigeneraPlanning);
 
@@ -563,7 +639,65 @@
       }
     }
 
-    // Storico Annuale Pagamenti
+    // Planning Pagamenti Mensile (Tutti i dipendenti)
+    function popolaPagamentiMensile() {
+      const tbody = document.getElementById("pagamenti-mensile-tbody");
+      const meseScelto = document.getElementById("pag-mensile-mese").value;
+      const annoScelto = document.getElementById("pag-mensile-anno").value;
+      if (!tbody) return;
+
+      tbody.innerHTML = "";
+      const chiavePeriodo = `${annoScelto}_${meseScelto}`;
+      const datiPeriodo = contabilitaTutta[chiavePeriodo] || {};
+
+      let totAcconti = 0;
+      let totSaldi = 0;
+
+      if (dipendenti.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="padding: 20px; color: var(--text-muted); font-style: italic;">Nessun collaboratore trovato.</td></tr>`;
+        return;
+      }
+
+      dipendenti.forEach(dip => {
+        const safeKey = dip.nome.replace(/[^a-zA-Z0-9]/g, "_");
+        const contData = datiPeriodo[safeKey] || { acconto: 0, bonifico: 0, dataBonifico: "", banca: "" };
+
+        const acc = parseFloat(contData.acconto) || 0;
+        const bon = parseFloat(contData.bonifico) || 0;
+        const totDip = acc + bon;
+
+        totAcconti += acc;
+        totSaldi += bon;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="text-align: left; padding-left: 14px; font-weight: 700; color: #fff;">${dip.nome}</td>
+          <td>€ ${acc.toFixed(2)}</td>
+          <td>€ ${bon.toFixed(2)}</td>
+          <td style="font-weight: 800; color: var(--accent);">€ ${totDip.toFixed(2)}</td>
+          <td>${contData.dataBonifico ? contData.dataBonifico : '-'}</td>
+          <td style="font-size: 11px; color: var(--text-muted);">${contData.banca ? contData.banca : '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      // Riga Sommatoria Totale Aziendale
+      const trTot = document.createElement("tr");
+      trTot.style.background = "#081120";
+      trTot.innerHTML = `
+        <td style="text-align: left; padding-left: 14px; font-weight: 800; color: var(--accent);">TOTALE AZIENDALE</td>
+        <td style="font-weight: 800; color: #fff;">€ ${totAcconti.toFixed(2)}</td>
+        <td style="font-weight: 800; color: #fff;">€ ${totSaldi.toFixed(2)}</td>
+        <td style="font-weight: 800; color: var(--success); font-size: 14px;">€ ${(totAcconti + totSaldi).toFixed(2)}</td>
+        <td colspan="2"></td>
+      `;
+      tbody.appendChild(trTot);
+    }
+
+    document.getElementById("pag-mensile-mese").addEventListener("change", popolaPagamentiMensile);
+    document.getElementById("pag-mensile-anno").addEventListener("change", popolaPagamentiMensile);
+
+    // Storico Annuale Pagamenti Dipendente con Sommatoria
     function popolaSelectStoricoDipendenti() {
       const sel = document.getElementById("storico-select-dip");
       if (!sel) return;
@@ -587,24 +721,43 @@
       const mesiAnno = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
       const safeKey = selDipNome.replace(/[^a-zA-Z0-9]/g, "_");
 
+      let totAccontiAnno = 0;
+      let totSaldiAnno = 0;
+
       mesiAnno.forEach(mese => {
         const chiavePeriodo = `${selAnno}_${mese}`;
         const contData = (contabilitaTutta[chiavePeriodo] && contabilitaTutta[chiavePeriodo][safeKey]) || { acconto: 0, bonifico: 0, dataBonifico: "", banca: "" };
 
-        const tr = document.createElement("tr");
-        const totaleCorrisposto = (parseFloat(contData.acconto) || 0) + (parseFloat(contData.bonifico) || 0);
-        const stato = totaleCorrisposto > 0 ? `<span style="color: var(--success); font-weight: 700;">Registrato</span>` : `<span style="color: var(--text-muted); font-style: italic;">In attesa</span>`;
+        const acc = parseFloat(contData.acconto) || 0;
+        const bon = parseFloat(contData.bonifico) || 0;
+        const totMese = acc + bon;
 
+        totAccontiAnno += acc;
+        totSaldiAnno += bon;
+
+        const tr = document.createElement("tr");
         tr.innerHTML = `
           <td style="text-align: left; padding-left: 14px; font-weight: 700; color: #fff;">${mese} ${selAnno}</td>
-          <td>€ ${(parseFloat(contData.acconto) || 0).toFixed(2)}</td>
-          <td>€ ${(parseFloat(contData.bonifico) || 0).toFixed(2)}</td>
+          <td>€ ${acc.toFixed(2)}</td>
+          <td>€ ${bon.toFixed(2)}</td>
+          <td style="font-weight: 800; color: var(--accent);">€ ${totMese.toFixed(2)}</td>
           <td>${contData.dataBonifico ? contData.dataBonifico : '-'}</td>
-          <td style="font-size: 11px; color: var(--accent);">${contData.banca ? contData.banca : '-'}</td>
-          <td>${stato}</td>
+          <td style="font-size: 11px; color: var(--text-muted);">${contData.banca ? contData.banca : '-'}</td>
         `;
         tbody.appendChild(tr);
       });
+
+      // Riga Sommatoria Totale Annuale Dipendente
+      const trTot = document.createElement("tr");
+      trTot.style.background = "#081120";
+      trTot.innerHTML = `
+        <td style="text-align: left; padding-left: 14px; font-weight: 800; color: var(--accent);">TOTALE ${selAnno}</td>
+        <td style="font-weight: 800; color: #fff;">€ ${totAccontiAnno.toFixed(2)}</td>
+        <td style="font-weight: 800; color: #fff;">€ ${totSaldiAnno.toFixed(2)}</td>
+        <td style="font-weight: 800; color: var(--success); font-size: 14px;">€ ${(totAccontiAnno + totSaldiAnno).toFixed(2)}</td>
+        <td colspan="2"></td>
+      `;
+      tbody.appendChild(trTot);
     }
 
     document.getElementById("storico-select-dip").addEventListener("change", popolaStoricoAnnuale);
@@ -780,7 +933,6 @@
     });
 
     const REGEX_CF = /[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]/;
-    const ELENCO_MESI = ["GENNAIO", "FEBBRAIO", "MARZO", "APRILE", "MAGGIO", "GIUGNO", "LUGLIO", "AGOSTO", "SETTEMBRE", "OTTOBRE", "NOVEMBRE", "DICEMBRE"];
 
     function rilevaMeseAnnoDalTesto(testoUpper) {
       for (let idx = 0; idx < ELENCO_MESI.length; idx++) {
