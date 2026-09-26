@@ -31,8 +31,8 @@
     body { background-color: var(--bg); color: var(--text); margin: 0; padding: 20px; min-height: 100vh; }
 
     #auth-overlay {
-      position: fixed; inset: 0; background: rgba(7, 13, 25, 0.95);
-      display: flex; align-items: center; justify-content: center; z-index: 9999;
+      position: fixed; inset: 0; background: rgba(7, 13, 25, 0.96);
+      display: none; align-items: center; justify-content: center; z-index: 9999;
     }
     .auth-modal {
       background: var(--surface); border: 1px solid var(--surface-border);
@@ -78,15 +78,15 @@
       padding: 8px 12px; border-radius: 6px; font-size: 14px; outline: none;
     }
 
-    .table-container { overflow-x: auto; max-width: 100%; border-radius: 8px; border: 1px solid var(--surface-border); }
+    .table-container { overflow-x: auto; max-width: 100%; border-radius: 8px; border: 1px solid var(--surface-border); min-height: 120px; }
     table { width: 100%; border-collapse: collapse; text-align: center; font-size: 12px; }
     th, td { padding: 8px 6px; border: 1px solid var(--surface-border); }
     th { background: #0b1528; color: var(--text-muted); font-weight: 700; }
-    th.dip-header { text-align: left; padding-left: 12px; min-width: 160px; position: sticky; left: 0; background: #0b1528; z-index: 10; }
+    th.dip-header { text-align: left; padding-left: 12px; min-width: 170px; position: sticky; left: 0; background: #0b1528; z-index: 10; }
     td.dip-cell { text-align: left; padding-left: 12px; font-weight: 700; position: sticky; left: 0; background: var(--surface); z-index: 5; }
 
-    .day-cell { cursor: pointer; transition: background 0.2s; font-weight: 700; font-size: 11px; }
-    .day-cell:hover { background: rgba(56, 189, 248, 0.1); }
+    .day-cell { cursor: pointer; transition: background 0.2s; font-weight: 700; font-size: 11px; height: 38px; }
+    .day-cell:hover { background: rgba(56, 189, 248, 0.15); }
     .st-intera { background: rgba(16, 185, 129, 0.25); color: var(--success); }
     .st-assente { background: rgba(239, 68, 68, 0.25); color: var(--danger); }
     .st-mattina { background: rgba(245, 158, 11, 0.25); color: var(--warning); }
@@ -112,17 +112,21 @@
       display: flex; justify-content: space-between; align-items: center;
     }
 
-    #toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: #fff; padding: 12px 20px; border-radius: 8px; border-left: 4px solid var(--success); display: none; z-index: 10000; }
+    #loading-state {
+      padding: 40px; text-align: center; color: var(--accent); font-weight: 700;
+    }
+
+    #toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: #fff; padding: 12px 20px; border-radius: 8px; border-left: 4px solid var(--success); display: none; z-index: 10000; font-size: 13px; font-weight: 600; }
   </style>
 </head>
 <body>
 
-  <!-- MODAL AUTENTICAZIONE RISERVATA -->
-  <div id="auth-overlay" style="display: flex;">
+  <!-- MODAL AUTENTICAZIONE -->
+  <div id="auth-overlay">
     <div class="auth-modal">
       <div style="font-size: 34px; color: var(--accent); margin-bottom: 10px;"><i class="fa-solid fa-lock"></i></div>
-      <h2>Area Amministrazione</h2>
-      <p>Accedi con il tuo account autorizzato</p>
+      <h2>Area Riservata Amministrazione</h2>
+      <p>Accedi con le credenziali Firebase</p>
       
       <input type="email" id="auth-email" class="auth-input" placeholder="dipierro.nino@gmail.com">
       <input type="password" id="auth-pass" class="auth-input" placeholder="Password">
@@ -137,11 +141,13 @@
   <header>
     <div class="brand">
       <h1>MIRISA <span>CERAMICHE</span></h1>
-      <p>Cruscotto Presenze, Spettanze & Buste Paga</p>
+      <p>Cruscotto Direzionale Presenze, Spettanze & Buste Paga</p>
     </div>
     <div style="display: flex; align-items: center; gap: 14px;">
-      <span id="label-operatore" style="font-size: 13px; color: var(--accent); font-weight: 600;"></span>
-      <button onclick="window.disconnetti()" style="background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
+      <span id="label-operatore" style="font-size: 13px; color: var(--accent); font-weight: 600;">
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Connessione...
+      </span>
+      <button id="btn-logout" onclick="window.disconnetti()" style="display: none; background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
         Esci
       </button>
     </div>
@@ -153,19 +159,19 @@
     <button class="nav-btn" onclick="mostraTab('anagrafica', event)"><i class="fa-solid fa-users"></i> Gestione Dipendenti & CF</button>
   </div>
 
-  <!-- TAB 1: PLANNING -->
+  <!-- TAB 1: PLANNING PRESENZE -->
   <div id="tab-planning" class="tab-content">
     <div class="card">
       <div class="toolbar">
         <div>
-          <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Seleziona Mese:</label>
-          <select id="select-mese" onchange="window.caricaTabellaPlanning()">
+          <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Seleziona Periodo:</label>
+          <select id="select-mese" onchange="window.rigeneraPlanning()">
             <option value="0">Gennaio</option><option value="1">Febbraio</option><option value="2">Marzo</option>
             <option value="3">Aprile</option><option value="4">Maggio</option><option value="5">Giugno</option>
             <option value="6">Luglio</option><option value="7">Agosto</option><option value="8" selected>Settembre</option>
             <option value="9">Ottobre</option><option value="10">Novembre</option><option value="11">Dicembre</option>
           </select>
-          <select id="select-anno" onchange="window.caricaTabellaPlanning()">
+          <select id="select-anno" onchange="window.rigeneraPlanning()">
             <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
           </select>
         </div>
@@ -176,13 +182,15 @@
           <span><span style="color: var(--purple); font-weight: 800;">F</span> Ferie</span>
         </div>
       </div>
+
       <div class="table-container">
-        <table id="tabella-planning"></table>
+        <div id="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Caricamento presenze dal database...</div>
+        <table id="tabella-planning" style="display: none;"></table>
       </div>
     </div>
   </div>
 
-  <!-- TAB 2: BUSTE PAGA -->
+  <!-- TAB 2: DIVISIONE BUSTE PAGA PDF -->
   <div id="tab-buste" class="tab-content" style="display: none;">
     <div class="card">
       <div class="dropzone" id="drop-zone">
@@ -190,7 +198,7 @@
         <h2 style="margin: 0 0 6px; font-size: 18px;">Caricamento Cedolone Buste Paga del Consulente</h2>
         <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-muted);">
           Trascina qui il file PDF unico inviato dallo studio paghe oppure selezionalo dal computer.<br>
-          Il sistema legge i Codici Fiscali e crea i singoli PDF (anche per cedolini su 2 pagine).
+          Il sistema analizza i Codici Fiscali e crea i singoli PDF autonomi.
         </p>
 
         <input type="file" id="input-pdf-buste" accept="application/pdf" style="display: none;" onchange="window.gestisciFileSelezionato(event)">
@@ -212,11 +220,11 @@
     </div>
   </div>
 
-  <!-- TAB 3: ANAGRAFICA & CF -->
+  <!-- TAB 3: GESTIONE ANAGRAFICA DIPENDENTI & CODICI FISCALI -->
   <div id="tab-anagrafica" class="tab-content" style="display: none;">
     <div class="card">
       <h3 id="form-titolo" style="margin-top: 0; font-size: 16px; color: var(--accent);">
-        <i class="fa-solid fa-user-plus"></i> Inserisci / Modifica Collaboratore
+        <i class="fa-solid fa-user-plus"></i> Inserisci Nuovo Collaboratore o Modifica Esistente
       </h3>
       
       <input type="hidden" id="edit-dip-id" value="">
@@ -270,25 +278,29 @@
 
     function pad(n) { return String(n).padStart(2, '0'); }
 
+    // Memoria locale sincronizzata
     let dipendenti = [];
-    let presenzeMese = {};
-    let cedoliniElaborati = [];
-    let dataListenersAttivi = false;
+    let presenzeTutte = {};
+    let listenersConnessi = false;
 
-    // Gestione persistenza sessione locale: rimane loggato
+    // Persistenza locale forzata (ricorda l'accesso)
     setPersistence(auth, browserLocalPersistence);
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
         document.getElementById("auth-overlay").style.display = "none";
-        document.getElementById("label-operatore").innerHTML = `<i class="fa-solid fa-user-check"></i> ${user.email}`;
-        if (!dataListenersAttivi) {
-          attivaAscoltoDati();
-          dataListenersAttivi = true;
+        document.getElementById("label-operatore").innerHTML = `<i class="fa-solid fa-user-check" style="color:var(--success);"></i> ${user.email}`;
+        document.getElementById("btn-logout").style.display = "inline-block";
+
+        if (!listenersConnessi) {
+          connettiDatabase();
+          listenersConnessi = true;
         }
       } else {
         document.getElementById("auth-overlay").style.display = "flex";
-        dataListenersAttivi = false;
+        document.getElementById("label-operatore").innerHTML = `<i class="fa-solid fa-lock"></i> Autenticazione richiesta`;
+        document.getElementById("btn-logout").style.display = "none";
+        listenersConnessi = false;
       }
     });
 
@@ -307,7 +319,7 @@
         errBox.style.display = "none";
         await signInWithEmailAndPassword(auth, email, pass);
       } catch (err) {
-        errBox.textContent = "Errore di accesso: " + err.message;
+        errBox.textContent = "Credenziali errate: " + err.message;
         errBox.style.display = "block";
       }
     };
@@ -316,7 +328,8 @@
       signOut(auth);
     };
 
-    function attivaAscoltoDati() {
+    function connettiDatabase() {
+      // 1. Sincronizzazione Dipendenti
       onValue(ref(db, "dipendenti"), (snap) => {
         const data = snap.val() || {};
         dipendenti = [];
@@ -328,28 +341,144 @@
             dipendenti.push({ id, nome: item.nome || id, cf: item.cf || "" });
           }
         });
+
+        // Ordinamento alfabetico
+        dipendenti.sort((a, b) => a.nome.localeCompare(b.nome));
+
         renderizzaAnagrafica();
-        window.caricaTabellaPlanning();
+        window.rigeneraPlanning();
+      }, (error) => {
+        document.getElementById("loading-state").innerHTML = `<span style="color:var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Errore permessi: ${error.message}</span>`;
       });
 
+      // 2. Sincronizzazione Presenze
       onValue(ref(db, "presenze"), (snap) => {
-        presenzeMese = snap.val() || {};
-        renderizzaPlanning();
+        presenzeTutte = snap.val() || {};
+        window.rigeneraPlanning();
       });
     }
 
-    window.mostraTab = function(tabId, evt) {
-      document.querySelectorAll(".tab-content").forEach(el => el.style.display = "none");
-      document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
-      document.getElementById(`tab-${tabId}`).style.display = "block";
-      if (evt && evt.currentTarget) evt.currentTarget.classList.add("active");
+    // MOTORE PLANNING CALENDARIO DETERMINISTICO
+    window.rigeneraPlanning = function() {
+      const table = document.getElementById("tabella-planning");
+      const loader = document.getElementById("loading-state");
+
+      if (dipendenti.length === 0) {
+        loader.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> In attesa dei collaboratori...`;
+        loader.style.display = "block";
+        table.style.display = "none";
+        return;
+      }
+
+      loader.style.display = "none";
+      table.style.display = "table";
+      table.innerHTML = "";
+
+      const selMese = parseInt(document.getElementById("select-mese").value, 10);
+      const selAnno = parseInt(document.getElementById("select-anno").value, 10);
+      const numGiorni = new Date(selAnno, selMese + 1, 0).getDate();
+
+      // Intestazione
+      const thead = document.createElement("thead");
+      const rigaHeader = document.createElement("tr");
+      rigaHeader.innerHTML = `<th class="dip-header">Collaboratore</th>`;
+
+      const giorniSettimana = ["DOM", "LUN", "MAR", "MER", "GIO", "VEN", "SAB"];
+      for (let g = 1; g <= numGiorni; g++) {
+        const dataObj = new Date(selAnno, selMese, g);
+        const nomeGiorno = giorniSettimana[dataObj.getDay()];
+        const isWeekend = (dataObj.getDay() === 0 || dataObj.getDay() === 6);
+        rigaHeader.innerHTML += `
+          <th style="${isWeekend ? 'background: #13223f; color: #64748b;' : ''}">
+            <div style="font-size: 10px;">${nomeGiorno}</div>
+            <div>${pad(g)}</div>
+          </th>
+        `;
+      }
+      thead.appendChild(rigaHeader);
+      table.appendChild(thead);
+
+      // Righe dipendenti
+      const tbody = document.createElement("tbody");
+      dipendenti.forEach(dip => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td class="dip-cell">${dip.nome}</td>`;
+
+        for (let g = 1; g <= numGiorni; g++) {
+          const chiaveGiorno = `${selAnno}-${pad(selMese + 1)}-${pad(g)}`;
+          const safeKey = dip.nome.replace(/[^a-zA-Z0-9]/g, "_");
+
+          const recordGiorno = presenzeTutte[chiaveGiorno] || {};
+          const recDip = recordGiorno[safeKey];
+          const statoDip = recDip ? recDip.stato : "";
+
+          let classeStato = "";
+          let sigla = "";
+
+          if (statoDip === "Intera") { classeStato = "st-intera"; sigla = "P"; }
+          else if (statoDip === "Assente") { classeStato = "st-assente"; sigla = "A"; }
+          else if (statoDip === "Mattina") { classeStato = "st-mattina"; sigla = "½M"; }
+          else if (statoDip === "Pomeriggio") { classeStato = "st-pomeriggio"; sigla = "½P"; }
+          else if (statoDip === "Ferie") { classeStato = "st-ferie"; sigla = "F"; }
+
+          tr.innerHTML += `
+            <td class="day-cell ${classeStato}" onclick="window.cambiaStatoPlanningRapido('${chiaveGiorno}', '${safeKey}', '${dip.nome.replace(/'/g, "\\'")}', '${statoDip}')">
+              ${sigla}
+            </td>
+          `;
+        }
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(tbody);
     };
 
-    function showToast(msg) {
-      const t = document.getElementById("toast");
-      t.textContent = msg;
-      t.style.display = "block";
-      setTimeout(() => t.style.display = "none", 3000);
+    window.cambiaStatoPlanningRapido = function(dataIso, safeKey, nome, statoAttuale) {
+      const sequenza = ["", "Intera", "Mattina", "Pomeriggio", "Assente", "Ferie"];
+      const prossimoStato = sequenza[(sequenza.indexOf(statoAttuale) + 1) % sequenza.length];
+
+      if (!prossimoStato) {
+        remove(ref(db, `presenze/${dataIso}/${safeKey}`));
+      } else {
+        set(ref(db, `presenze/${dataIso}/${safeKey}`), {
+          dipendente: nome,
+          data: dataIso,
+          stato: prossimoStato,
+          orarioRegistrazione: new Date().toISOString(),
+          modificatoDa: "Admin Planning Click"
+        });
+      }
+    };
+
+    // GESTIONE ANAGRAFICA E MODIFICA CF
+    function renderizzaAnagrafica() {
+      const body = document.getElementById("lista-anagrafica-body");
+      if (!body) return;
+      body.innerHTML = "";
+
+      dipendenti.forEach(dip => {
+        const safeNome = dip.nome.replace(/'/g, "\\'");
+        const safeCf = (dip.cf || "").replace(/'/g, "\\'");
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+          <td style="text-align: left; padding-left: 14px; font-weight: 700;">${dip.nome}</td>
+          <td style="font-family: monospace; font-size: 13px; font-weight: 700; color: ${dip.cf ? 'var(--accent)' : 'var(--danger)'}; cursor: pointer;" 
+              onclick="window.modificaCfRapido('${dip.id}', '${safeNome}', '${safeCf}')" 
+              title="Clicca per modificare rapidamente il CF">
+            ${dip.cf ? dip.cf : '<span style="font-weight: normal; font-style: italic; opacity: 0.6;"><i class="fa-solid fa-plus"></i> Inserisci CF</span>'}
+          </td>
+          <td>
+            <button onclick="window.avviaModificaDipendente('${dip.id}', '${safeNome}', '${safeCf}')" title="Modifica" style="background: rgba(56, 189, 248, 0.2); color: var(--accent); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; margin-right: 6px; font-weight: 600;">
+              <i class="fa-solid fa-pen"></i> Modifica
+            </button>
+            <button onclick="window.eliminaDipendente('${dip.id}')" title="Elimina" style="background: rgba(239, 68, 68, 0.2); color: var(--danger); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer;">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </td>
+        `;
+        body.appendChild(tr);
+      });
     }
 
     window.avviaModificaDipendente = function(id, nome, cf) {
@@ -369,7 +498,7 @@
       document.getElementById("nuovo-nome").value = "";
       document.getElementById("nuovo-cf").value = "";
       
-      document.getElementById("form-titolo").innerHTML = `<i class="fa-solid fa-user-plus"></i> Inserisci / Modifica Collaboratore`;
+      document.getElementById("form-titolo").innerHTML = `<i class="fa-solid fa-user-plus"></i> Inserisci Nuovo Collaboratore o Modifica Esistente`;
       document.getElementById("btn-salva-testo").textContent = "Salva";
       document.getElementById("btn-salva-dip").style.background = "var(--accent)";
       document.getElementById("btn-annulla-edit").style.display = "none";
@@ -413,136 +542,10 @@
       }
     };
 
-    function renderizzaAnagrafica() {
-      const body = document.getElementById("lista-anagrafica-body");
-      if (!body) return;
-      body.innerHTML = "";
+    // GESTIONE BUSTE PAGA PDF
+    let cedoliniElaborati = [];
+    const REGEX_CF = /[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]/;
 
-      dipendenti.forEach(dip => {
-        const safeNome = dip.nome.replace(/'/g, "\\'");
-        const safeCf = (dip.cf || "").replace(/'/g, "\\'");
-        const tr = document.createElement("tr");
-
-        tr.innerHTML = `
-          <td style="text-align: left; padding-left: 14px; font-weight: 700;">${dip.nome}</td>
-          <td style="font-family: monospace; font-size: 13px; font-weight: 700; color: ${dip.cf ? 'var(--accent)' : 'var(--danger)'}; cursor: pointer;" 
-              onclick="window.modificaCfRapido('${dip.id}', '${safeNome}', '${safeCf}')" 
-              title="Clicca per modificare rapidamente il CF">
-            ${dip.cf ? dip.cf : '<span style="font-weight: normal; font-style: italic; opacity: 0.6;"><i class="fa-solid fa-plus"></i> Inserisci CF</span>'}
-          </td>
-          <td>
-            <button onclick="window.avviaModificaDipendente('${dip.id}', '${safeNome}', '${safeCf}')" title="Modifica" style="background: rgba(56, 189, 248, 0.2); color: var(--accent); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; margin-right: 6px; font-weight: 600;">
-              <i class="fa-solid fa-pen"></i> Modifica
-            </button>
-            <button onclick="window.eliminaDipendente('${dip.id}')" title="Elimina" style="background: rgba(239, 68, 68, 0.2); color: var(--danger); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer;">
-              <i class="fa-solid fa-trash"></i>
-            </button>
-          </td>
-        `;
-        body.appendChild(tr);
-      });
-    }
-
-    // Planning Calendario
-    window.caricaTabellaPlanning = function() {
-      const elMese = document.getElementById("select-mese");
-      const elAnno = document.getElementById("select-anno");
-      if (!elMese || !elAnno) return;
-
-      const mese = parseInt(elMese.value, 10);
-      const anno = parseInt(elAnno.value, 10);
-      const numGiorni = new Date(anno, mese + 1, 0).getDate();
-
-      const table = document.getElementById("tabella-planning");
-      table.innerHTML = "";
-
-      const thead = document.createElement("thead");
-      const rigaHeader = document.createElement("tr");
-      rigaHeader.innerHTML = `<th class="dip-header">Collaboratore</th>`;
-
-      const giorniSettimana = ["DOM", "LUN", "MAR", "MER", "GIO", "VEN", "SAB"];
-      for (let g = 1; g <= numGiorni; g++) {
-        const dataObj = new Date(anno, mese, g);
-        const nomeGiorno = giorniSettimana[dataObj.getDay()];
-        const isWeekend = (dataObj.getDay() === 0 || dataObj.getDay() === 6);
-        rigaHeader.innerHTML += `
-          <th style="${isWeekend ? 'background: #13223f; color: #64748b;' : ''}">
-            <div style="font-size: 10px;">${nomeGiorno}</div>
-            <div>${pad(g)}</div>
-          </th>
-        `;
-      }
-      thead.appendChild(rigaHeader);
-      table.appendChild(thead);
-
-      const tbody = document.createElement("tbody");
-      tbody.id = "planning-tbody";
-      table.appendChild(tbody);
-
-      renderizzaPlanning();
-    };
-
-    function renderizzaPlanning() {
-      const tbody = document.getElementById("planning-tbody");
-      if (!tbody) return;
-      tbody.innerHTML = "";
-
-      const elMese = document.getElementById("select-mese");
-      const elAnno = document.getElementById("select-anno");
-      if (!elMese || !elAnno) return;
-
-      const mese = parseInt(elMese.value, 10);
-      const anno = parseInt(elAnno.value, 10);
-      const numGiorni = new Date(anno, mese + 1, 0).getDate();
-
-      dipendenti.forEach(dip => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td class="dip-cell">${dip.nome}</td>`;
-
-        for (let g = 1; g <= numGiorni; g++) {
-          const chiaveGiorno = `${anno}-${pad(mese + 1)}-${pad(g)}`;
-          const safeKey = dip.nome.replace(/[^a-zA-Z0-9]/g, "_");
-
-          const recordGiorno = presenzeMese[chiaveGiorno] || {};
-          const statoDip = recordGiorno[safeKey]?.stato || "";
-
-          let classeStato = "";
-          let sigla = "";
-
-          if (statoDip === "Intera") { classeStato = "st-intera"; sigla = "P"; }
-          else if (statoDip === "Assente") { classeStato = "st-assente"; sigla = "A"; }
-          else if (statoDip === "Mattina") { classeStato = "st-mattina"; sigla = "½M"; }
-          else if (statoDip === "Pomeriggio") { classeStato = "st-pomeriggio"; sigla = "½P"; }
-          else if (statoDip === "Ferie") { classeStato = "st-ferie"; sigla = "F"; }
-
-          tr.innerHTML += `
-            <td class="day-cell ${classeStato}" onclick="window.cambiaStatoPlanningRapido('${chiaveGiorno}', '${safeKey}', '${dip.nome.replace(/'/g, "\\'")}', '${statoDip}')">
-              ${sigla}
-            </td>
-          `;
-        }
-        tbody.appendChild(tr);
-      });
-    }
-
-    window.cambiaStatoPlanningRapido = function(dataIso, safeKey, nome, statoAttuale) {
-      const sequenza = ["", "Intera", "Mattina", "Pomeriggio", "Assente", "Ferie"];
-      const prossimoStato = sequenza[(sequenza.indexOf(statoAttuale) + 1) % sequenza.length];
-
-      if (!prossimoStato) {
-        remove(ref(db, `presenze/${dataIso}/${safeKey}`));
-      } else {
-        set(ref(db, `presenze/${dataIso}/${safeKey}`), {
-          dipendente: nome,
-          data: dataIso,
-          stato: prossimoStato,
-          orarioRegistrazione: new Date().toISOString(),
-          modificatoDa: "Admin Planning Click"
-        });
-      }
-    };
-
-    // Elaborazione Split Buste Paga
     const dropZone = document.getElementById("drop-zone");
     if (dropZone) {
       dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
@@ -558,8 +561,6 @@
       if (e.target.files.length > 0) elaboraFilePdf(e.target.files[0]);
     };
 
-    const REGEX_CF = /[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]/;
-
     async function elaboraFilePdf(file) {
       if (!file || file.type !== "application/pdf") return alert("Carica un file PDF valido.");
 
@@ -568,7 +569,7 @@
       const barraDownload = document.getElementById("barra-download-tutti");
 
       boxStato.style.display = "block";
-      boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-spinner fa-spin"></i> Lettura e analisi del documento in corso...</span>`;
+      boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-spinner fa-spin"></i> Lettura documento PDF in corso...</span>`;
       griglia.innerHTML = "";
       barraDownload.style.display = "none";
       cedoliniElaborati = [];
@@ -583,7 +584,7 @@
         let cedolinoCorrente = null;
 
         for (let i = 1; i <= totalePagine; i++) {
-          boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-spinner fa-spin"></i> Analisi pagina ${i} di ${totalePagine}...</span>`;
+          boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-spinner fa-spin"></i> Scansione pagina ${i} di ${totalePagine}...</span>`;
           
           const page = await pdfPerTesto.getPage(i);
           const content = await page.getTextContent();
@@ -620,7 +621,7 @@
         }
         if (cedolinoCorrente) gruppiCedolini.push(cedolinoCorrente);
 
-        boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-gear fa-spin"></i> Generazione singoli file PDF in corso...</span>`;
+        boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-gear fa-spin"></i> Divisione pagine e creazione singoli file...</span>`;
 
         for (const gruppo of gruppiCedolini) {
           const nuovoPdf = await PDFLib.PDFDocument.create();
@@ -641,8 +642,8 @@
           });
         }
 
-        boxStato.innerHTML = `<span style="color: var(--success);"><i class="fa-solid fa-circle-check"></i> Operazione completata! ${cedoliniElaborati.length} cedolini separati con successo.</span>`;
-        document.getElementById("totale-estratti-label").textContent = `${cedoliniElaborati.length} Cedolini Pronti per l'Archiviazione`;
+        boxStato.innerHTML = `<span style="color: var(--success);"><i class="fa-solid fa-circle-check"></i> Completato con successo! ${cedoliniElaborati.length} cedolini generati.</span>`;
+        document.getElementById("totale-estratti-label").textContent = `${cedoliniElaborati.length} Cedolini Pronti per il Download`;
         barraDownload.style.display = "flex";
 
         cedoliniElaborati.forEach(item => {
@@ -676,6 +677,20 @@
       saveAs(zipBlob, `Buste_Paga_Mirisa_${new Date().toISOString().split("T")[0]}.zip`);
       showToast("Download ZIP avviato!");
     };
+
+    window.mostraTab = function(tabId, evt) {
+      document.querySelectorAll(".tab-content").forEach(el => el.style.display = "none");
+      document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
+      document.getElementById(`tab-${tabId}`).style.display = "block";
+      if (evt && evt.currentTarget) evt.currentTarget.classList.add("active");
+    };
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      setTimeout(() => t.style.display = "none", 3000);
+    }
   </script>
 </body>
 </html>
