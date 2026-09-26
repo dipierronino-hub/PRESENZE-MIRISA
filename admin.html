@@ -42,7 +42,6 @@
       text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.7);
     }
     
-    /* Stili Logo e Fallback elegante */
     .auth-logo { width: 120px; height: auto; object-fit: contain; border-radius: 8px; background: #fff; padding: 10px; margin-bottom: 15px; }
     .logo-img { width: 65px; height: auto; object-fit: contain; border-radius: 6px; background: #fff; padding: 4px; }
     .fallback-m { color: #8b0000; background: #fff; display: none; align-items: center; justify-content: center; font-weight: 900; font-family: sans-serif; }
@@ -126,8 +125,8 @@
   <!-- SCHERMATA LOGIN -->
   <div id="auth-overlay">
     <div class="auth-modal">
-      <!-- LOGO CON FALLBACK ELEGANTE -->
-      <img src="270776_2.jpg" alt="Mirisa Ceramiche" class="auth-logo" onerror="this.style.display='none'; document.getElementById('icon-fallback').style.display='flex';">
+      <!-- Il codice ora prova con .jpg e se fallisce prova con .JPG -->
+      <img src="270776_2.jpg" alt="Mirisa Ceramiche" class="auth-logo" onerror="this.onerror=null; this.src='270776_2.JPG'; this.addEventListener('error', function(){ this.style.display='none'; document.getElementById('icon-fallback').style.display='flex'; });">
       <div id="icon-fallback" class="fallback-m" style="width: 120px; height: 60px; border-radius: 8px; font-size: 38px; margin: 0 auto 15px auto;">M</div>
       
       <h2>Area Riservata</h2>
@@ -140,8 +139,7 @@
 
   <header>
     <div class="brand-container">
-      <!-- LOGO HEADER CON FALLBACK ELEGANTE -->
-      <img src="270776_2.jpg" alt="Logo" class="logo-img" onerror="this.style.display='none'; document.getElementById('header-fallback').style.display='flex';">
+      <img src="270776_2.jpg" alt="Logo" class="logo-img" onerror="this.onerror=null; this.src='270776_2.JPG'; this.addEventListener('error', function(){ this.style.display='none'; document.getElementById('header-fallback').style.display='flex'; });">
       <div id="header-fallback" class="fallback-m" style="width: 65px; height: 45px; border-radius: 6px; font-size: 28px;">M</div>
 
       <div class="brand">
@@ -201,17 +199,13 @@
   <!-- TAB 2: DATI PER CONSULENTE -->
   <div id="tab-consulente" class="tab-content" style="display: none;">
     <div class="card">
-      
-      <!-- CONTATTI CONSULENTE -->
       <div style="margin-bottom: 20px; background: #081120; border: 1px solid var(--surface-border); border-radius: 8px; padding: 16px;">
         <div style="font-weight: 700; color: var(--accent); margin-bottom: 10px;"><i class="fa-solid fa-address-book"></i> Contatti Consulente</div>
         <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
           <input type="email" id="consulente-email" placeholder="Email Studio Paghe" style="background: #0f1b33; color: #fff; padding: 10px; border-radius: 6px; border: 1px solid var(--surface-border); width: 220px; outline: none;">
           <input type="tel" id="consulente-tel" placeholder="Cellulare WhatsApp" style="background: #0f1b33; color: #fff; padding: 10px; border-radius: 6px; border: 1px solid var(--surface-border); width: 180px; outline: none;">
           <button id="btn-salva-consulente" class="btn-action" style="padding: 10px 16px; font-size: 13px;"><i class="fa-solid fa-floppy-disk"></i> Salva Contatti</button>
-          
           <div style="width: 1px; height: 30px; background: var(--surface-border); margin: 0 10px;"></div>
-          
           <a href="#" id="link-wa-consulente" target="_blank" class="btn-whatsapp" style="display: none;"><i class="fa-brands fa-whatsapp"></i> Invia WhatsApp</a>
           <a href="#" id="link-mail-consulente" class="btn-mail" style="display: none;"><i class="fa-solid fa-envelope"></i> Invia Email</a>
         </div>
@@ -235,7 +229,7 @@
         </button>
       </div>
       <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">
-        <em>Nota: Inserisci eventuali Extra e si sommeranno in tempo reale. Clicca fuori dalla casella per salvare in cloud. Togli la spunta per non includere un dipendente.</em>
+        <em>Nota: L'Extra Mese viene pescato in automatico dall'Anagrafica (Extra Fisso). Puoi comunque modificarlo in questa casella per singole variazioni mensili.</em>
       </p>
       <div class="table-container">
         <table>
@@ -328,7 +322,10 @@
       <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
         <input type="text" id="nuovo-nome" placeholder="Cognome e Nome" style="flex: 2; min-width: 170px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
         <input type="text" id="nuovo-cf" placeholder="Codice Fiscale" maxlength="16" style="flex: 1.4; min-width: 150px; text-transform: uppercase; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
-        <input type="number" step="0.01" id="nuovo-costo" placeholder="Costo Giorn. €" style="flex: 1; min-width: 120px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
+        <input type="number" step="0.01" id="nuovo-costo" placeholder="Costo Giorn. €" style="flex: 1; min-width: 100px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
+        <!-- NUOVO CAMPO EXTRA FISSO -->
+        <input type="number" step="0.01" id="nuovo-extra-fisso" placeholder="Extra Fisso €" style="flex: 1; min-width: 100px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
+        
         <input type="email" id="nuovo-email" placeholder="Email" style="flex: 1.6; min-width: 160px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
         <button id="btn-salva-dip" class="btn-action"><i class="fa-solid fa-floppy-disk"></i> <span id="btn-salva-testo">Salva</span></button>
         <button id="btn-annulla-edit" style="display: none; background: #1e293b; color: #fff; border: 1px solid var(--surface-border); padding: 10px 14px; border-radius: 8px; cursor: pointer;">Annulla</button>
@@ -340,6 +337,7 @@
               <th style="text-align: left; padding-left: 14px;">Nominativo</th>
               <th>Codice Fiscale</th>
               <th>Costo Giorn. (€)</th>
+              <th>Extra Fisso (€)</th>
               <th>Indirizzo Email</th>
               <th style="width: 140px;">Azioni</th>
             </tr>
@@ -431,8 +429,8 @@
         dipendenti = [];
         Object.keys(data).forEach(id => {
           const item = data[id];
-          if (typeof item === "string") { dipendenti.push({ id, nome: item, cf: "", costo: 0, email: "" }); } 
-          else { dipendenti.push({ id, nome: item.nome || id, cf: item.cf || "", costo: parseFloat(item.costo) || 0, email: item.email || "" }); }
+          if (typeof item === "string") { dipendenti.push({ id, nome: item, cf: "", costo: 0, extraFisso: 0, email: "" }); } 
+          else { dipendenti.push({ id, nome: item.nome || id, cf: item.cf || "", costo: parseFloat(item.costo) || 0, extraFisso: parseFloat(item.extraFisso) || 0, email: item.email || "" }); }
         });
         dipendenti.sort((a, b) => a.nome.localeCompare(b.nome));
         renderizzaAnagrafica(); rigeneraPlanning(); popolaSelectStoricoDipendenti(); 
@@ -563,7 +561,9 @@
         const giorniLav = conteggioP + (conteggioM * 0.5);
         const costoBase = giorniLav * (dip.costo || 0);
         const contData = (contabilitaTutta[chiavePeriodo] && contabilitaTutta[chiavePeriodo][safeKey]) || {};
-        const extraVal = parseFloat(contData.extra) || 0;
+        
+        // Se nel mese non c'è ancora nessun extra registrato, carica quello fisso dell'anagrafica
+        const extraVal = contData.extra !== undefined ? parseFloat(contData.extra) : (dip.extraFisso || 0);
         const totFinale = costoBase + extraVal;
 
         const tr = document.createElement("tr");
@@ -656,7 +656,9 @@
 
         const giorniLav = conteggioP + (conteggioM * 0.5);
         const contData = (contabilitaTutta[chiavePeriodo] && contabilitaTutta[chiavePeriodo][safeKey]) || {};
-        const extraVal = parseFloat(contData.extra) || 0;
+        
+        // Peschiamo l'extra specifico o quello fisso
+        const extraVal = contData.extra !== undefined ? parseFloat(contData.extra) : (dipObj.extraFisso || 0);
         const totFinale = (giorniLav * (dipObj.costo || 0)) + extraVal;
         
         totaleMeseAzienda += totFinale;
@@ -688,7 +690,7 @@
       setTimeout(() => { win.print(); }, 500);
     });
 
-    // TAB 3: DIVISIONE BUSTE PAGA
+    // TAB 3: DIVISIONE BUSTE PAGA PDF
     const dropZone = document.getElementById("drop-zone");
     const inputBuste = document.getElementById("input-pdf-buste");
     document.getElementById("btn-sfoglia-file").addEventListener("click", () => inputBuste.click());
@@ -859,6 +861,7 @@
           <td style="text-align: left; padding-left: 14px; font-weight: 700;">${dip.nome}</td>
           <td style="font-family: monospace; font-size: 13px; font-weight: 700; color: ${dip.cf ? 'var(--accent)' : 'var(--danger)'}; cursor: pointer;" onclick="modificaCfRapido('${dip.id}', '${dip.nome}', '${dip.cf}')">${dip.cf ? dip.cf : 'Inserisci CF'}</td>
           <td style="font-size: 13px; font-weight: 600; color: ${dip.costo > 0 ? 'var(--success)' : 'var(--warning)'}; cursor: pointer;" onclick="modificaCostoRapido('${dip.id}', '${dip.nome}', '${dip.costo}')">€ ${dip.costo ? formattaEuro(dip.costo) : '0,00'}</td>
+          <td style="font-size: 13px; font-weight: 600; color: ${dip.extraFisso > 0 ? 'var(--success)' : 'var(--text-muted)'}; cursor: pointer;" onclick="modificaExtraRapido('${dip.id}', '${dip.nome}', '${dip.extraFisso}')">€ ${dip.extraFisso ? formattaEuro(dip.extraFisso) : '0,00'}</td>
           <td style="font-size: 13px; font-weight: 600; color: ${dip.email ? 'var(--mail-color)' : 'var(--text-muted)'}; cursor: pointer;" onclick="modificaEmailRapido('${dip.id}', '${dip.nome}', '${dip.email}')">${dip.email ? dip.email : 'No Email'}</td>
           <td><button title="Elimina" style="background: rgba(239, 68, 68, 0.2); color: var(--danger); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer;" onclick="eliminaDipendente('${dip.id}')"><i class="fa-solid fa-trash"></i></button></td>
         `;
@@ -872,20 +875,22 @@
       const cf = document.getElementById("nuovo-cf").value.trim().toUpperCase();
       const tel = document.getElementById("nuovo-tel").value.trim().replace(/\s+/g, "");
       const costo = parseFloat(document.getElementById("nuovo-costo").value) || 0;
+      const extraFisso = parseFloat(document.getElementById("nuovo-extra-fisso").value) || 0;
       const email = document.getElementById("nuovo-email").value.trim().toLowerCase();
 
       if (!nome) return alert("Inserisci il nome!");
       const targetId = editId || nome.replace(/[^a-zA-Z0-9]/g, "_");
       try {
-        await set(dbRef(db, `dipendenti/${targetId}`), { nome, cf, tel, costo, email });
+        await set(dbRef(db, `dipendenti/${targetId}`), { nome, cf, tel, costo, extraFisso, email });
         showToast(`Dati salvati!`);
-        document.getElementById("nuovo-nome").value = ""; document.getElementById("nuovo-cf").value = ""; document.getElementById("nuovo-tel").value = ""; document.getElementById("nuovo-costo").value = ""; document.getElementById("nuovo-email").value = "";
+        document.getElementById("nuovo-nome").value = ""; document.getElementById("nuovo-cf").value = ""; document.getElementById("nuovo-tel").value = ""; document.getElementById("nuovo-costo").value = ""; document.getElementById("nuovo-extra-fisso").value = ""; document.getElementById("nuovo-email").value = "";
       } catch (err) { alert("Errore: " + err.message); }
     });
 
     window.modificaCfRapido = async (id, nomeAttuale, cfAttuale) => { const n = prompt(`Codice Fiscale per ${nomeAttuale}:`, cfAttuale || ""); if(n!==null) await update(dbRef(db, `dipendenti/${id}`), { cf: n.trim().toUpperCase() }); };
     window.modificaEmailRapido = async (id, nomeAttuale, emailAttuale) => { const n = prompt(`Email per ${nomeAttuale}:`, emailAttuale || ""); if(n!==null) await update(dbRef(db, `dipendenti/${id}`), { email: n.trim().toLowerCase() }); };
     window.modificaCostoRapido = async (id, nomeAttuale, costoAttuale) => { const n = prompt(`Costo Giornaliero (€) per ${nomeAttuale} (usa il punto per i decimali):`, costoAttuale || "0"); if(n!==null && !isNaN(parseFloat(n))) await update(dbRef(db, `dipendenti/${id}`), { costo: parseFloat(n) }); };
+    window.modificaExtraRapido = async (id, nomeAttuale, extraAttuale) => { const n = prompt(`Extra Fisso (€) per ${nomeAttuale} (usa il punto per i decimali):`, extraAttuale || "0"); if(n!==null && !isNaN(parseFloat(n))) await update(dbRef(db, `dipendenti/${id}`), { extraFisso: parseFloat(n) }); };
     window.eliminaDipendente = (id) => { if(confirm("Vuoi davvero eliminare questo collaboratore?")) remove(dbRef(db, `dipendenti/${id}`)); };
 
   </script>
