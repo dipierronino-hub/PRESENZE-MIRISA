@@ -40,7 +40,7 @@
     }
     .auth-modal {
       background: var(--surface); border: 1px solid var(--surface-border);
-      border-radius: var(--radius); padding: 32px; width: 100%; max-width: 400px;
+      border-radius: var(--radius); padding: 32px; width: 100%; max-width: 380px;
       text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.7);
     }
     .auth-modal h2 { margin: 0 0 8px; font-size: 20px; color: #fff; }
@@ -137,20 +137,21 @@
 </head>
 <body>
 
-  <!-- MODAL AUTENTICAZIONE -->
+  <!-- SCHERMATA LOGIN DIRETTA (SENZA BLOCCHI FIREBASE) -->
   <div id="auth-overlay">
     <div class="auth-modal">
       <div style="font-size: 34px; color: var(--accent); margin-bottom: 10px;"><i class="fa-solid fa-lock"></i></div>
       <h2>Area Riservata</h2>
       <p>Mirisa Ceramiche - Presenze & Buste Paga</p>
       
-      <input type="email" id="auth-email" class="auth-input" placeholder="Email" value="admin@mirisa.it">
-      <input type="password" id="auth-pass" class="auth-input" placeholder="Password">
+      <input type="password" id="auth-pass" class="auth-input" placeholder="Inserisci Password Amministratore">
       
       <button type="button" id="btn-login" class="auth-btn">
-        <i class="fa-solid fa-arrow-right-to-bracket"></i> Accedi
+        <i class="fa-solid fa-unlock"></i> Sblocca Cruscotto
       </button>
-      <div id="auth-err" style="color: #ff6b6b; font-size: 12px; font-weight: 700; margin-top: 14px; display: none; background: rgba(239, 68, 68, 0.2); padding: 12px; border-radius: 6px; text-align: left; border: 1px solid #ef4444; line-height: 1.4;"></div>
+      <div id="auth-err" style="color: #ff6b6b; font-size: 12px; font-weight: 700; margin-top: 14px; display: none; background: rgba(239, 68, 68, 0.2); padding: 10px; border-radius: 6px; border: 1px solid #ef4444;">
+        Password errata!
+      </div>
     </div>
   </div>
 
@@ -161,9 +162,9 @@
     </div>
     <div style="display: flex; align-items: center; gap: 14px;">
       <span id="label-operatore" style="font-size: 13px; color: var(--accent); font-weight: 600;">
-        <i class="fa-solid fa-user-shield"></i> Amministrazione
+        <i class="fa-solid fa-user-shield"></i> Amministrazione Mirisa
       </span>
-      <button id="btn-logout" style="display: none; background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
+      <button id="btn-logout" style="background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
         Esci
       </button>
     </div>
@@ -297,12 +298,14 @@
 
   <div id="toast"></div>
 
-  <!-- FIREBASE & LOGICA APPLICATIVA -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref as dbRef, set, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+    // PASSWORD AMMINISTRATORE DIRETTA
+    const PASSWORD_ADMIN = "Mirisa2026!";
+
+    // WEBHOOK PER INVIO EMAIL CON PDF DA GMAIL
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-BbRr_VlTDUDBpszuQ6nKaSMvLrcmcSxxI8L9LbR_xdGPU5Jfqb9NWVwBy53snt_r/exec";
 
     const firebaseConfig = {
@@ -313,7 +316,6 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getDatabase(app);
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
@@ -331,7 +333,46 @@
       setTimeout(() => t.style.display = "none", 3000);
     }
 
-    // Gestione Navigazione Tab
+    // GESTIONE ACCESSO DIRETTO
+    const authOverlay = document.getElementById("auth-overlay");
+    const inputPass = document.getElementById("auth-pass");
+    const btnLogin = document.getElementById("btn-login");
+    const errBox = document.getElementById("auth-err");
+
+    function verificaLogin() {
+      if (localStorage.getItem("mirisa_admin_logged") === "true") {
+        authOverlay.style.display = "none";
+        connettiDatabase();
+      } else {
+        authOverlay.style.display = "flex";
+      }
+    }
+
+    function eseguiSblocco() {
+      const pass = inputPass.value.trim();
+      if (pass === PASSWORD_ADMIN) {
+        localStorage.setItem("mirisa_admin_logged", "true");
+        errBox.style.display = "none";
+        authOverlay.style.display = "none";
+        connettiDatabase();
+      } else {
+        errBox.style.display = "block";
+      }
+    }
+
+    btnLogin.addEventListener("click", eseguiSblocco);
+    inputPass.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") eseguiSblocco();
+    });
+
+    document.getElementById("btn-logout").addEventListener("click", () => {
+      localStorage.removeItem("mirisa_admin_logged");
+      location.reload();
+    });
+
+    verificaLogin();
+
+    // Navigazione Tab
     function vaiATab(tabId) {
       document.querySelectorAll(".tab-content").forEach(el => el.style.display = "none");
       document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
@@ -342,71 +383,7 @@
     document.getElementById("tab-btn-buste").addEventListener("click", () => vaiATab("buste"));
     document.getElementById("tab-btn-anagrafica").addEventListener("click", () => vaiATab("anagrafica"));
 
-    // Autenticazione con listener diretto
-    const btnLogin = document.getElementById("btn-login");
-    const inputPass = document.getElementById("auth-pass");
-    const inputEmail = document.getElementById("auth-email");
-    const errBox = document.getElementById("auth-err");
-
-    onAuthStateChanged(auth, (user) => {
-      const overlay = document.getElementById("auth-overlay");
-      const labelOp = document.getElementById("label-operatore");
-      const btnLogout = document.getElementById("btn-logout");
-
-      if (user) {
-        overlay.style.display = "none";
-        labelOp.innerHTML = `<i class="fa-solid fa-user-check" style="color:var(--success);"></i> ${user.email}`;
-        btnLogout.style.display = "inline-block";
-        connettiDatabase();
-      } else {
-        overlay.style.display = "flex";
-        labelOp.innerHTML = `<i class="fa-solid fa-lock"></i> Area Riservata`;
-        btnLogout.style.display = "none";
-      }
-    });
-
-    async function eseguiLogin() {
-      const email = inputEmail.value.trim();
-      const pass = inputPass.value;
-
-      if (!email || !pass) {
-        errBox.textContent = "Inserisci sia email che password.";
-        errBox.style.display = "block";
-        return;
-      }
-
-      try {
-        errBox.style.display = "none";
-        btnLogin.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Accesso in corso...`;
-        btnLogin.disabled = true;
-
-        await signInWithEmailAndPassword(auth, email, pass);
-      } catch (err) {
-        btnLogin.innerHTML = `<i class="fa-solid fa-arrow-right-to-bracket"></i> Accedi`;
-        btnLogin.disabled = false;
-        
-        let msg = "Errore: " + err.message;
-        if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
-          msg = "Password errata per l'account inserito.";
-        } else if (err.code === "auth/user-not-found") {
-          msg = "Account non trovato su Firebase.";
-        }
-        errBox.textContent = msg;
-        errBox.style.display = "block";
-      }
-    }
-
-    btnLogin.addEventListener("click", eseguiLogin);
-    inputPass.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        eseguiLogin();
-      }
-    });
-
-    document.getElementById("btn-logout").addEventListener("click", () => signOut(auth));
-
-    // Sincronizzazione Database
+    // Database Presenze & Anagrafica
     function connettiDatabase() {
       onValue(dbRef(db, "dipendenti"), (snap) => {
         const data = snap.val() || {};
@@ -682,7 +659,7 @@
       }
     }
 
-    // Split Buste Paga
+    // Caricamento e Split Buste Paga
     const dropZone = document.getElementById("drop-zone");
     const inputBuste = document.getElementById("input-pdf-buste");
     document.getElementById("btn-sfoglia-file").addEventListener("click", () => inputBuste.click());
