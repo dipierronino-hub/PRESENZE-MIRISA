@@ -193,7 +193,7 @@
         catalogoDipendenti.push({
           id: id,
           nome: nome.trim(),
-          tokens: nome.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter(w => w.length >= 3)
+          tokens: nome.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/)
         });
       });
 
@@ -359,22 +359,24 @@
           let score = 0;
           const nomeDipLower = dip.nome.toLowerCase();
           
-          const partiNome = nomeDipLower.split(/\s+/);
-          partiNome.forEach(parte => {
-            if (parte.length >= 3 && t.includes(parte)) {
-              score += 40;
+          // Controlla ogni singola parte del nome del dipendente nel testo pronunciato
+          dip.tokens.forEach(tok => {
+            if (tok.length >= 2 && t.includes(tok)) {
+              score += 25;
             }
           });
 
-          dip.tokens.forEach(tok => {
-            if (t.includes(tok)) score += 10;
-          });
+          // Se il nome completo o parte di esso è contenuto nella frase
+          if (t.includes(nomeDipLower)) {
+            score += 100;
+          }
 
           if (score > 0) punteggi.push({ nome: dip.nome, score });
         });
 
         if (punteggi.length > 0) {
           punteggi.sort((a, b) => b.score - a.score);
+          // Prende il migliore o i migliori compatibili
           punteggi.forEach(p => {
             if (!dipendentiCoinvolti.includes(p.nome)) dipendentiCoinvolti.push(p.nome);
           });
@@ -394,7 +396,10 @@
       }
 
       window.operazioniProposte = [];
-      dipendentiCoinvolti.forEach(nomeDip => {
+      // Prende al massimo il primo dipendente più probabile per evitare falsi positivi multipli
+      const dipendenteScelto = dipendentiCoinvolti.length > 0 ? [dipendentiCoinvolti[0]] : [];
+
+      dipendenteScelto.forEach(nomeDip => {
         giorniFinali.forEach(giorno => {
           const dCompensata = new Date(annoFinale, meseFinale - 1, giorno + offsetAttivo, 12, 0, 0);
           const dataIsoScrittura = `${dCompensata.getFullYear()}-${pad(dCompensata.getMonth() + 1)}-${pad(dCompensata.getDate())}`;
