@@ -141,9 +141,7 @@
       </div>
 
       <div class="table-container">
-        <table id="tabella-planning">
-          <!-- Generata dinamicamente -->
-        </table>
+        <table id="tabella-planning"></table>
       </div>
     </div>
   </div>
@@ -252,7 +250,7 @@
       setTimeout(() => t.style.display = "none", 3000);
     }
 
-    // Caricamento in tempo reale dipendenti da Firebase
+    // Ascolto Dipendenti
     onValue(ref(db, "dipendenti"), (snap) => {
       const data = snap.val() || {};
       dipendenti = [];
@@ -264,17 +262,16 @@
           dipendenti.push({ id, nome: item.nome || id, cf: item.cf || "" });
         }
       });
-
       renderizzaAnagrafica();
       window.caricaTabellaPlanning();
     });
 
+    // Ascolto Presenze
     onValue(ref(db, "presenze"), (snap) => {
       presenzeMese = snap.val() || {};
       renderizzaPlanning();
     });
 
-    // Modifica rapida: popola i campi in alto
     window.avviaModificaDipendente = function(id, nome, cf) {
       document.getElementById("edit-dip-id").value = id;
       document.getElementById("nuovo-nome").value = nome;
@@ -284,7 +281,6 @@
       document.getElementById("btn-salva-testo").textContent = "Salva Modifiche";
       document.getElementById("btn-salva-dip").style.background = "var(--success)";
       document.getElementById("btn-annulla-edit").style.display = "inline-block";
-      
       document.getElementById("nuovo-cf").focus();
     };
 
@@ -299,7 +295,6 @@
       document.getElementById("btn-annulla-edit").style.display = "none";
     };
 
-    // Salvataggio sicuro su Firebase (sia nuovo che aggiornamento)
     window.salvaDipendente = async function() {
       const editId = document.getElementById("edit-dip-id").value;
       const nomeInput = document.getElementById("nuovo-nome");
@@ -308,36 +303,27 @@
       const cf = cfInput.value.trim().toUpperCase();
 
       if (!nome) return alert("Inserisci il nome del collaboratore!");
-
       const targetId = editId || nome.replace(/[^a-zA-Z0-9]/g, "_");
 
       try {
-        await set(ref(db, `dipendenti/${targetId}`), {
-          nome: nome,
-          cf: cf
-        });
-
+        await set(ref(db, `dipendenti/${targetId}`), { nome, cf });
         showToast(`Dati di ${nome} salvati correttamente!`);
         window.annullaModifica();
       } catch (err) {
-        alert("Errore salvataggio Firebase: " + err.message);
+        alert("Errore salvataggio: " + err.message);
       }
     };
 
-    // Modifica istantanea direttamente con prompt
     window.modificaCfRapido = async function(id, nomeAttuale, cfAttuale) {
       const nuovoCf = prompt(`Inserisci il Codice Fiscale per ${nomeAttuale}:`, cfAttuale || "");
-      if (nuovoCf === null) return; // annullato
+      if (nuovoCf === null) return;
       
       const cfPulito = nuovoCf.trim().toUpperCase();
       try {
-        await update(ref(db, `dipendenti/${id}`), {
-          nome: nomeAttuale,
-          cf: cfPulito
-        });
+        await update(ref(db, `dipendenti/${id}`), { nome: nomeAttuale, cf: cfPulito });
         showToast(`Codice Fiscale per ${nomeAttuale} aggiornato!`);
       } catch (err) {
-        alert("Errore aggiornamento rapido: " + err.message);
+        alert("Errore aggiornamento: " + err.message);
       }
     };
 
@@ -377,7 +363,7 @@
       });
     }
 
-    // Costruzione Planning Calendario
+    // Planning Calendario
     window.caricaTabellaPlanning = function() {
       const elMese = document.getElementById("select-mese");
       const elAnno = document.getElementById("select-anno");
