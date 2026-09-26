@@ -195,12 +195,33 @@
   <!-- TAB 2: DIVISIONE BUSTE PAGA PDF -->
   <div id="tab-buste" class="tab-content" style="display: none;">
     <div class="card">
+      
+      <!-- Toolbar periodo per le buste paga -->
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; background: #081120; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--surface-border);">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <i class="fa-solid fa-calendar-check" style="color: var(--accent);"></i>
+          <span style="font-size: 13px; font-weight: 700;">Competenza Cedolino:</span>
+          <select id="select-mese-cedolino" style="background: #0f1b33; border: 1px solid var(--surface-border); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 13px;">
+            <option value="Gennaio">Gennaio</option><option value="Febbraio">Febbraio</option><option value="Marzo">Marzo</option>
+            <option value="Aprile">Aprile</option><option value="Maggio">Maggio</option><option value="Giugno">Giugno</option>
+            <option value="Luglio">Luglio</option><option value="Agosto">Agosto</option><option value="Settembre" selected>Settembre</option>
+            <option value="Ottobre">Ottobre</option><option value="Novembre">Novembre</option><option value="Dicembre">Dicembre</option>
+          </select>
+          <select id="select-anno-cedolino" style="background: #0f1b33; border: 1px solid var(--surface-border); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 13px;">
+            <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+          </select>
+        </div>
+        <span id="badge-rilevamento-periodo" style="font-size: 12px; color: var(--text-muted); font-style: italic;">
+          (Rilevato in automatico dal testo del PDF)
+        </span>
+      </div>
+
       <div class="dropzone" id="drop-zone">
         <i class="fa-solid fa-file-pdf" style="font-size: 44px; color: var(--accent); margin-bottom: 12px;"></i>
         <h2 style="margin: 0 0 6px; font-size: 18px;">Caricamento Cedolone Buste Paga del Consulente</h2>
         <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-muted);">
           Trascina qui il file PDF unico inviato dallo studio paghe oppure selezionalo dal computer.<br>
-          Il sistema analizza i Codici Fiscali e crea i singoli PDF autonomi.
+          Il sistema rileva il mese, divide per Codice Fiscale e genera i PDF singoli nominati.
         </p>
 
         <input type="file" id="input-pdf-buste" accept="application/pdf" style="display: none;">
@@ -589,7 +610,7 @@
       }
     }
 
-    // Split Buste Paga
+    // Split Buste Paga con Riconoscimento Mese
     const dropZone = document.getElementById("drop-zone");
     const inputBuste = document.getElementById("input-pdf-buste");
     document.getElementById("btn-sfoglia-pdf").addEventListener("click", () => inputBuste.click());
@@ -606,6 +627,36 @@
     });
 
     const REGEX_CF = /[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]/;
+    const ELENCO_MESI = ["GENNAIO", "FEBBRAIO", "MARZO", "APRILE", "MAGGIO", "GIUGNO", "LUGLIO", "AGOSTO", "SETTEMBRE", "OTTOBRE", "NOVEMBRE", "DICEMBRE"];
+
+    function rilevaMeseAnnoDalTesto(testoUpper) {
+      // 1. Cerca il nome del mese seguito dall'anno (es. SETTEMBRE 2026 o SETTEMBRE / 2026)
+      for (let idx = 0; idx < ELENCO_MESI.length; idx++) {
+        const nomeMese = ELENCO_MESI[idx];
+        const regexNome = new RegExp(`${nomeMese}\\s*[/\\-]?\\s*(202[4-9])`, 'i');
+        const match = testoUpper.match(regexNome);
+        if (match) {
+          return {
+            mese: nomeMese.charAt(0) + nomeMese.slice(1).toLowerCase(),
+            anno: match[1]
+          };
+        }
+      }
+
+      // 2. Cerca formato numerico classico (es. 09/2026 o 09-2026)
+      const regexNum = /(?:0[1-9]|1[0-2])\s*[/\\-]\s*(202[4-9])/;
+      const matchNum = testoUpper.match(regexNum);
+      if (matchNum) {
+        const parteMeseNum = parseInt(matchNum[0].split(/[/\\-]/)[0].trim(), 10);
+        const nomeMese = ELENCO_MESI[parteMeseNum - 1];
+        return {
+          mese: nomeMese.charAt(0) + nomeMese.slice(1).toLowerCase(),
+          anno: matchNum[1]
+        };
+      }
+
+      return null;
+    }
 
     async function elaboraFilePdf(file) {
       if (!file || file.type !== "application/pdf") return alert("Carica un file PDF valido.");
@@ -613,6 +664,9 @@
       const boxStato = document.getElementById("box-stato-pdf");
       const griglia = document.getElementById("griglia-cedolini");
       const barraDownload = document.getElementById("barra-download-tutti");
+      const selMeseCed = document.getElementById("select-mese-cedolino");
+      const selAnnoCed = document.getElementById("select-anno-cedolino");
+      const badgeRilevato = document.getElementById("badge-rilevamento-periodo");
 
       boxStato.style.display = "block";
       boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-spinner fa-spin"></i> Lettura documento PDF in corso...</span>`;
@@ -621,11 +675,15 @@
       cedoliniElaborati = [];
 
       try {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdfPerTesto = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        const pdfOriginale = await PDFLib.PDFDocument.load(arrayBuffer);
+        const bufferOriginale = await file.arrayBuffer();
+        const bufferPerTesto = bufferOriginale.slice(0);
+        const bufferPerTaglio = bufferOriginale.slice(0);
+
+        const pdfPerTesto = await pdfjsLib.getDocument({ data: bufferPerTesto }).promise;
+        const pdfOriginale = await PDFLib.PDFDocument.load(bufferPerTaglio);
         const totalePagine = pdfPerTesto.numPages;
 
+        let periodoRilevato = null;
         let gruppiCedolini = [];
         let cedolinoCorrente = null;
 
@@ -636,6 +694,17 @@
           const content = await page.getTextContent();
           const testoPagina = content.items.map(it => it.str).join(" ");
           const testoUpper = testoPagina.toUpperCase();
+
+          // Alla prima pagina verifichiamo il periodo
+          if (!periodoRilevato) {
+            const p = rilevaMeseAnnoDalTesto(testoUpper);
+            if (p) {
+              periodoRilevato = p;
+              selMeseCed.value = p.mese;
+              selAnnoCed.value = p.anno;
+              badgeRilevato.innerHTML = `<strong style="color: var(--success);"><i class="fa-solid fa-circle-check"></i> Rilevato: ${p.mese} ${p.anno}</strong>`;
+            }
+          }
 
           const matchCf = testoUpper.match(REGEX_CF);
           const cfTrovato = matchCf ? matchCf[0] : null;
@@ -669,6 +738,9 @@
 
         boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-gear fa-spin"></i> Divisione pagine e creazione singoli file...</span>`;
 
+        const meseScelto = selMeseCed.value;
+        const annoScelto = selAnnoCed.value;
+
         for (const gruppo of gruppiCedolini) {
           const nuovoPdf = await PDFLib.PDFDocument.create();
           const pagineCopiate = await nuovoPdf.copyPages(pdfOriginale, gruppo.pagine);
@@ -677,7 +749,7 @@
           const pdfBytes = await nuovoPdf.save();
           const blob = new Blob([pdfBytes], { type: "application/pdf" });
           const url = URL.createObjectURL(blob);
-          const nomeFile = `BustaPaga_${gruppo.nome.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
+          const nomeFile = `Cedolino_${meseScelto}_${annoScelto}_${gruppo.nome.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
 
           cedoliniElaborati.push({
             nome: gruppo.nome,
@@ -688,8 +760,8 @@
           });
         }
 
-        boxStato.innerHTML = `<span style="color: var(--success);"><i class="fa-solid fa-circle-check"></i> Completato! ${cedoliniElaborati.length} cedolini generati.</span>`;
-        document.getElementById("totale-estratti-label").textContent = `${cedoliniElaborati.length} Cedolini Pronti per il Download`;
+        boxStato.innerHTML = `<span style="color: var(--success);"><i class="fa-solid fa-circle-check"></i> Completato! ${cedoliniElaborati.length} cedolini separati con successo per <strong>${meseScelto} ${annoScelto}</strong>.</span>`;
+        document.getElementById("totale-estratti-label").textContent = `${cedoliniElaborati.length} Cedolini (${meseScelto} ${annoScelto})`;
         barraDownload.style.display = "flex";
 
         cedoliniElaborati.forEach(item => {
@@ -698,7 +770,7 @@
           card.innerHTML = `
             <div>
               <div style="font-weight: 800; font-size: 13px; color: #fff;">${item.nome}</div>
-              <div style="font-size: 11px; color: var(--text-muted);">${item.numPagine} pag. &bull; PDF Singolo</div>
+              <div style="font-size: 11px; color: var(--text-muted);">${item.numPagine} pag. &bull; ${meseScelto} ${annoScelto}</div>
             </div>
             <a href="${item.url}" download="${item.nomeFile}" class="btn-action" style="padding: 6px 12px; font-size: 12px; text-decoration: none;">
               <i class="fa-solid fa-download"></i> Scarica
@@ -714,12 +786,15 @@
 
     document.getElementById("btn-scarica-zip-action").addEventListener("click", async () => {
       if (cedoliniElaborati.length === 0) return;
+      const meseScelto = document.getElementById("select-mese-cedolino").value;
+      const annoScelto = document.getElementById("select-anno-cedolino").value;
+
       const zip = new JSZip();
       cedoliniElaborati.forEach(item => {
         zip.file(item.nomeFile, item.blob);
       });
       const zipBlob = await zip.generateAsync({ type: "blob" });
-      saveAs(zipBlob, `Buste_Paga_Mirisa_${new Date().toISOString().split("T")[0]}.zip`);
+      saveAs(zipBlob, `Buste_Paga_Mirisa_${meseScelto}_${annoScelto}.zip`);
       showToast("Download ZIP avviato!");
     });
   </script>
