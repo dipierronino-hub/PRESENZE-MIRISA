@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mirisa Ceramiche - Cruscotto Presenze & Buste Paga</title>
-  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css)">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   
-  <script src="[https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js)"></script>
-  <script src="[https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js)"></script>
-  <script src="[https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js](https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js)"></script>
-  <script src="[https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js](https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js)"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
   <style>
     :root {
@@ -137,7 +137,7 @@
       display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 6px;
     }
     .contabilita-row input, .contabilita-row select {
-      background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 6px 8px; border-radius: 4px; font-size: 12px; width: 160px; outline: none;
+      background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 6px 8px; border-radius: 4px; font-size: 12px; width: 170px; outline: none;
     }
 
     #loading-state { padding: 40px; text-align: center; color: var(--accent); font-weight: 700; }
@@ -308,23 +308,23 @@
   <div id="toast"></div>
 
   <script type="module">
-    import { initializeApp } from "[https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js](https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js)";
-    import { getDatabase, ref as dbRef, set, update, onValue, remove } from "[https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js](https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js)";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref as dbRef, set, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const PASSWORD_ADMIN = "Mirisa2026!";
-    const APPS_SCRIPT_URL = "[https://script.google.com/macros/s/AKfycbw-BbRr_VlTDUDBpszuQ6nKaSMvLrcmcSxxI8L9LbR_xdGPU5Jfqb9NWVwBy53snt_r/exec](https://script.google.com/macros/s/AKfycbw-BbRr_VlTDUDBpszuQ6nKaSMvLrcmcSxxI8L9LbR_xdGPU5Jfqb9NWVwBy53snt_r/exec)";
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-BbRr_VlTDUDBpszuQ6nKaSMvLrcmcSxxI8L9LbR_xdGPU5Jfqb9NWVwBy53snt_r/exec";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAb6M5iEzafntiQbr7fj76XrZYNjmz17tE",
       authDomain: "presenze-dipendenti-e377b.firebaseapp.com",
-      databaseURL: "[https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app](https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app)",
+      databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "presenze-dipendenti-e377b"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    pdfjsLib.GlobalWorkerOptions.workerSrc = '[https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js)';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
     function pad(n) { return String(n).padStart(2, '0'); }
 
@@ -729,7 +729,7 @@
         numPulito = "39" + numPulito;
       }
       const testoMessaggio = encodeURIComponent(`Ciao ${nomeDip}, ti trasmetto in allegato il cedolino paga di ${mese} ${anno}.\n\nAmministrazione Mirisa Ceramiche\n(amministrazione.mirisa@gmail.com)`);
-      return `[https://wa.me/$](https://wa.me/$){numPulito}?text=${testoMessaggio}`;
+      return `https://wa.me/${numPulito}?text=${testoMessaggio}`;
     }
 
     function arrayBufferToBase64(buffer) {
@@ -958,7 +958,7 @@
 
             <div class="contabilita-row">
               <span style="color: var(--text-muted);">Banca di Accredito:</span>
-              <select id="bnk-${index}" style="width: 160px;">
+              <select id="bnk-${index}" style="width: 170px;">
                 <option value="" ${!contData.banca ? 'selected' : ''}>-- Seleziona Banca --</option>
                 <option value="BCC BARI E TARANTO" ${contData.banca === 'BCC BARI E TARANTO' ? 'selected' : ''}>BCC BARI E TARANTO</option>
                 <option value="CASSA RURALE CASTELLANA GROTTE" ${contData.banca === 'CASSA RURALE CASTELLANA GROTTE' ? 'selected' : ''}>CASSA RURALE CASTELLANA GROTTE</option>
