@@ -364,6 +364,11 @@
 
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     function pad(n) { return String(n).padStart(2, '0'); }
+    
+    // Funzione per formattare i numeri con migliaia e decimali (it-IT)
+    function formattaEuro(num) {
+      return num.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
 
     let dipendenti = [];
     let presenzeTutte = {};
@@ -434,7 +439,6 @@
         if (document.getElementById("tab-storico").style.display === "block") popolaStoricoAnnuale(); 
       });
       
-      // Caricamento impostazioni consulente (Email e Telefono)
       onValue(dbRef(db, "impostazioni/consulente"), (snap) => {
         const data = snap.val() || {};
         document.getElementById("consulente-email").value = data.email || "";
@@ -450,9 +454,7 @@
       try {
         await set(dbRef(db, "impostazioni/consulente"), { email, tel });
         showToast("Contatti Studio Paghe salvati!");
-      } catch (e) {
-        alert("Errore salvataggio: " + e.message);
-      }
+      } catch (e) { alert("Errore salvataggio: " + e.message); }
     });
 
     function aggiornaLinkInvioConsulente() {
@@ -560,9 +562,9 @@
           <td><input type="checkbox" class="chk-export-consulente" data-dip="${dip.nome}" checked style="cursor: pointer; width: 16px; height: 16px;"></td>
           <td style="text-align: left; padding-left: 14px; font-weight: 700; color: #fff;">${dip.nome}</td>
           <td>${giorniLav}</td>
-          <td style="color: var(--text-muted);">€ ${(dip.costo || 0).toFixed(2)}</td>
+          <td style="color: var(--text-muted);">€ ${formattaEuro(dip.costo || 0)}</td>
           <td><input type="number" step="0.01" class="input-extra-cons" data-safekey="${safeKey}" data-basecosto="${costoBase}" value="${extraVal || 0}" style="width: 80px; text-align: right; background: #081120; border: 1px solid var(--surface-border); color: #fff; border-radius: 4px; padding: 4px;"></td>
-          <td class="td-totale-finale" style="font-weight: 800; color: var(--accent);">€ ${totFinale.toFixed(2)}</td>
+          <td class="td-totale-finale" style="font-weight: 800; color: var(--accent);">€ ${formattaEuro(totFinale)}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -572,7 +574,7 @@
           const val = parseFloat(e.target.value) || 0;
           const baseCosto = parseFloat(e.target.getAttribute("data-basecosto")) || 0;
           const tdTotale = e.target.closest("tr").querySelector(".td-totale-finale");
-          tdTotale.textContent = "€ " + (baseCosto + val).toFixed(2);
+          tdTotale.textContent = "€ " + formattaEuro(baseCosto + val);
         });
         inp.addEventListener("change", async (e) => {
           const sk = e.target.getAttribute("data-safekey");
@@ -653,8 +655,8 @@
             <td>${giorniLav}</td>
             <td style="color:#ef4444;">${conteggioA}</td>
             <td style="color:#a855f7;">${conteggioF}</td>
-            <td>${extraVal.toFixed(2)}</td>
-            <td style="font-weight:bold;">${totFinale.toFixed(2)}</td>
+            <td>${formattaEuro(extraVal)}</td>
+            <td style="font-weight:bold;">${formattaEuro(totFinale)}</td>
           </tr>
         `;
       });
@@ -812,8 +814,8 @@
         const tr = document.createElement("tr");
         tr.innerHTML = `
           <td style="text-align: left; padding-left: 14px; font-weight: 700; color: #fff;">${mese} ${selAnno}</td>
-          <td>€ ${acc.toFixed(2)}</td><td>€ ${bon.toFixed(2)}</td>
-          <td style="font-weight: 800; color: var(--accent);">€ ${(acc + bon).toFixed(2)}</td>
+          <td>€ ${formattaEuro(acc)}</td><td>€ ${formattaEuro(bon)}</td>
+          <td style="font-weight: 800; color: var(--accent);">€ ${formattaEuro(acc + bon)}</td>
           <td>${contData.dataBonifico ? contData.dataBonifico : '-'}</td>
           <td style="font-size: 11px; color: var(--text-muted);">${contData.banca ? contData.banca : '-'}</td>
         `;
@@ -823,8 +825,8 @@
       const trTot = document.createElement("tr"); trTot.style.background = "#081120";
       trTot.innerHTML = `
         <td style="text-align: left; padding-left: 14px; font-weight: 800; color: var(--accent);">TOTALE PAGATO ${selAnno}</td>
-        <td style="font-weight: 800; color: #fff;">€ ${totAccontiAnno.toFixed(2)}</td><td style="font-weight: 800; color: #fff;">€ ${totSaldiAnno.toFixed(2)}</td>
-        <td style="font-weight: 800; color: var(--success); font-size: 14px;">€ ${(totAccontiAnno + totSaldiAnno).toFixed(2)}</td><td colspan="2"></td>
+        <td style="font-weight: 800; color: #fff;">€ ${formattaEuro(totAccontiAnno)}</td><td style="font-weight: 800; color: #fff;">€ ${formattaEuro(totSaldiAnno)}</td>
+        <td style="font-weight: 800; color: var(--success); font-size: 14px;">€ ${formattaEuro(totAccontiAnno + totSaldiAnno)}</td><td colspan="2"></td>
       `;
       tbody.appendChild(trTot);
     }
@@ -839,7 +841,7 @@
         tr.innerHTML = `
           <td style="text-align: left; padding-left: 14px; font-weight: 700;">${dip.nome}</td>
           <td style="font-family: monospace; font-size: 13px; font-weight: 700; color: ${dip.cf ? 'var(--accent)' : 'var(--danger)'}; cursor: pointer;" onclick="modificaCfRapido('${dip.id}', '${dip.nome}', '${dip.cf}')">${dip.cf ? dip.cf : 'Inserisci CF'}</td>
-          <td style="font-size: 13px; font-weight: 600; color: ${dip.costo > 0 ? 'var(--success)' : 'var(--warning)'}; cursor: pointer;" onclick="modificaCostoRapido('${dip.id}', '${dip.nome}', '${dip.costo}')">€ ${dip.costo ? dip.costo.toFixed(2) : '0.00'}</td>
+          <td style="font-size: 13px; font-weight: 600; color: ${dip.costo > 0 ? 'var(--success)' : 'var(--warning)'}; cursor: pointer;" onclick="modificaCostoRapido('${dip.id}', '${dip.nome}', '${dip.costo}')">€ ${dip.costo ? formattaEuro(dip.costo) : '0,00'}</td>
           <td style="font-size: 13px; font-weight: 600; color: ${dip.email ? 'var(--mail-color)' : 'var(--text-muted)'}; cursor: pointer;" onclick="modificaEmailRapido('${dip.id}', '${dip.nome}', '${dip.email}')">${dip.email ? dip.email : 'No Email'}</td>
           <td><button title="Elimina" style="background: rgba(239, 68, 68, 0.2); color: var(--danger); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer;" onclick="eliminaDipendente('${dip.id}')"><i class="fa-solid fa-trash"></i></button></td>
         `;
