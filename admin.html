@@ -303,7 +303,7 @@
               <th>Bonifico Saldo (€)</th>
               <th>Totale Emesso (€)</th>
               <th>Data Esecuzione</th>
-              <th>Banca di Accredito</th>
+              <th>Banca di Addebito</th>
             </tr>
           </thead>
           <tbody id="storico-tbody"></tbody>
@@ -564,7 +564,7 @@
           <td><input type="checkbox" class="chk-export-consulente" data-dip="${dip.nome}" checked style="cursor: pointer; width: 16px; height: 16px;"></td>
           <td style="text-align: left; padding-left: 14px; font-weight: 700; color: #fff;">${dip.nome}</td>
           <td>${giorniLav}</td>
-          <td style="color: var(--text-muted);">€ ${formattaEuro(dip.costo)}</td>
+          <td style="color: var(--text-muted);">€ ${formattaEuro(dip.costo || 0)}</td>
           <td><input type="number" step="0.01" class="input-extra-cons" data-safekey="${safeKey}" data-basecosto="${costoBase}" value="${extraVal || 0}" style="width: 80px; text-align: right; background: #081120; border: 1px solid var(--surface-border); color: #fff; border-radius: 4px; padding: 4px;"></td>
           <td class="td-totale-finale" style="font-weight: 800; color: var(--accent);">€ ${formattaEuro(totFinale)}</td>
         `;
