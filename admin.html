@@ -40,7 +40,7 @@
     }
     .auth-modal {
       background: var(--surface); border: 1px solid var(--surface-border);
-      border-radius: var(--radius); padding: 32px; width: 100%; max-width: 420px;
+      border-radius: var(--radius); padding: 32px; width: 100%; max-width: 400px;
       text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.7);
     }
     .auth-modal h2 { margin: 0 0 8px; font-size: 20px; color: #fff; }
@@ -144,7 +144,7 @@
       <h2>Area Riservata</h2>
       <p>Mirisa Ceramiche - Presenze & Buste Paga</p>
       
-      <input type="email" id="auth-email" class="auth-input" placeholder="Email (es. admin@mirisa.it)" value="admin@mirisa.it">
+      <input type="email" id="auth-email" class="auth-input" placeholder="Email" value="admin@mirisa.it">
       <input type="password" id="auth-pass" class="auth-input" placeholder="Password">
       
       <button type="button" id="btn-login" class="auth-btn">
@@ -215,29 +215,766 @@
           <span style="font-size: 13px; font-weight: 700;">Competenza Cedolino:</span>
           <select id="select-mese-cedolino" style="background: #0f1b33; border: 1px solid var(--surface-border); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 13px;">
             <option value="Gennaio">Gennaio</option><option value="Febbraio">Febbraio</option><option value="Marzo">Marzo</option>
-            <option value="Aprile">Aprile</option><option value="Maggio">MaggioSe non entra nemmeno con l'utente appena creato (`admin@mirisa.it`) e con password digitata a mano da te, il problema **non è la password**: è **Firebase Authentication che blocca la richiesta dall'esterno** (quasi sempre per il dominio GitHub Pages non autorizzato) oppure il browser che non mostra l'errore effettivo.
+            <option value="Aprile">Aprile</option><option value="Maggio">Maggio</option><option value="Giugno">Giugno</option>
+            <option value="Luglio">Luglio</option><option value="Agosto" selected>Agosto</option><option value="Settembre">Settembre</option>
+            <option value="Ottobre">Ottobre</option><option value="Novembre">Novembre</option><option value="Dicembre">Dicembre</option>
+          </select>
+          <select id="select-anno-cedolino" style="background: #0f1b33; border: 1px solid var(--surface-border); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 13px;">
+            <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+          </select>
+        </div>
+        <span id="badge-rilevamento-periodo" style="font-size: 12px; color: var(--text-muted); font-style: italic;">
+          (Rilevato in automatico dal testo del PDF)
+        </span>
+      </div>
 
-Facciamo una cosa definitiva per capire al 100% cosa succede in quel preciso secondo:
+      <div class="dropzone" id="drop-zone">
+        <i class="fa-solid fa-file-pdf" style="font-size: 44px; color: var(--accent); margin-bottom: 12px;"></i>
+        <h2 style="margin: 0 0 6px; font-size: 18px;">Caricamento Cedolone Buste Paga del Consulente</h2>
+        <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-muted);">
+          Trascina qui il file PDF unico inviato dallo studio paghe oppure selezionalo dal computer.<br>
+          Il sistema divide i cedolini e consente l'<strong>invio automatico via Email (con PDF allegato da Gmail)</strong> o WhatsApp.
+        </p>
 
-### 1. Verifica fondamentale su Firebase Console (1 minuto)
-1. Vai su [console.firebase.google.com](https://console.firebase.google.com/) -> Progetto `presenze-dipendenti-e377b`.
-2. Clicca a sinistra su **Authentication**.
-3. Clicca sulla scheda in alto **Impostazioni** (Settings).
-4. Nel menu a sinistra (o in basso), clicca su **Domini autorizzati** (Authorized domains).
-5. Guarda l'elenco: c'è scritto **`dipierronino-hub.github.io`**?
-   - Se **NON C'È**, è questo il motivo esatto del blocco: Firebase rifiuta ogni tentativo di login proveniente da siti non in elenco.
-   - Clicca su **Aggiungi dominio**, digita:
-     `dipierronino-hub.github.io`
-     (senza `https://` e senza barre finali) e clicca su **Salva**.
+        <input type="file" id="input-pdf-buste" accept="application/pdf" style="display: none;">
+        <button class="btn-action" id="btn-sfoglia-file">
+          <i class="fa-solid fa-folder-open"></i> Seleziona PDF Cedolone
+        </button>
 
----
+        <div id="box-stato-pdf" style="display: none; margin-top: 16px; font-weight: 700; font-size: 14px;"></div>
+      </div>
 
-### 2. Guardiamo l'errore esatto a video
-Per evitare che la pagina stia zitta senza dire cosa non va, premi **F12** sulla tastiera direttamente mentre sei sulla pagina del gestionale con la schermata di login:
-1. Clicca sulla scheda **Console** del pannello F12.
-2. Inserisci `admin@mirisa.it` e la password.
-3. Premi **Accedi**.
-4. Cosa compare scritto in rosso nella Console in quel momento?
-   - Se compare `auth/unauthorized-domain`: è la conferma che manca il dominio al punto 1 sopra.
-   - Se compare `auth/network-request-failed`: c'è un blocco di rete o estensione adblocker.
-   - Se compare qualcos'altro, dimmi la scritta esatta o fai una foto e lo risolviamo subito!
+      <div id="barra-download-tutti" style="display: none; margin-top: 20px; justify-content: space-between; align-items: center; background: #081120; border: 1px solid var(--surface-border); border-radius: 8px; padding: 12px 18px;">
+        <span id="totale-estratti-label" style="font-weight: 700; font-size: 14px; color: var(--accent);"></span>
+        <button class="btn-action" id="btn-scarica-zip">
+          <i class="fa-solid fa-file-zipper"></i> Scarica Tutti in Cartella ZIP (per Google Drive)
+        </button>
+      </div>
+
+      <div id="griglia-cedolini" class="cedolini-grid"></div>
+    </div>
+  </div>
+
+  <!-- TAB 3: ANAGRAFICA -->
+  <div id="tab-anagrafica" class="tab-content" style="display: none;">
+    <div class="card">
+      <h3 id="form-titolo" style="margin-top: 0; font-size: 16px; color: var(--accent);">
+        <i class="fa-solid fa-user-plus"></i> Inserisci / Modifica Collaboratore
+      </h3>
+      
+      <input type="hidden" id="edit-dip-id" value="">
+      
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+        <input type="text" id="nuovo-nome" placeholder="Cognome e Nome" style="flex: 2; min-width: 170px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
+        <input type="text" id="nuovo-cf" placeholder="Codice Fiscale" maxlength="16" style="flex: 1.4; min-width: 160px; text-transform: uppercase; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
+        <input type="tel" id="nuovo-tel" placeholder="Cellulare WhatsApp" style="flex: 1.4; min-width: 150px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
+        <input type="email" id="nuovo-email" placeholder="Email Dipendente" style="flex: 1.6; min-width: 180px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
+        
+        <button id="btn-salva-dip" class="btn-action">
+          <i class="fa-solid fa-floppy-disk"></i> <span id="btn-salva-testo">Salva</span>
+        </button>
+        <button id="btn-annulla-edit" style="display: none; background: #1e293b; color: #fff; border: 1px solid var(--surface-border); padding: 10px 14px; border-radius: 8px; cursor: pointer;">
+          Annulla
+        </button>
+      </div>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: left; padding-left: 14px;">Nominativo</th>
+              <th>Codice Fiscale</th>
+              <th>Cellulare WhatsApp</th>
+              <th>Indirizzo Email</th>
+              <th style="width: 140px;">Azioni</th>
+            </tr>
+          </thead>
+          <tbody id="lista-anagrafica-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+
+  <!-- FIREBASE & LOGICA APPLICATIVA -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getDatabase, ref as dbRef, set, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-BbRr_VlTDUDBpszuQ6nKaSMvLrcmcSxxI8L9LbR_xdGPU5Jfqb9NWVwBy53snt_r/exec";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAb6M5iEzafntiQbr7fj76XrZYNjmz17tE",
+      authDomain: "presenze-dipendenti-e377b.firebaseapp.com",
+      databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "presenze-dipendenti-e377b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    let dipendenti = [];
+    let presenzeTutte = {};
+    let cedoliniElaborati = [];
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      setTimeout(() => t.style.display = "none", 3000);
+    }
+
+    // Gestione Navigazione Tab
+    function vaiATab(tabId) {
+      document.querySelectorAll(".tab-content").forEach(el => el.style.display = "none");
+      document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
+      document.getElementById(`tab-${tabId}`).style.display = "block";
+      document.getElementById(`tab-btn-${tabId}`).classList.add("active");
+    }
+    document.getElementById("tab-btn-planning").addEventListener("click", () => vaiATab("planning"));
+    document.getElementById("tab-btn-buste").addEventListener("click", () => vaiATab("buste"));
+    document.getElementById("tab-btn-anagrafica").addEventListener("click", () => vaiATab("anagrafica"));
+
+    // Autenticazione con listener diretto
+    const btnLogin = document.getElementById("btn-login");
+    const inputPass = document.getElementById("auth-pass");
+    const inputEmail = document.getElementById("auth-email");
+    const errBox = document.getElementById("auth-err");
+
+    onAuthStateChanged(auth, (user) => {
+      const overlay = document.getElementById("auth-overlay");
+      const labelOp = document.getElementById("label-operatore");
+      const btnLogout = document.getElementById("btn-logout");
+
+      if (user) {
+        overlay.style.display = "none";
+        labelOp.innerHTML = `<i class="fa-solid fa-user-check" style="color:var(--success);"></i> ${user.email}`;
+        btnLogout.style.display = "inline-block";
+        connettiDatabase();
+      } else {
+        overlay.style.display = "flex";
+        labelOp.innerHTML = `<i class="fa-solid fa-lock"></i> Area Riservata`;
+        btnLogout.style.display = "none";
+      }
+    });
+
+    async function eseguiLogin() {
+      const email = inputEmail.value.trim();
+      const pass = inputPass.value;
+
+      if (!email || !pass) {
+        errBox.textContent = "Inserisci sia email che password.";
+        errBox.style.display = "block";
+        return;
+      }
+
+      try {
+        errBox.style.display = "none";
+        btnLogin.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Accesso in corso...`;
+        btnLogin.disabled = true;
+
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch (err) {
+        btnLogin.innerHTML = `<i class="fa-solid fa-arrow-right-to-bracket"></i> Accedi`;
+        btnLogin.disabled = false;
+        
+        let msg = "Errore: " + err.message;
+        if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
+          msg = "Password errata per l'account inserito.";
+        } else if (err.code === "auth/user-not-found") {
+          msg = "Account non trovato su Firebase.";
+        }
+        errBox.textContent = msg;
+        errBox.style.display = "block";
+      }
+    }
+
+    btnLogin.addEventListener("click", eseguiLogin);
+    inputPass.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        eseguiLogin();
+      }
+    });
+
+    document.getElementById("btn-logout").addEventListener("click", () => signOut(auth));
+
+    // Sincronizzazione Database
+    function connettiDatabase() {
+      onValue(dbRef(db, "dipendenti"), (snap) => {
+        const data = snap.val() || {};
+        dipendenti = [];
+        Object.keys(data).forEach(id => {
+          const item = data[id];
+          if (typeof item === "string") {
+            dipendenti.push({ id, nome: item, cf: "", tel: "", email: "" });
+          } else {
+            dipendenti.push({ 
+              id, 
+              nome: item.nome || id, 
+              cf: item.cf || "", 
+              tel: item.tel || "",
+              email: item.email || ""
+            });
+          }
+        });
+
+        dipendenti.sort((a, b) => a.nome.localeCompare(b.nome));
+        renderizzaAnagrafica();
+        rigeneraPlanning();
+      });
+
+      onValue(dbRef(db, "presenze"), (snap) => {
+        presenzeTutte = snap.val() || {};
+        rigeneraPlanning();
+      });
+    }
+
+    function rigeneraPlanning() {
+      const table = document.getElementById("tabella-planning");
+      const loader = document.getElementById("loading-state");
+
+      if (dipendenti.length === 0) {
+        loader.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> In attesa dei dati...`;
+        loader.style.display = "block";
+        table.style.display = "none";
+        return;
+      }
+
+      loader.style.display = "none";
+      table.style.display = "table";
+      table.innerHTML = "";
+
+      const selMese = parseInt(document.getElementById("select-mese").value, 10);
+      const selAnno = parseInt(document.getElementById("select-anno").value, 10);
+      const numGiorni = new Date(selAnno, selMese + 1, 0).getDate();
+
+      const thead = document.createElement("thead");
+      const rigaHeader = document.createElement("tr");
+      rigaHeader.innerHTML = `<th class="dip-header">Collaboratore</th>`;
+
+      const giorniSettimana = ["DOM", "LUN", "MAR", "MER", "GIO", "VEN", "SAB"];
+      for (let g = 1; g <= numGiorni; g++) {
+        const dataObj = new Date(selAnno, selMese, g);
+        const nomeGiorno = giorniSettimana[dataObj.getDay()];
+        const isWeekend = (dataObj.getDay() === 0 || dataObj.getDay() === 6);
+        rigaHeader.innerHTML += `
+          <th style="${isWeekend ? 'background: #13223f; color: #64748b;' : ''}">
+            <div style="font-size: 10px;">${nomeGiorno}</div>
+            <div>${pad(g)}</div>
+          </th>
+        `;
+      }
+      thead.appendChild(rigaHeader);
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+      dipendenti.forEach(dip => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td class="dip-cell">${dip.nome}</td>`;
+
+        for (let g = 1; g <= numGiorni; g++) {
+          const chiaveGiorno = `${selAnno}-${pad(selMese + 1)}-${pad(g)}`;
+          const safeKey = dip.nome.replace(/[^a-zA-Z0-9]/g, "_");
+
+          const recordGiorno = presenzeTutte[chiaveGiorno] || {};
+          const recDip = recordGiorno[safeKey];
+          const statoDip = recDip ? recDip.stato : "";
+
+          let classeStato = "";
+          let sigla = "";
+
+          if (statoDip === "Intera") { classeStato = "st-intera"; sigla = "P"; }
+          else if (statoDip === "Assente") { classeStato = "st-assente"; sigla = "A"; }
+          else if (statoDip === "Mattina") { classeStato = "st-mattina"; sigla = "½M"; }
+          else if (statoDip === "Pomeriggio") { classeStato = "st-pomeriggio"; sigla = "½P"; }
+          else if (statoDip === "Ferie") { classeStato = "st-ferie"; sigla = "F"; }
+
+          const td = document.createElement("td");
+          td.className = `day-cell ${classeStato}`;
+          td.textContent = sigla;
+          td.addEventListener("click", () => cambiaStatoPlanning(chiaveGiorno, safeKey, dip.nome, statoDip));
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      });
+
+      table.appendChild(tbody);
+    }
+
+    document.getElementById("select-mese").addEventListener("change", rigeneraPlanning);
+    document.getElementById("select-anno").addEventListener("change", rigeneraPlanning);
+
+    function cambiaStatoPlanning(dataIso, safeKey, nome, statoAttuale) {
+      const sequenza = ["", "Intera", "Mattina", "Pomeriggio", "Assente", "Ferie"];
+      const prossimoStato = sequenza[(sequenza.indexOf(statoAttuale) + 1) % sequenza.length];
+
+      if (!prossimoStato) {
+        remove(dbRef(db, `presenze/${dataIso}/${safeKey}`));
+      } else {
+        set(dbRef(db, `presenze/${dataIso}/${safeKey}`), {
+          dipendente: nome,
+          data: dataIso,
+          stato: prossimoStato,
+          orarioRegistrazione: new Date().toISOString(),
+          modificatoDa: "Admin Planning Click"
+        });
+      }
+    }
+
+    // Anagrafica
+    function renderizzaAnagrafica() {
+      const body = document.getElementById("lista-anagrafica-body");
+      if (!body) return;
+      body.innerHTML = "";
+
+      dipendenti.forEach(dip => {
+        const tr = document.createElement("tr");
+
+        const tdNome = document.createElement("td");
+        tdNome.style.cssText = "text-align: left; padding-left: 14px; font-weight: 700;";
+        tdNome.textContent = dip.nome;
+
+        const tdCf = document.createElement("td");
+        tdCf.style.cssText = `font-family: monospace; font-size: 13px; font-weight: 700; color: ${dip.cf ? 'var(--accent)' : 'var(--danger)'}; cursor: pointer;`;
+        tdCf.innerHTML = dip.cf ? dip.cf : '<span style="font-weight: normal; font-style: italic; opacity: 0.6;"><i class="fa-solid fa-plus"></i> Inserisci CF</span>';
+        tdCf.addEventListener("click", () => modificaCfRapido(dip.id, dip.nome, dip.cf));
+
+        const tdTel = document.createElement("td");
+        tdTel.style.cssText = `font-size: 13px; font-weight: 600; color: ${dip.tel ? 'var(--whatsapp)' : 'var(--warning)'}; cursor: pointer;`;
+        tdTel.innerHTML = dip.tel 
+          ? `<i class="fa-brands fa-whatsapp"></i> ${dip.tel}` 
+          : '<span style="font-weight: normal; font-style: italic; opacity: 0.6;"><i class="fa-solid fa-phone"></i> Inserisci Cell.</span>';
+        tdTel.addEventListener("click", () => modificaTelRapido(dip.id, dip.nome, dip.tel));
+
+        const tdEmail = document.createElement("td");
+        tdEmail.style.cssText = `font-size: 13px; font-weight: 600; color: ${dip.email ? 'var(--mail-color)' : 'var(--warning)'}; cursor: pointer;`;
+        tdEmail.innerHTML = dip.email 
+          ? `<i class="fa-solid fa-envelope"></i> ${dip.email}` 
+          : '<span style="font-weight: normal; font-style: italic; opacity: 0.6;"><i class="fa-solid fa-at"></i> Inserisci Email</span>';
+        tdEmail.addEventListener("click", () => modificaEmailRapido(dip.id, dip.nome, dip.email));
+
+        const tdAzioni = document.createElement("td");
+
+        const btnMod = document.createElement("button");
+        btnMod.innerHTML = '<i class="fa-solid fa-pen"></i>';
+        btnMod.title = "Modifica";
+        btnMod.style.cssText = "background: rgba(56, 189, 248, 0.2); color: var(--accent); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; margin-right: 6px; font-weight: 600;";
+        btnMod.addEventListener("click", () => avviaModificaDipendente(dip.id, dip.nome, dip.cf, dip.tel, dip.email));
+
+        const btnDel = document.createElement("button");
+        btnDel.innerHTML = '<i class="fa-solid fa-trash"></i>';
+        btnDel.title = "Elimina";
+        btnDel.style.cssText = "background: rgba(239, 68, 68, 0.2); color: var(--danger); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer;";
+        btnDel.addEventListener("click", () => eliminaDipendente(dip.id));
+
+        tdAzioni.appendChild(btnMod);
+        tdAzioni.appendChild(btnDel);
+
+        tr.appendChild(tdNome);
+        tr.appendChild(tdCf);
+        tr.appendChild(tdTel);
+        tr.appendChild(tdEmail);
+        tr.appendChild(tdAzioni);
+        body.appendChild(tr);
+      });
+    }
+
+    function avviaModificaDipendente(id, nome, cf, tel, email) {
+      document.getElementById("edit-dip-id").value = id;
+      document.getElementById("nuovo-nome").value = nome;
+      document.getElementById("nuovo-cf").value = cf || "";
+      document.getElementById("nuovo-tel").value = tel || "";
+      document.getElementById("nuovo-email").value = email || "";
+      
+      document.getElementById("form-titolo").innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Modifica: <span style="color:#fff;">${nome}</span>`;
+      document.getElementById("btn-salva-testo").textContent = "Salva Modifiche";
+      document.getElementById("btn-salva-dip").style.background = "var(--success)";
+      document.getElementById("btn-annulla-edit").style.display = "inline-block";
+      document.getElementById("nuovo-cf").focus();
+    }
+
+    function annullaModifica() {
+      document.getElementById("edit-dip-id").value = "";
+      document.getElementById("nuovo-nome").value = "";
+      document.getElementById("nuovo-cf").value = "";
+      document.getElementById("nuovo-tel").value = "";
+      document.getElementById("nuovo-email").value = "";
+      
+      document.getElementById("form-titolo").innerHTML = `<i class="fa-solid fa-user-plus"></i> Inserisci / Modifica Collaboratore`;
+      document.getElementById("btn-salva-testo").textContent = "Salva";
+      document.getElementById("btn-salva-dip").style.background = "var(--accent)";
+      document.getElementById("btn-annulla-edit").style.display = "none";
+    }
+    document.getElementById("btn-annulla-edit").addEventListener("click", annullaModifica);
+
+    async function salvaDipendente() {
+      const editId = document.getElementById("edit-dip-id").value;
+      const nomeInput = document.getElementById("nuovo-nome");
+      const cfInput = document.getElementById("nuovo-cf");
+      const telInput = document.getElementById("nuovo-tel");
+      const emailInput = document.getElementById("nuovo-email");
+
+      const nome = nomeInput.value.trim();
+      const cf = cfInput.value.trim().toUpperCase();
+      const tel = telInput.value.trim().replace(/\s+/g, "");
+      const email = emailInput.value.trim().toLowerCase();
+
+      if (!nome) return alert("Inserisci il nome del collaboratore!");
+      const targetId = editId || nome.replace(/[^a-zA-Z0-9]/g, "_");
+
+      try {
+        await set(dbRef(db, `dipendenti/${targetId}`), { nome, cf, tel, email });
+        showToast(`Dati di ${nome} salvati!`);
+        annullaModifica();
+      } catch (err) {
+        alert("Errore salvataggio: " + err.message);
+      }
+    }
+    document.getElementById("btn-salva-dip").addEventListener("click", salvaDipendente);
+
+    async function modificaCfRapido(id, nomeAttuale, cfAttuale) {
+      const nuovoCf = prompt(`Codice Fiscale per ${nomeAttuale}:`, cfAttuale || "");
+      if (nuovoCf === null) return;
+      const cfPulito = nuovoCf.trim().toUpperCase();
+      try {
+        await update(dbRef(db, `dipendenti/${id}`), { cf: cfPulito });
+        showToast(`Codice Fiscale aggiornato!`);
+      } catch (err) {
+        alert("Errore: " + err.message);
+      }
+    }
+
+    async function modificaTelRapido(id, nomeAttuale, telAttuale) {
+      const nuovoTel = prompt(`Cellulare WhatsApp per ${nomeAttuale}:`, telAttuale || "");
+      if (nuovoTel === null) return;
+      const telPulito = nuovoTel.trim().replace(/\s+/g, "");
+      try {
+        await update(dbRef(db, `dipendenti/${id}`), { tel: telPulito });
+        showToast(`Cellulare aggiornato!`);
+      } catch (err) {
+        alert("Errore: " + err.message);
+      }
+    }
+
+    async function modificaEmailRapido(id, nomeAttuale, emailAttuale) {
+      const nuovaEmail = prompt(`Indirizzo Email per ${nomeAttuale}:`, emailAttuale || "");
+      if (nuovaEmail === null) return;
+      const emailPulita = nuovaEmail.trim().toLowerCase();
+      try {
+        await update(dbRef(db, `dipendenti/${id}`), { email: emailPulita });
+        showToast(`Email aggiornata!`);
+      } catch (err) {
+        alert("Errore: " + err.message);
+      }
+    }
+
+    function eliminaDipendente(id) {
+      if (confirm("Vuoi davvero eliminare questo collaboratore?")) {
+        remove(dbRef(db, `dipendenti/${id}`));
+      }
+    }
+
+    // Split Buste Paga
+    const dropZone = document.getElementById("drop-zone");
+    const inputBuste = document.getElementById("input-pdf-buste");
+    document.getElementById("btn-sfoglia-file").addEventListener("click", () => inputBuste.click());
+
+    dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
+    dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
+    dropZone.addEventListener("drop", (e) => {
+      e.preventDefault();
+      dropZone.classList.remove("dragover");
+      if (e.dataTransfer.files.length > 0) elaboraFilePdf(e.dataTransfer.files[0]);
+    });
+    inputBuste.addEventListener("change", (e) => {
+      if (e.target.files.length > 0) elaboraFilePdf(e.target.files[0]);
+    });
+
+    const REGEX_CF = /[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]/;
+    const ELENCO_MESI = ["GENNAIO", "FEBBRAIO", "MARZO", "APRILE", "MAGGIO", "GIUGNO", "LUGLIO", "AGOSTO", "SETTEMBRE", "OTTOBRE", "NOVEMBRE", "DICEMBRE"];
+
+    function rilevaMeseAnnoDalTesto(testoUpper) {
+      for (let idx = 0; idx < ELENCO_MESI.length; idx++) {
+        const nomeMese = ELENCO_MESI[idx];
+        const regexNome = new RegExp(`${nomeMese}\\s*[/\\-]?\\s*(202[4-9])`, 'i');
+        const match = testoUpper.match(regexNome);
+        if (match) {
+          return {
+            mese: nomeMese.charAt(0) + nomeMese.slice(1).toLowerCase(),
+            anno: match[1]
+          };
+        }
+      }
+
+      const regexNum = /(?:0[1-9]|1[0-2])\s*[/\\-]\s*(202[4-9])/;
+      const matchNum = testoUpper.match(regexNum);
+      if (matchNum) {
+        const parteMeseNum = parseInt(matchNum[0].split(/[/\\-]/)[0].trim(), 10);
+        const nomeMese = ELENCO_MESI[parteMeseNum - 1];
+        return {
+          mese: nomeMese.charAt(0) + nomeMese.slice(1).toLowerCase(),
+          anno: matchNum[1]
+        };
+      }
+
+      return null;
+    }
+
+    function generaLinkWhatsApp(numero, nomeDip, mese, anno) {
+      if (!numero) return null;
+      let numPulito = numero.replace(/[^0-9]/g, "");
+      if (numPulito.length === 10 && !numPulito.startsWith("39")) {
+        numPulito = "39" + numPulito;
+      }
+      const testoMessaggio = encodeURIComponent(`Ciao ${nomeDip}, ti trasmetto in allegato il cedolino paga di ${mese} ${anno}.\n\nAmministrazione Mirisa Ceramiche\n(amministrazione.mirisa@gmail.com)`);
+      return `https://wa.me/${numPulito}?text=${testoMessaggio}`;
+    }
+
+    function arrayBufferToBase64(buffer) {
+      let binary = '';
+      let bytes = new Uint8Array(buffer);
+      let len = bytes.byteLength;
+      for (let i = 0; i < len; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa(binary);
+    }
+
+    async function inviaEmailAutomatica(indice) {
+      const item = cedoliniElaborati[indice];
+      if (!item || !item.email) return alert("Nessuna email registrata per questo dipendente.");
+
+      const btnMail = document.getElementById(`btn-mail-${indice}`);
+      const testoOriginale = btnMail.innerHTML;
+
+      try {
+        btnMail.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Invio...`;
+        btnMail.disabled = true;
+
+        const meseScelto = document.getElementById("select-mese-cedolino").value;
+        const annoScelto = document.getElementById("select-anno-cedolino").value;
+        const base64Data = arrayBufferToBase64(item.bytes);
+
+        const payload = {
+          destinatario: item.email,
+          nome: item.nome,
+          mese: meseScelto,
+          anno: annoScelto,
+          nomeFile: item.nomeFile,
+          fileBase64: base64Data
+        };
+
+        await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        btnMail.innerHTML = `<i class="fa-solid fa-check"></i> Inviata!`;
+        btnMail.style.background = "var(--success)";
+        showToast(`Cedolino inviato via email a ${item.nome}!`);
+
+      } catch (err) {
+        alert("Errore durante l'invio: " + err.message);
+        btnMail.innerHTML = testoOriginale;
+        btnMail.disabled = false;
+      }
+    }
+
+    async function elaboraFilePdf(file) {
+      if (!file || file.type !== "application/pdf") return alert("Carica un file PDF valido.");
+
+      const boxStato = document.getElementById("box-stato-pdf");
+      const griglia = document.getElementById("griglia-cedolini");
+      const barraDownload = document.getElementById("barra-download-tutti");
+      const selMeseCed = document.getElementById("select-mese-cedolino");
+      const selAnnoCed = document.getElementById("select-anno-cedolino");
+      const badgeRilevato = document.getElementById("badge-rilevamento-periodo");
+
+      boxStato.style.display = "block";
+      boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-spinner fa-spin"></i> Lettura documento PDF in corso...</span>`;
+      griglia.innerHTML = "";
+      barraDownload.style.display = "none";
+      cedoliniElaborati = [];
+
+      try {
+        const bufferOriginale = await file.arrayBuffer();
+        const bufferPerTesto = bufferOriginale.slice(0);
+        const bufferPerTaglio = bufferOriginale.slice(0);
+
+        const pdfPerTesto = await pdfjsLib.getDocument({ data: bufferPerTesto }).promise;
+        const pdfOriginale = await PDFLib.PDFDocument.load(bufferPerTaglio);
+        const totalePagine = pdfPerTesto.numPages;
+
+        let periodoRilevato = null;
+        let gruppiCedolini = [];
+        let cedolinoCorrente = null;
+
+        for (let i = 1; i <= totalePagine; i++) {
+          boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-spinner fa-spin"></i> Scansione pagina ${i} di ${totalePagine}...</span>`;
+          
+          const page = await pdfPerTesto.getPage(i);
+          const content = await page.getTextContent();
+          const testoPagina = content.items.map(it => it.str).join(" ");
+          const testoUpper = testoPagina.toUpperCase();
+
+          if (!periodoRilevato) {
+            const p = rilevaMeseAnnoDalTesto(testoUpper);
+            if (p) {
+              periodoRilevato = p;
+              selMeseCed.value = p.mese;
+              selAnnoCed.value = p.anno;
+              badgeRilevato.innerHTML = `<strong style="color: var(--success);"><i class="fa-solid fa-circle-check"></i> Rilevato: ${p.mese} ${p.anno}</strong>`;
+            }
+          }
+
+          const matchCf = testoUpper.match(REGEX_CF);
+          const cfTrovato = matchCf ? matchCf[0] : null;
+
+          let dipendenteTrovato = null;
+          if (cfTrovato) {
+            dipendenteTrovato = dipendenti.find(d => d.cf && d.cf.toUpperCase() === cfTrovato);
+          }
+          if (!dipendenteTrovato) {
+            dipendenteTrovato = dipendenti.find(d => {
+              const paroleNome = d.nome.toUpperCase().split(/\s+/).filter(w => w.length >= 3);
+              return paroleNome.every(p => testoUpper.includes(p));
+            });
+          }
+
+          const identificativo = cfTrovato || (dipendenteTrovato ? dipendenteTrovato.nome : `Sconosciuto_Pag_${i}`);
+          const nomeVisualizzato = dipendenteTrovato ? dipendenteTrovato.nome : (cfTrovato ? `CF: ${cfTrovato}` : `Pagina ${i}`);
+          const telVisualizzato = dipendenteTrovato ? dipendenteTrovato.tel : "";
+          const emailVisualizzata = dipendenteTrovato ? dipendenteTrovato.email : "";
+
+          if (cedolinoCorrente && cedolinoCorrente.id === identificativo) {
+            cedolinoCorrente.pagine.push(i - 1);
+          } else {
+            if (cedolinoCorrente) gruppiCedolini.push(cedolinoCorrente);
+            cedolinoCorrente = {
+              id: identificativo,
+              nome: nomeVisualizzato,
+              tel: telVisualizzato,
+              email: emailVisualizzata,
+              pagine: [i - 1]
+            };
+          }
+        }
+        if (cedolinoCorrente) gruppiCedolini.push(cedolinoCorrente);
+
+        boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-gear fa-spin"></i> Divisione pagine e preparazione file...</span>`;
+
+        const meseScelto = selMeseCed.value;
+        const annoScelto = selAnnoCed.value;
+
+        for (const gruppo of gruppiCedolini) {
+          const nuovoPdf = await PDFLib.PDFDocument.create();
+          const pagineCopiate = await nuovoPdf.copyPages(pdfOriginale, gruppo.pagine);
+          pagineCopiate.forEach(p => nuovoPdf.addPage(p));
+
+          const pdfBytes = await nuovoPdf.save();
+          const blob = new Blob([pdfBytes], { type: "application/pdf" });
+          const urlLocale = URL.createObjectURL(blob);
+          const nomeFile = `Cedolino_${meseScelto}_${annoScelto}_${gruppo.nome.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`;
+
+          cedoliniElaborati.push({
+            nome: gruppo.nome,
+            tel: gruppo.tel,
+            email: gruppo.email,
+            numPagine: gruppo.pagine.length,
+            blob: blob,
+            bytes: pdfBytes,
+            url: urlLocale,
+            nomeFile: nomeFile
+          });
+        }
+
+        boxStato.innerHTML = `<span style="color: var(--success);"><i class="fa-solid fa-circle-check"></i> Elaborazione completata! ${cedoliniElaborati.length} cedolini per <strong>${meseScelto} ${annoScelto}</strong>.</span>`;
+        document.getElementById("totale-estratti-label").textContent = `${cedoliniElaborati.length} Cedolini Pronti (${meseScelto} ${annoScelto})`;
+        barraDownload.style.display = "flex";
+
+        griglia.innerHTML = "";
+        cedoliniElaborati.forEach((item, index) => {
+          const card = document.createElement("div");
+          card.className = "cedolino-card";
+          
+          const linkWa = generaLinkWhatsApp(item.tel, item.nome, meseScelto, annoScelto);
+
+          card.innerHTML = `
+            <div>
+              <div style="font-weight: 800; font-size: 14px; color: #fff;">${item.nome}</div>
+              <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                ${item.numPagine} pag. &bull; ${meseScelto} ${annoScelto}
+              </div>
+              <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 4px; font-size: 11px;">
+                <span style="color: ${item.tel ? 'var(--whatsapp)' : 'rgba(255,255,255,0.3)'};">
+                  <i class="fa-brands fa-whatsapp"></i> ${item.tel ? item.tel : 'No tel'}
+                </span>
+                <span style="color: ${item.email ? 'var(--mail-color)' : 'rgba(255,255,255,0.3)'};">
+                  <i class="fa-solid fa-envelope"></i> ${item.email ? item.email : 'No email'}
+                </span>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 5px; align-items: flex-end; min-width: 120px;">
+              <a href="${item.url}" download="${item.nomeFile}" class="btn-action" style="padding: 5px 10px; font-size: 11px; text-decoration: none; width: 100%; justify-content: center;">
+                <i class="fa-solid fa-download"></i> Scarica
+              </a>
+              ${linkWa ? `
+                <a href="${linkWa}" target="_blank" class="btn-whatsapp" style="width: 100%; justify-content: center;" title="Invia WhatsApp">
+                  <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                </a>
+              ` : `
+                <button disabled style="opacity: 0.35; cursor: not-allowed; font-size: 10px; padding: 4px 6px; border-radius: 4px; background: #1e293b; color: #fff; border: none; width: 100%;">
+                  No WA
+                </button>
+              `}
+              ${item.email ? `
+                <button id="btn-mail-${index}" class="btn-mail" style="width: 100%; justify-content: center;" title="Invia Email con allegato PDF da amministrazione.mirisa@gmail.com">
+                  <i class="fa-solid fa-paper-plane"></i> Invia Mail
+                </button>
+              ` : `
+                <button disabled style="opacity: 0.35; cursor: not-allowed; font-size: 10px; padding: 4px 6px; border-radius: 4px; background: #1e293b; color: #fff; border: none; width: 100%;">
+                  No Mail
+                </button>
+              `}
+            </div>
+          `;
+
+          const btnSpedisci = card.querySelector(`#btn-mail-${index}`);
+          if (btnSpedisci) {
+            btnSpedisci.addEventListener("click", () => inviaEmailAutomatica(index));
+          }
+
+          griglia.appendChild(card);
+        });
+
+      } catch (err) {
+        boxStato.innerHTML = `<span style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Errore: ${err.message}</span>`;
+      }
+    }
+
+    document.getElementById("btn-scarica-zip").addEventListener("click", async () => {
+      if (cedoliniElaborati.length === 0) return;
+      const meseScelto = document.getElementById("select-mese-cedolino").value;
+      const annoScelto = document.getElementById("select-anno-cedolino").value;
+
+      const zip = new JSZip();
+      cedoliniElaborati.forEach(item => {
+        zip.file(item.nomeFile, item.blob);
+      });
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      saveAs(zipBlob, `Buste_Paga_Mirisa_${meseScelto}_${annoScelto}.zip`);
+      showToast("Download ZIP avviato!");
+    });
+  </script>
+</body>
+</html>
