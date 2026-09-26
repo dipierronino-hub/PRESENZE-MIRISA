@@ -10,8 +10,6 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
-  <!-- Libreria per generare il PDF per il consulente -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
     :root {
@@ -21,9 +19,7 @@
       --accent: #38bdf8;
       --accent-hover: #0284c7;
       --whatsapp: #25d366;
-      --whatsapp-hover: #1ebd5b;
       --mail-color: #6366f1;
-      --mail-hover: #4f46e5;
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --success: #22c55e;
@@ -45,11 +41,10 @@
       border-radius: var(--radius); padding: 32px; width: 100%; max-width: 380px;
       text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.7);
     }
-    .auth-logo-box {
-      width: 70px; height: 70px; background: linear-gradient(135deg, #881337, #1e1b4b);
-      border: 2px solid var(--accent); border-radius: 14px; display: flex; align-items: center; justify-content: center;
-      margin: 0 auto 14px; font-weight: 900; font-size: 24px; color: #fff; box-shadow: 0 4px 12px rgba(56,189,248,0.3);
-    }
+    /* Stile per il Logo */
+    .auth-logo { width: 90px; height: 90px; object-fit: contain; border-radius: 10px; background: #fff; padding: 6px; margin-bottom: 15px; }
+    .logo-img { width: 55px; height: 55px; object-fit: contain; border-radius: 8px; background: #fff; padding: 4px; }
+    
     .auth-modal h2 { margin: 0 0 6px; font-size: 20px; color: #fff; }
     .auth-modal p { margin: 0 0 20px; font-size: 13px; color: var(--text-muted); }
     .auth-input {
@@ -62,7 +57,6 @@
       padding: 12px; border-radius: 8px; font-weight: 800; font-size: 14px; cursor: pointer;
       display: flex; align-items: center; justify-content: center; gap: 8px;
     }
-    .auth-btn:hover { background: var(--accent-hover); }
     
     header {
       display: flex; justify-content: space-between; align-items: center;
@@ -70,11 +64,6 @@
       border-radius: var(--radius); padding: 16px 24px; margin-bottom: 24px;
     }
     .brand-container { display: flex; align-items: center; gap: 16px; }
-    .logo-badge {
-      width: 50px; height: 50px; background: linear-gradient(135deg, #881337, #1e1b4b);
-      border: 2px solid var(--accent); border-radius: 10px; display: flex; align-items: center; justify-content: center;
-      font-weight: 900; font-size: 18px; color: #fff; box-shadow: 0 4px 10px rgba(56,189,248,0.2);
-    }
     .brand h1 { margin: 0; font-size: 22px; font-weight: 800; }
     .brand h1 span { color: var(--accent); }
     .brand p { margin: 4px 0 0; font-size: 13px; color: var(--text-muted); }
@@ -105,6 +94,7 @@
     th.dip-header { text-align: left; padding-left: 12px; min-width: 170px; position: sticky; left: 0; background: #0b1528; z-index: 10; }
     td.dip-cell { text-align: left; padding-left: 12px; font-weight: 700; position: sticky; left: 0; background: var(--surface); z-index: 5; }
 
+    /* Colori vivaci per le presenze */
     .day-cell { cursor: pointer; transition: background 0.2s; font-weight: 800; font-size: 12px; height: 38px; }
     .day-cell:hover { filter: brightness(1.2); }
     .st-intera { background: rgba(34, 197, 94, 0.35); color: #4ade80; }
@@ -117,38 +107,17 @@
       border: 2px dashed var(--accent); background: rgba(56, 189, 248, 0.04);
       border-radius: var(--radius); padding: 30px; text-align: center; transition: all 0.2s;
     }
-    .dropzone.dragover { background: rgba(56, 189, 248, 0.15); border-color: #fff; }
     .btn-action {
       background: var(--accent); color: #04101e; border: none; padding: 10px 20px;
       border-radius: 8px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
     }
     .btn-action:hover { background: var(--accent-hover); }
 
-    .btn-whatsapp {
-      background: var(--whatsapp); color: #04101e; border: none; padding: 6px 10px;
-      border-radius: 6px; font-weight: 800; font-size: 11px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; text-decoration: none;
-    }
-    .btn-whatsapp:hover { background: var(--whatsapp-hover); }
-
-    .btn-mail {
-      background: var(--mail-color); color: #fff; border: none; padding: 6px 10px;
-      border-radius: 6px; font-weight: 800; font-size: 11px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
-    }
-    .btn-mail:hover { background: var(--mail-hover); }
-
-    .cedolini-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; margin-top: 20px;
-    }
-    .cedolino-card {
-      background: #081120; border: 1px solid var(--surface-border); border-radius: 10px; padding: 16px;
-      display: flex; flex-direction: column; gap: 12px;
-    }
-    .contabilita-box {
-      background: #0f1b33; border: 1px solid var(--surface-border); border-radius: 8px; padding: 12px; font-size: 12px;
-    }
-    .contabilita-row {
-      display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 6px;
-    }
+    .cedolini-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; margin-top: 20px; }
+    .cedolino-card { background: #081120; border: 1px solid var(--surface-border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    
+    .contabilita-box { background: #0f1b33; border: 1px solid var(--surface-border); border-radius: 8px; padding: 12px; font-size: 12px; }
+    .contabilita-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 6px; }
     .contabilita-row input, .contabilita-row select {
       background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 6px 8px; border-radius: 4px; font-size: 12px; width: 170px; outline: none;
     }
@@ -162,7 +131,10 @@
   <!-- SCHERMATA LOGIN CON LOGO -->
   <div id="auth-overlay">
     <div class="auth-modal">
-      <div class="auth-logo-box">MC</div>
+      <!-- Il logo viene pescato in locale, assicurati di caricare 'logo.jpg' su GitHub -->
+      <img src="logo.jpg" alt="Mirisa Ceramiche" class="auth-logo" onerror="this.style.display='none'; document.getElementById('icon-fallback').style.display='block';">
+      <div id="icon-fallback" style="font-size: 40px; color: var(--accent); margin-bottom: 10px; display: none;"><i class="fa-solid fa-lock"></i></div>
+      
       <h2>Area Riservata</h2>
       <p>Mirisa Ceramiche - Presenze & Buste Paga</p>
       
@@ -179,28 +151,24 @@
 
   <header>
     <div class="brand-container">
-      <div class="logo-badge">MC</div>
+      <img src="logo.jpg" alt="Logo" class="logo-img" onerror="this.style.display='none'">
       <div class="brand">
         <h1>MIRISA <span>CERAMICHE</span></h1>
         <p>Cruscotto Direzionale Presenze, Spettanze & Buste Paga</p>
       </div>
     </div>
     <div style="display: flex; align-items: center; gap: 14px;">
-      <span id="label-operatore" style="font-size: 13px; color: var(--accent); font-weight: 600;">
-        <i class="fa-solid fa-user-shield"></i> Amministrazione Mirisa
-      </span>
-      <button id="btn-logout" style="background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
-        Esci
-      </button>
+      <span style="font-size: 13px; color: var(--accent); font-weight: 600;"><i class="fa-solid fa-user-shield"></i> Amministrazione</span>
+      <button id="btn-logout" style="background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">Esci</button>
     </div>
   </header>
 
   <div class="nav-tabs">
     <button class="nav-btn active" id="tab-btn-planning"><i class="fa-solid fa-calendar-days"></i> Planning Presenze</button>
     <button class="nav-btn" id="tab-btn-buste"><i class="fa-solid fa-file-invoice-dollar"></i> Divisione Buste Paga</button>
-    <button class="nav-btn" id="tab-btn-pagamenti-mensile"><i class="fa-solid fa-money-bill-wave"></i> Planning Pagamenti</button>
-    <button class="nav-btn" id="tab-btn-storico"><i class="fa-solid fa-chart-line"></i> Storico Annuale</button>
-    <button class="nav-btn" id="tab-btn-anagrafica"><i class="fa-solid fa-users"></i> Gestione Dipendenti & Flag PDF</button>
+    <button class="nav-btn" id="tab-btn-pagamenti-mensile"><i class="fa-solid fa-money-bill-wave"></i> Planning Pagamenti Mensile</button>
+    <button class="nav-btn" id="tab-btn-storico"><i class="fa-solid fa-chart-line"></i> Storico Annuale Dipendente</button>
+    <button class="nav-btn" id="tab-btn-anagrafica"><i class="fa-solid fa-users"></i> Gestione Dipendenti</button>
   </div>
 
   <!-- TAB 1: PLANNING PRESENZE -->
@@ -208,8 +176,8 @@
     <div class="card">
       <div class="toolbar">
         <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-          <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Visualizzazione:</label>
-          <select id="select-vista-presenze" style="background: #0f1b33; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 14px;">
+          <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Vista:</label>
+          <select id="select-vista-presenze" style="background: #0f1b33; color: #fff; padding: 8px 12px; border-radius: 6px;">
             <option value="mensile" selected>Mensile</option>
             <option value="settimanale">Settimanale</option>
           </select>
@@ -225,19 +193,13 @@
             <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
           </select>
         </div>
-        <div style="display: flex; align-items: center; gap: 14px;">
-          <button class="btn-action" id="btn-esporta-pdf-consulente" style="padding: 8px 14px; font-size: 12px; background: var(--success); color: #fff;">
-            <i class="fa-solid fa-file-pdf"></i> Esporta PDF per Consulente
-          </button>
-          <div style="font-size: 12px; color: var(--text-muted); display: flex; gap: 10px;">
-            <span><span style="color: #4ade80; font-weight: 800;">P</span> Intera</span>
-            <span><span style="color: #fb923c; font-weight: 800;">½</span> Mezza</span>
-            <span><span style="color: #f87171; font-weight: 800;">A</span> Assente</span>
-            <span><span style="color: #c084fc; font-weight: 800;">F</span> Ferie</span>
-          </div>
+        <div style="font-size: 12px; color: var(--text-muted); display: flex; gap: 14px;">
+          <span><span style="color: #4ade80; font-weight: 800;">P</span> Intera</span>
+          <span><span style="color: #fb923c; font-weight: 800;">½</span> Mezza</span>
+          <span><span style="color: #f87171; font-weight: 800;">A</span> Assente</span>
+          <span><span style="color: #c084fc; font-weight: 800;">F</span> Ferie</span>
         </div>
       </div>
-
       <div class="table-container">
         <div id="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Connessione database...</div>
         <table id="tabella-planning" style="display: none;"></table>
@@ -254,53 +216,660 @@
           <span style="font-size: 13px; font-weight: 700;">Competenza Cedolino:</span>
           <select id="select-mese-cedolino" style="background: #0f1b33; border: 1px solid var(--surface-border); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 13px;">
             <option value="Gennaio">Gennaio</option><option value="Febbraio">Febbraio</option><option value="Marzo">Marzo</option>
-            <option value="Aprile">Aprile</option><option valuePer quanto riguarda il logo, ho risolto alla radice incorporandolo direttamente nel codice tramite una stringa grafica (SVG) incorporata: in questo modo non dipenderà mai da link esterni, siti di hosting o blocchi di rete, e apparirà sempre perfetto sia nella schermata di sblocco password che nell'intestazione.
+            <option value="Aprile">Aprile</option><option value="Maggio">Maggio</option><option value="Giugno">Giugno</option>
+            <option value="Luglio">Luglio</option><option value="Agosto" selected>Agosto</option><option value="Settembre">Settembre</option>
+            <option value="Ottobre">Ottobre</option><option value="Novembre">Novembre</option><option value="Dicembre">Dicembre</option>
+          </select>
+          <select id="select-anno-cedolino" style="background: #0f1b33; border: 1px solid var(--surface-border); color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 13px;">
+            <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+          </select>
+        </div>
+      </div>
+      <div class="dropzone" id="drop-zone">
+        <i class="fa-solid fa-file-pdf" style="font-size: 44px; color: var(--accent); margin-bottom: 12px;"></i>
+        <h2 style="margin: 0 0 6px; font-size: 18px;">Caricamento Cedolone Buste Paga</h2>
+        <p style="margin: 0 0 16px; font-size: 13px; color: var(--text-muted);">Trascina qui il file PDF unico inviato dallo studio paghe oppure selezionalo dal computer.</p>
+        <input type="file" id="input-pdf-buste" accept="application/pdf" style="display: none;">
+        <button class="btn-action" id="btn-sfoglia-file"><i class="fa-solid fa-folder-open"></i> Seleziona PDF</button>
+        <div id="box-stato-pdf" style="display: none; margin-top: 16px; font-weight: 700; font-size: 14px;"></div>
+      </div>
+      <div id="barra-download-tutti" style="display: none; margin-top: 20px; justify-content: space-between; align-items: center; background: #081120; border: 1px solid var(--surface-border); border-radius: 8px; padding: 12px 18px;">
+        <span id="totale-estratti-label" style="font-weight: 700; font-size: 14px; color: var(--accent);"></span>
+        <button class="btn-action" id="btn-scarica-zip"><i class="fa-solid fa-file-zipper"></i> Scarica Tutti ZIP</button>
+      </div>
+      <div id="griglia-cedolini" class="cedolini-grid"></div>
+    </div>
+  </div>
 
-Soprattutto, hai centrato un'esigenza fondamentale per chi gestisce l'azienda: **la chiusura mensile per il consulente paghe**. 
+  <!-- TAB 3: PLANNING PAGAMENTI E REPORT CONSULENTE -->
+  <div id="tab-pagamenti-mensile" class="tab-content" style="display: none;">
+    <div class="card">
+      <div class="toolbar">
+        <div>
+          <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Mese:</label>
+          <select id="pag-mensile-mese" style="background: #0f1b33; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 14px; margin-right: 15px;">
+            <option value="Gennaio">Gennaio</option><option value="Febbraio">Febbraio</option><option value="Marzo">Marzo</option>
+            <option value="Aprile">Aprile</option><option value="Maggio">Maggio</option><option value="Giugno">Giugno</option>
+            <option value="Luglio">Luglio</option><option value="Agosto" selected>Agosto</option><option value="Settembre">Settembre</option>
+            <option value="Ottobre">Ottobre</option><option value="Novembre">Novembre</option><option value="Dicembre">Dicembre</option>
+          </select>
+          <select id="pag-mensile-anno" style="background: #0f1b33; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 14px;">
+            <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+          </select>
+        </div>
+        <button class="btn-action" style="background: var(--success);" id="btn-stampa-consulente">
+          <i class="fa-solid fa-print"></i> Genera Report PDF per Consulente
+        </button>
+      </div>
 
-Per soddisfare questa richiesta con precisione chirurgica, ho aggiunto al cruscotto due strumenti potentissimi:
-1. **Flag di Esclusione (Blocco Consulente):** Nel tab *Gestione Dipendenti* (Anagrafica), ogni collaboratore ha adesso un comodo interruttore/spunta **"Includi nel PDF per Consulente"**. Se per un mese decidi che un dipendente non deve essere conteggiato (es. a zero o non attivo), basta togliere la spunta e il sistema lo salterà automaticamente.
-2. **Esportazione PDF Presenze & Compensi per il Consulente:** Nel tab del Planning Presenze ho aggiunto un pulsante ufficiale **"Genera PDF Mensile per Consulente"**. Cliccandolo, il sistema genera un report in PDF pulito, ufficiale e intestato a **Mirisa Ceramiche** con:
-   - Il dettaglio delle presenze del mese per ogni dipendente attivo.
-   - Gli importi erogati (acconti e bonifici a saldo) registrati in contabilità.
-   - Il totale aziendale pronto da stampare o inviare con un clic allo studio paghe.
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 40px;" title="Seleziona chi includere nel PDF del consulente">Inc.</th>
+              <th style="text-align: left; padding-left: 14px;">Collaboratore</th>
+              <th>Acconto (€)</th>
+              <th>Bonifico Saldo (€)</th>
+              <th>Totale Mese (€)</th>
+              <th>Data Esecuzione</th>
+              <th>Banca di Accredito</th>
+            </tr>
+          </thead>
+          <tbody id="pagamenti-mensile-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-Ecco il codice completo e definitivo per il file **`admin.html`**:
+  <!-- TAB 4: STORICO ANNUALE -->
+  <div id="tab-storico" class="tab-content" style="display: none;">
+    <div class="card">
+      <div class="toolbar">
+        <div>
+          <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Collaboratore:</label>
+          <select id="storico-select-dip" style="background: #0f1b33; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 14px; margin-right: 15px;"></select>
+          <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Anno:</label>
+          <select id="storico-select-anno" style="background: #0f1b33; color: #fff; padding: 8px 12px; border-radius: 6px; font-size: 14px;">
+            <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: left; padding-left: 14px;">Mese di Competenza</th>
+              <th>Acconto (€)</th>
+              <th>Bonifico Saldo (€)</th>
+              <th>Totale Mese (€)</th>
+              <th>Data Esecuzione</th>
+              <th>Banca di Accredito</th>
+            </tr>
+          </thead>
+          <tbody id="storico-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-```html
-<!DOCTYPE html>
-<html lang="it">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mirisa Ceramiche - Cruscotto Presenze & Buste Paga</title>
-  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css)">
-  
-  <script src="[https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js)"></script>
-  <script src="[https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js](https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js)"></script>
-  <script src="[https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js](https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js)"></script>
-  <script src="[https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js](https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js)"></script>
-  <!-- Inclusione libreria jsPDF per generare il PDF per il consulente -->
-  <script src="[https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js](https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js)"></script>
+  <!-- TAB 5: ANAGRAFICA -->
+  <div id="tab-anagrafica" class="tab-content" style="display: none;">
+    <div class="card">
+      <h3 id="form-titolo" style="margin-top: 0; font-size: 16px; color: var(--accent);"><i class="fa-solid fa-user-plus"></i> Inserisci / Modifica Collaboratore</h3>
+      <input type="hidden" id="edit-dip-id" value="">
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+        <input type="text" id="nuovo-nome" placeholder="Cognome e Nome" style="flex: 2; min-width: 170px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
+        <input type="text" id="nuovo-cf" placeholder="Codice Fiscale" maxlength="16" style="flex: 1.4; min-width: 160px; text-transform: uppercase; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
+        <input type="tel" id="nuovo-tel" placeholder="Cellulare" style="flex: 1.4; min-width: 150px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
+        <input type="email" id="nuovo-email" placeholder="Email" style="flex: 1.6; min-width: 180px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
+        <button id="btn-salva-dip" class="btn-action"><i class="fa-solid fa-floppy-disk"></i> <span id="btn-salva-testo">Salva</span></button>
+        <button id="btn-annulla-edit" style="display: none; background: #1e293b; color: #fff; border: 1px solid var(--surface-border); padding: 10px 14px; border-radius: 8px; cursor: pointer;">Annulla</button>
+      </div>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align: left; padding-left: 14px;">Nominativo</th>
+              <th>Codice Fiscale</th>
+              <th>Cellulare WhatsApp</th>
+              <th>Indirizzo Email</th>
+              <th style="width: 140px;">Azioni</th>
+            </tr>
+          </thead>
+          <tbody id="lista-anagrafica-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-  <style>
-    :root {
-      --bg: #070d19;
-      --surface: #0f1b33;
-      --surface-border: #1a2c4e;
-      --accent: #38bdf8;
-      --accent-hover: #0284c7;
-      --whatsapp: #25d366;
-      --whatsapp-hover: #1ebd5b;
-      --mail-color: #6366f1;
-      --mail-hover: #4f46e5;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --success: #22c55e;
-      --warning: #f97316;
-      --danger: #ef4444;
-      --purple: #a855f7;
-      --radius: 12px;
+  <div id="toast"></div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref as dbRef, set, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const PASSWORD_ADMIN = "Mirisa2026!";
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw-BbRr_VlTDUDBpszuQ6nKaSMvLrcmcSxxI8L9LbR_xdGPU5Jfqb9NWVwBy53snt_r/exec";
+    const ELENCO_MESI = ["GENNAIO", "FEBBRAIO", "MARZO", "APRILE", "MAGGIO", "GIUGNO", "LUGLIO", "AGOSTO", "SETTEMBRE", "OTTOBRE", "NOVEMBRE", "DICEMBRE"];
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAb6M5iEzafntiQbr7fj76XrZYNjmz17tE",
+      authDomain: "presenze-dipendenti-e377b.firebaseapp.com",
+      databaseURL: "https://presenze-dipendenti-e377b-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "presenze-dipendenti-e377b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    function pad(n) { return String(n).padStart(2, '0'); }
+
+    let dipendenti = [];
+    let presenzeTutte = {};
+    let cedoliniElaborati = [];
+    let contabilitaTutta = {};
+
+    function showToast(msg) {
+      const t = document.getElementById("toast");
+      t.textContent = msg;
+      t.style.display = "block";
+      setTimeout(() => t.style.display = "none", 3000);
     }
 
-    * { box-sizing: border-box;
+    // LOGIN
+    const authOverlay = document.getElementById("auth-overlay");
+    const inputPass = document.getElementById("auth-pass");
+    const btnLogin = document.getElementById("btn-login");
+    const errBox = document.getElementById("auth-err");
+
+    function verificaLogin() {
+      if (localStorage.getItem("mirisa_admin_logged") === "true") {
+        authOverlay.style.display = "none";
+        connettiDatabase();
+      } else {
+        authOverlay.style.display = "flex";
+      }
+    }
+
+    function eseguiSblocco() {
+      const pass = inputPass.value.trim();
+      if (pass === PASSWORD_ADMIN) {
+        localStorage.setItem("mirisa_admin_logged", "true");
+        errBox.style.display = "none";
+        authOverlay.style.display = "none";
+        connettiDatabase();
+      } else {
+        errBox.style.display = "block";
+      }
+    }
+
+    btnLogin.addEventListener("click", eseguiSblocco);
+    inputPass.addEventListener("keydown", (e) => { if (e.key === "Enter") { e.preventDefault(); eseguiSblocco(); } });
+    document.getElementById("btn-logout").addEventListener("click", () => { localStorage.removeItem("mirisa_admin_logged"); location.reload(); });
+
+    verificaLogin();
+
+    // NAV TABS
+    function vaiATab(tabId) {
+      document.querySelectorAll(".tab-content").forEach(el => el.style.display = "none");
+      document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
+      document.getElementById(`tab-${tabId}`).style.display = "block";
+      document.getElementById(`tab-btn-${tabId}`).classList.add("active");
+      if (tabId === 'storico') popolaStoricoAnnuale();
+      if (tabId === 'pagamenti-mensile') popolaPagamentiMensile();
+    }
+    document.getElementById("tab-btn-planning").addEventListener("click", () => vaiATab("planning"));
+    document.getElementById("tab-btn-buste").addEventListener("click", () => vaiATab("buste"));
+    document.getElementById("tab-btn-pagamenti-mensile").addEventListener("click", () => vaiATab("pagamenti-mensile"));
+    document.getElementById("tab-btn-storico").addEventListener("click", () => vaiATab("storico"));
+    document.getElementById("tab-btn-anagrafica").addEventListener("click", () => vaiATab("anagrafica"));
+
+    function connettiDatabase() {
+      onValue(dbRef(db, "dipendenti"), (snap) => {
+        const data = snap.val() || {};
+        dipendenti = [];
+        Object.keys(data).forEach(id => {
+          const item = data[id];
+          if (typeof item === "string") { dipendenti.push({ id, nome: item, cf: "", tel: "", email: "" }); } 
+          else { dipendenti.push({ id, nome: item.nome || id, cf: item.cf || "", tel: item.tel || "", email: item.email || "" }); }
+        });
+        dipendenti.sort((a, b) => a.nome.localeCompare(b.nome));
+        renderizzaAnagrafica();
+        rigeneraPlanning();
+        popolaSelectStoricoDipendenti();
+        popolaPagamentiMensile();
+      });
+      onValue(dbRef(db, "presenze"), (snap) => { presenzeTutte = snap.val() || {}; rigeneraPlanning(); });
+      onValue(dbRef(db, "contabilita"), (snap) => {
+        contabilitaTutta = snap.val() || {};
+        if (cedoliniElaborati.length > 0) renderizzaGrigliaCedolini();
+        if (document.getElementById("tab-storico").style.display === "block") popolaStoricoAnnuale();
+        if (document.getElementById("tab-pagamenti-mensile").style.display === "block") popolaPagamentiMensile();
+      });
+    }
+
+    // PLANNING PRESENZE (Settimanale / Mensile)
+    function rigeneraPlanning() {
+      const table = document.getElementById("tabella-planning");
+      const loader = document.getElementById("loading-state");
+      const tipoVista = document.getElementById("select-vista-presenze").value;
+
+      if (dipendenti.length === 0) {
+        loader.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> In attesa dei dati...`;
+        loader.style.display = "block";
+        table.style.display = "none";
+        return;
+      }
+      loader.style.display = "none";
+      table.style.display = "table";
+      table.innerHTML = "";
+
+      const selMese = parseInt(document.getElementById("select-mese").value, 10);
+      const selAnno = parseInt(document.getElementById("select-anno").value, 10);
+
+      let giorniDaMostrare = [];
+      const giorniSettimanaNomi = ["DOM", "LUN", "MAR", "MER", "GIO", "VEN", "SAB"];
+
+      if (tipoVista === "mensile") {
+        const numGiorni = new Date(selAnno, selMese + 1, 0).getDate();
+        for (let g = 1; g <= numGiorni; g++) {
+          const dObj = new Date(selAnno, selMese, g);
+          giorniDaMostrare.push({ giornoNum: g, dataIso: `${selAnno}-${pad(selMese + 1)}-${pad(g)}`, etichetta: pad(g), settimana: giorniSettimanaNomi[dObj.getDay()], weekend: (dObj.getDay() === 0 || dObj.getDay() === 6) });
+        }
+      } else {
+        const oggi = new Date();
+        for (let i = 6; i >= 0; i--) {
+          const dObj = new Date(oggi);
+          dObj.setDate(oggi.getDate() - i);
+          giorniDaMostrare.push({
+            giornoNum: dObj.getDate(),
+            dataIso: `${dObj.getFullYear()}-${pad(dObj.getMonth() + 1)}-${pad(dObj.getDate())}`,
+            etichetta: `${pad(dObj.getDate())}/${pad(dObj.getMonth() + 1)}`,
+            settimana: giorniSettimanaNomi[dObj.getDay()],
+            weekend: (dObj.getDay() === 0 || dObj.getDay() === 6)
+          });
+        }
+      }
+
+      const thead = document.createElement("thead");
+      const rigaHeader = document.createElement("tr");
+      rigaHeader.innerHTML = `<th class="dip-header">Collaboratore</th>`;
+      giorniDaMostrare.forEach(g => {
+        rigaHeader.innerHTML += `<th style="${g.weekend ? 'background: #13223f; color: #64748b;' : ''}"><div style="font-size: 10px;">${g.settimana}</div><div>${g.etichetta}</div></th>`;
+      });
+      thead.appendChild(rigaHeader);
+      table.appendChild(thead);
+
+      const tbody = document.createElement("tbody");
+      dipendenti.forEach(dip => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td class="dip-cell">${dip.nome}</td>`;
+
+        giorniDaMostrare.forEach(g => {
+          const safeKey = dip.nome.replace(/[^a-zA-Z0-9]/g, "_");
+          const recDip = (presenzeTutte[g.dataIso] || {})[safeKey];
+          const statoDip = recDip ? recDip.stato : "";
+
+          let classeStato = ""; let sigla = "";
+          if (statoDip === "Intera") { classeStato = "st-intera"; sigla = "P"; }
+          else if (statoDip === "Assente") { classeStato = "st-assente"; sigla = "A"; }
+          else if (statoDip === "Mattina") { classeStato = "st-mattina"; sigla = "½M"; }
+          else if (statoDip === "Pomeriggio") { classeStato = "st-pomeriggio"; sigla = "½P"; }
+          else if (statoDip === "Ferie") { classeStato = "st-ferie"; sigla = "F"; }
+
+          const td = document.createElement("td");
+          td.className = `day-cell ${classeStato}`;
+          td.textContent = sigla;
+          td.addEventListener("click", () => cambiaStatoPlanning(g.dataIso, safeKey, dip.nome, statoDip));
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+      table.appendChild(tbody);
+    }
+
+    document.getElementById("select-vista-presenze").addEventListener("change", rigeneraPlanning);
+    document.getElementById("select-mese").addEventListener("change", rigeneraPlanning);
+    document.getElementById("select-anno").addEventListener("change", rigeneraPlanning);
+
+    function cambiaStatoPlanning(dataIso, safeKey, nome, statoAttuale) {
+      const sequenza = ["", "Intera", "Mattina", "Pomeriggio", "Assente", "Ferie"];
+      const prossimoStato = sequenza[(sequenza.indexOf(statoAttuale) + 1) % sequenza.length];
+      if (!prossimoStato) { remove(dbRef(db, `presenze/${dataIso}/${safeKey}`)); } 
+      else { set(dbRef(db, `presenze/${dataIso}/${safeKey}`), { dipendente: nome, data: dataIso, stato: prossimoStato }); }
+    }
+
+    // TAB 3: PLANNING PAGAMENTI MENSILE & REPORT CONSULENTE
+    function popolaPagamentiMensile() {
+      const tbody = document.getElementById("pagamenti-mensile-tbody");
+      const meseScelto = document.getElementById("pag-mensile-mese").value;
+      const annoScelto = document.getElementById("pag-mensile-anno").value;
+      if (!tbody) return;
+
+      tbody.innerHTML = "";
+      const chiavePeriodo = `${annoScelto}_${meseScelto}`;
+      const datiPeriodo = contabilitaTutta[chiavePeriodo] || {};
+      let totAcconti = 0, totSaldi = 0;
+
+      if (dipendenti.length === 0) return;
+
+      dipendenti.forEach(dip => {
+        const safeKey = dip.nome.replace(/[^a-zA-Z0-9]/g, "_");
+        const contData = datiPeriodo[safeKey] || { acconto: 0, bonifico: 0, dataBonifico: "", banca: "" };
+        const acc = parseFloat(contData.acconto) || 0;
+        const bon = parseFloat(contData.bonifico) || 0;
+        totAcconti += acc; totSaldi += bon;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input type="checkbox" class="chk-export-consulente" data-dip="${dip.nome}" checked style="cursor: pointer; width: 16px; height: 16px;"></td>
+          <td style="text-align: left; padding-left: 14px; font-weight: 700; color: #fff;">${dip.nome}</td>
+          <td>€ ${acc.toFixed(2)}</td>
+          <td>€ ${bon.toFixed(2)}</td>
+          <td style="font-weight: 800; color: var(--accent);">€ ${(acc + bon).toFixed(2)}</td>
+          <td>${contData.dataBonifico ? contData.dataBonifico : '-'}</td>
+          <td style="font-size: 11px; color: var(--text-muted);">${contData.banca ? contData.banca : '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const trTot = document.createElement("tr");
+      trTot.style.background = "#081120";
+      trTot.innerHTML = `
+        <td></td>
+        <td style="text-align: left; padding-left: 14px; font-weight: 800; color: var(--accent);">TOTALE AZIENDALE</td>
+        <td style="font-weight: 800; color: #fff;">€ ${totAcconti.toFixed(2)}</td>
+        <td style="font-weight: 800; color: #fff;">€ ${totSaldi.toFixed(2)}</td>
+        <td style="font-weight: 800; color: var(--success); font-size: 14px;">€ ${(totAcconti + totSaldi).toFixed(2)}</td>
+        <td colspan="2"></td>
+      `;
+      tbody.appendChild(trTot);
+    }
+    document.getElementById("pag-mensile-mese").addEventListener("change", popolaPagamentiMensile);
+    document.getElementById("pag-mensile-anno").addEventListener("change", popolaPagamentiMensile);
+
+    // FUNZIONE STAMPA REPORT CONSULENTE (PDF)
+    document.getElementById("btn-stampa-consulente").addEventListener("click", () => {
+      const meseScelto = document.getElementById("pag-mensile-mese").value;
+      const annoScelto = document.getElementById("pag-mensile-anno").value;
+      const meseNum = ELENCO_MESI.indexOf(meseScelto.toUpperCase());
+      const cks = document.querySelectorAll(".chk-export-consulente:checked");
+      
+      if(cks.length === 0) return alert("Seleziona almeno un dipendente da includere nel report!");
+
+      let html = `
+        <html><head><title>Report Presenze e Spettanze - ${meseScelto} ${annoScelto}</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; color: #333; }
+          h1 { text-align: center; color: #1e3a8a; margin-bottom: 5px; }
+          h3 { text-align: center; color: #6b7280; margin-top: 0; margin-bottom: 30px; }
+          table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 30px; }
+          th, td { border: 1px solid #cbd5e1; padding: 10px; text-align: center; }
+          th { background-color: #f1f5f9; color: #0f172a; font-weight: bold; }
+          td.nome-dip { text-align: left; font-weight: bold; }
+        </style>
+        </head><body>
+        <h1>Mirisa Ceramiche - Riepilogo Mensile</h1>
+        <h3>Competenza: ${meseScelto} ${annoScelto}</h3>
+        <table>
+          <thead>
+            <tr>
+              <th style="text-align:left;">Collaboratore</th>
+              <th>Giorni Pieni (P)</th>
+              <th>Mezze Giornate (½)</th>
+              <th>Assenze (A)</th>
+              <th>Ferie (F)</th>
+              <th>Acconto Erogato (€)</th>
+              <th>Bonifico Saldo (€)</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      const giorniMese = new Date(annoScelto, meseNum + 1, 0).getDate();
+      const chiavePeriodo = `${annoScelto}_${meseScelto}`;
+
+      cks.forEach(chk => {
+        const nome = chk.getAttribute("data-dip");
+        const safeKey = nome.replace(/[^a-zA-Z0-9]/g, "_");
+
+        let conteggioP = 0, conteggioM = 0, conteggioA = 0, conteggioF = 0;
+        for (let g = 1; g <= giorniMese; g++) {
+          const dataIso = `${annoScelto}-${pad(meseNum + 1)}-${pad(g)}`;
+          if (presenzeTutte[dataIso] && presenzeTutte[dataIso][safeKey]) {
+            const st = presenzeTutte[dataIso][safeKey].stato;
+            if (st === "Intera") conteggioP++;
+            else if (st === "Mattina" || st === "Pomeriggio") conteggioM++;
+            else if (st === "Assente") conteggioA++;
+            else if (st === "Ferie") conteggioF++;
+          }
+        }
+
+        const contData = (contabilitaTutta[chiavePeriodo] && contabilitaTutta[chiavePeriodo][safeKey]) || { acconto: 0, bonifico: 0 };
+        const acc = parseFloat(contData.acconto) || 0;
+        const bon = parseFloat(contData.bonifico) || 0;
+
+        html += `
+          <tr>
+            <td class="nome-dip">${nome}</td>
+            <td>${conteggioP}</td>
+            <td>${conteggioM}</td>
+            <td style="color:#ef4444;">${conteggioA}</td>
+            <td style="color:#a855f7;">${conteggioF}</td>
+            <td>${acc.toFixed(2)}</td>
+            <td>${bon.toFixed(2)}</td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>
+        <p style="text-align: right; font-size: 11px; color: #94a3b8;">Generato automaticamente dal Cruscotto Mirisa Ceramiche in data ${new Date().toLocaleDateString('it-IT')}</p>
+        </body></html>`;
+
+      const win = window.open('', '_blank');
+      win.document.write(html);
+      win.document.close();
+      setTimeout(() => { win.print(); }, 500);
+    });
+
+    // STORICO ANNUALE
+    function popolaSelectStoricoDipendenti() {
+      const sel = document.getElementById("storico-select-dip");
+      if (!sel) return;
+      sel.innerHTML = "";
+      dipendenti.forEach(dip => {
+        const opt = document.createElement("option"); opt.value = dip.nome; opt.textContent = dip.nome; sel.appendChild(opt);
+      });
+      popolaStoricoAnnuale();
+    }
+    function popolaStoricoAnnuale() {
+      const tbody = document.getElementById("storico-tbody");
+      const selDipNome = document.getElementById("storico-select-dip").value;
+      const selAnno = document.getElementById("storico-select-anno").value;
+      if (!tbody || !selDipNome) return;
+
+      tbody.innerHTML = "";
+      const safeKey = selDipNome.replace(/[^a-zA-Z0-9]/g, "_");
+      let totAccontiAnno = 0, totSaldiAnno = 0;
+
+      ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"].forEach(mese => {
+        const contData = (contabilitaTutta[`${selAnno}_${mese}`] && contabilitaTutta[`${selAnno}_${mese}`][safeKey]) || { acconto: 0, bonifico: 0, dataBonifico: "", banca: "" };
+        const acc = parseFloat(contData.acconto) || 0;
+        const bon = parseFloat(contData.bonifico) || 0;
+        totAccontiAnno += acc; totSaldiAnno += bon;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="text-align: left; padding-left: 14px; font-weight: 700; color: #fff;">${mese} ${selAnno}</td>
+          <td>€ ${acc.toFixed(2)}</td><td>€ ${bon.toFixed(2)}</td>
+          <td style="font-weight: 800; color: var(--accent);">€ ${(acc + bon).toFixed(2)}</td>
+          <td>${contData.dataBonifico ? contData.dataBonifico : '-'}</td>
+          <td style="font-size: 11px; color: var(--text-muted);">${contData.banca ? contData.banca : '-'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const trTot = document.createElement("tr");
+      trTot.style.background = "#081120";
+      trTot.innerHTML = `
+        <td style="text-align: left; padding-left: 14px; font-weight: 800; color: var(--accent);">TOTALE ${selAnno}</td>
+        <td style="font-weight: 800; color: #fff;">€ ${totAccontiAnno.toFixed(2)}</td>
+        <td style="font-weight: 800; color: #fff;">€ ${totSaldiAnno.toFixed(2)}</td>
+        <td style="font-weight: 800; color: var(--success); font-size: 14px;">€ ${(totAccontiAnno + totSaldiAnno).toFixed(2)}</td>
+        <td colspan="2"></td>
+      `;
+      tbody.appendChild(trTot);
+    }
+    document.getElementById("storico-select-dip").addEventListener("change", popolaStoricoAnnuale);
+    document.getElementById("storico-select-anno").addEventListener("change", popolaStoricoAnnuale);
+
+    // ANAGRAFICA E MODIFICHE (Omesse dal riassunto ma attive nel codice unito per brevità)
+    function renderizzaAnagrafica() {
+      const body = document.getElementById("lista-anagrafica-body");
+      if (!body) return;
+      body.innerHTML = "";
+      dipendenti.forEach(dip => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td style="text-align: left; padding-left: 14px; font-weight: 700;">${dip.nome}</td>
+          <td style="font-family: monospace; font-size: 13px; font-weight: 700; color: ${dip.cf ? 'var(--accent)' : 'var(--danger)'}; cursor: pointer;" onclick="modificaCfRapido('${dip.id}', '${dip.nome}', '${dip.cf}')">${dip.cf ? dip.cf : 'Inserisci CF'}</td>
+          <td style="font-size: 13px; font-weight: 600; color: ${dip.tel ? 'var(--whatsapp)' : 'var(--warning)'}; cursor: pointer;" onclick="modificaTelRapido('${dip.id}', '${dip.nome}', '${dip.tel}')">${dip.tel ? dip.tel : 'Inserisci Cell.'}</td>
+          <td style="font-size: 13px; font-weight: 600; color: ${dip.email ? 'var(--mail-color)' : 'var(--warning)'}; cursor: pointer;" onclick="modificaEmailRapido('${dip.id}', '${dip.nome}', '${dip.email}')">${dip.email ? dip.email : 'Inserisci Email'}</td>
+          <td>
+             <button title="Elimina" style="background: rgba(239, 68, 68, 0.2); color: var(--danger); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer;" onclick="eliminaDipendente('${dip.id}')"><i class="fa-solid fa-trash"></i></button>
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+    }
+
+    document.getElementById("btn-salva-dip").addEventListener("click", async () => {
+      const editId = document.getElementById("edit-dip-id").value;
+      const nome = document.getElementById("nuovo-nome").value.trim();
+      const cf = document.getElementById("nuovo-cf").value.trim().toUpperCase();
+      const tel = document.getElementById("nuovo-tel").value.trim().replace(/\s+/g, "");
+      const email = document.getElementById("nuovo-email").value.trim().toLowerCase();
+
+      if (!nome) return alert("Inserisci il nome!");
+      const targetId = editId || nome.replace(/[^a-zA-Z0-9]/g, "_");
+      try {
+        await set(dbRef(db, `dipendenti/${targetId}`), { nome, cf, tel, email });
+        showToast(`Salvato!`);
+        document.getElementById("nuovo-nome").value = ""; document.getElementById("nuovo-cf").value = ""; document.getElementById("nuovo-tel").value = ""; document.getElementById("nuovo-email").value = "";
+      } catch (err) { alert("Errore: " + err.message); }
+    });
+
+    window.modificaCfRapido = async (id, nomeAttuale, cfAttuale) => { const n = prompt(`Codice Fiscale per ${nomeAttuale}:`, cfAttuale || ""); if(n!==null) await update(dbRef(db, `dipendenti/${id}`), { cf: n.trim().toUpperCase() }); };
+    window.modificaTelRapido = async (id, nomeAttuale, telAttuale) => { const n = prompt(`Cellulare WhatsApp per ${nomeAttuale}:`, telAttuale || ""); if(n!==null) await update(dbRef(db, `dipendenti/${id}`), { tel: n.trim().replace(/\s+/g, "") }); };
+    window.modificaEmailRapido = async (id, nomeAttuale, emailAttuale) => { const n = prompt(`Email per ${nomeAttuale}:`, emailAttuale || ""); if(n!==null) await update(dbRef(db, `dipendenti/${id}`), { email: n.trim().toLowerCase() }); };
+    window.eliminaDipendente = (id) => { if(confirm("Vuoi davvero eliminare questo collaboratore?")) remove(dbRef(db, `dipendenti/${id}`)); };
+
+    // PDF CEDOLINI
+    const inputBuste = document.getElementById("input-pdf-buste");
+    document.getElementById("btn-sfoglia-file").addEventListener("click", () => inputBuste.click());
+    inputBuste.addEventListener("change", (e) => { if (e.target.files.length > 0) elaboraFilePdf(e.target.files[0]); });
+
+    async function elaboraFilePdf(file) {
+      const boxStato = document.getElementById("box-stato-pdf");
+      const barraDownload = document.getElementById("barra-download-tutti");
+      boxStato.style.display = "block";
+      boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-spinner fa-spin"></i> Elaborazione in corso...</span>`;
+      cedoliniElaborati = []; document.getElementById("griglia-cedolini").innerHTML = "";
+
+      try {
+        const bufferOriginale = await file.arrayBuffer();
+        const pdfPerTesto = await pdfjsLib.getDocument({ data: bufferOriginale.slice(0) }).promise;
+        const pdfOriginale = await PDFLib.PDFDocument.load(bufferOriginale.slice(0));
+        
+        let gruppiCedolini = []; let cedolinoCorrente = null;
+        for (let i = 1; i <= pdfPerTesto.numPages; i++) {
+          boxStato.innerHTML = `Scansione pagina ${i}...`;
+          const page = await pdfPerTesto.getPage(i);
+          const testoUpper = (await page.getTextContent()).items.map(it => it.str).join(" ").toUpperCase();
+          const matchCf = testoUpper.match(/[A-Z]{6}[0-9]{2}[A-Z][0-9]{2}[A-Z][0-9]{3}[A-Z]/);
+          
+          let dipTrovato = dipendenti.find(d => d.cf && matchCf && d.cf.toUpperCase() === matchCf[0]) || dipendenti.find(d => d.nome.toUpperCase().split(/\s+/).filter(w => w.length>=3).every(p => testoUpper.includes(p)));
+          
+          const id = matchCf ? matchCf[0] : (dipTrovato ? dipTrovato.nome : `Sconosciuto_${i}`);
+          if (cedolinoCorrente && cedolinoCorrente.id === id) { cedolinoCorrente.pagine.push(i - 1); } 
+          else {
+            if (cedolinoCorrente) gruppiCedolini.push(cedolinoCorrente);
+            cedolinoCorrente = { id: id, nome: dipTrovato ? dipTrovato.nome : id, tel: dipTrovato ? dipTrovato.tel : "", email: dipTrovato ? dipTrovato.email : "", pagine: [i - 1] };
+          }
+        }
+        if (cedolinoCorrente) gruppiCedolini.push(cedolinoCorrente);
+
+        for (const gruppo of gruppiCedolini) {
+          const nuovoPdf = await PDFLib.PDFDocument.create();
+          const pagCopiate = await nuovoPdf.copyPages(pdfOriginale, gruppo.pagine);
+          pagCopiate.forEach(p => nuovoPdf.addPage(p));
+          const pdfBytes = await nuovoPdf.save();
+          cedoliniElaborati.push({
+            nome: gruppo.nome, tel: gruppo.tel, email: gruppo.email, numPagine: gruppo.pagine.length,
+            blob: new Blob([pdfBytes], { type: "application/pdf" }), bytes: pdfBytes,
+            url: URL.createObjectURL(new Blob([pdfBytes], { type: "application/pdf" })),
+            nomeFile: `Cedolino_${document.getElementById("select-mese-cedolino").value}_${document.getElementById("select-anno-cedolino").value}_${gruppo.nome.replace(/[^a-zA-Z0-9]/g, "_")}.pdf`
+          });
+        }
+        boxStato.innerHTML = `<span style="color: var(--success);">Pronti ${cedoliniElaborati.length} cedolini!</span>`;
+        barraDownload.style.display = "flex";
+        renderizzaGrigliaCedolini();
+      } catch (err) { boxStato.innerHTML = `<span style="color: var(--danger);">Errore: ${err.message}</span>`; }
+    }
+
+    function renderizzaGrigliaCedolini() {
+      const griglia = document.getElementById("griglia-cedolini");
+      griglia.innerHTML = "";
+      const chiave = `${document.getElementById("select-anno-cedolino").value}_${document.getElementById("select-mese-cedolino").value}`;
+      
+      cedoliniElaborati.forEach((item, i) => {
+        const safeKey = item.nome.replace(/[^a-zA-Z0-9]/g, "_");
+        const contData = (contabilitaTutta[chiave] && contabilitaTutta[chiave][safeKey]) || { acconto: 0, bonifico: 0, dataBonifico: "", banca: "" };
+        const linkWa = item.tel ? `https://wa.me/39${item.tel.replace(/[^0-9]/g, "")}?text=Cedolino_Allegato` : null;
+
+        const card = document.createElement("div"); card.className = "cedolino-card";
+        card.innerHTML = `
+          <div style="display:flex;justify-content:space-between;">
+            <div><strong style="color:#fff;">${item.nome}</strong><br><small style="color:var(--text-muted);">${item.numPagine} pag.</small></div>
+            <div style="display:flex;gap:5px;">
+              <a href="${item.url}" download="${item.nomeFile}" class="btn-action" style="padding:5px;font-size:11px;"><i class="fa-solid fa-download"></i></a>
+              ${linkWa ? `<a href="${linkWa}" target="_blank" class="btn-whatsapp"><i class="fa-brands fa-whatsapp"></i></a>` : ''}
+            </div>
+          </div>
+          <div class="contabilita-box">
+            <div style="color:var(--accent);font-weight:bold;border-bottom:1px solid #1a2c4e;margin-bottom:8px;">Pagamenti</div>
+            <div class="contabilita-row">Acconto: <input type="number" id="acc-${i}" value="${contData.acconto||0}"></div>
+            <div class="contabilita-row">Saldo: <input type="number" id="bon-${i}" value="${contData.bonifico||0}"></div>
+            <div class="contabilita-row">Data: <input type="date" id="dat-${i}" value="${contData.dataBonifico||''}"></div>
+            <div class="contabilita-row">Banca: 
+              <select id="bnk-${i}">
+                <option value="" ${!contData.banca?'selected':''}>-Seleziona-</option>
+                <option value="BCC BARI E TARANTO" ${contData.banca==='BCC BARI E TARANTO'?'selected':''}>BCC BARI E TARANTO</option>
+                <option value="CASSA RURALE CASTELLANA GROTTE" ${contData.banca==='CASSA RURALE CASTELLANA GROTTE'?'selected':''}>CASSA RURALE CASTELLANA</option>
+                <option value="BANCA POPOLARE PUGLIESE" ${contData.banca==='BANCA POPOLARE PUGLIESE'?'selected':''}>B. POPOLARE PUGLIESE</option>
+                <option value="BANCA POPOLARE PUGLIA E BASILICATA" ${contData.banca==='BANCA POPOLARE PUGLIA E BASILICATA'?'selected':''}>B. POP. PUGLIA E BASILICATA</option>
+              </select>
+            </div>
+            <button class="btn-action" style="width:100%;font-size:11px;" id="btn-salva-cont-${i}">Salva</button>
+          </div>
+        `;
+        card.querySelector(`#btn-salva-cont-${i}`).addEventListener("click", async () => {
+          await set(dbRef(db, `contabilita/${chiave}/${safeKey}`), {
+            nome: item.nome, acconto: parseFloat(document.getElementById(`acc-${i}`).value)||0, bonifico: parseFloat(document.getElementById(`bon-${i}`).value)||0,
+            dataBonifico: document.getElementById(`dat-${i}`).value, banca: document.getElementById(`bnk-${i}`).value
+          });
+          showToast(`Contabilità salvata!`);
+        });
+        griglia.appendChild(card);
+      });
+    }
+
+    document.getElementById("btn-scarica-zip").addEventListener("click", async () => {
+      const zip = new JSZip(); cedoliniElaborati.forEach(i => zip.file(i.nomeFile, i.blob));
+      saveAs(await zip.generateAsync({ type: "blob" }), `Buste_Paga.zip`);
+    });
+  </script>
+</body>
+</html>
