@@ -39,6 +39,9 @@
       box-shadow: 0 10px 25px rgba(2, 132, 199, 0.4);
       transition: all 0.2s;
     }
+    .mic-button:disabled {
+      background: #1e293b; color: #64748b; cursor: not-allowed; box-shadow: none; opacity: 0.5;
+    }
     .mic-button.recording {
       background: linear-gradient(135deg, #ef4444, #f43f5e);
       animation: pulse 1.2s infinite;
@@ -114,11 +117,11 @@
       </div>
 
       <div class="voice-box">
-        <button id="btn-mic" class="mic-button" onclick="toggleVoiceRecording()">
+        <button id="btn-mic" class="mic-button" disabled onclick="toggleVoiceRecording()">
           <i class="fa-solid fa-microphone"></i>
         </button>
-        <div id="mic-status" class="voice-hint">Tocca il microfono e parla</div>
-        <div id="transcript" class="speech-transcript">In attesa della tua voce...</div>
+        <div id="mic-status" class="voice-hint">Connessione al database in corso...</div>
+        <div id="transcript" class="speech-transcript">In attesa della sincronizzazione...</div>
       </div>
 
       <!-- PANNELLO CALIBRAZIONE COLONNA -->
@@ -183,6 +186,7 @@
     window.operazioniProposte = [];
     window.ultimaFrase = "";
 
+    // Sincronizzazione sicura con Firebase
     onValue(ref(db, "dipendenti"), (snap) => {
       const data = snap.val() || {};
       catalogoDipendenti = [];
@@ -197,7 +201,15 @@
         });
       });
 
-      document.getElementById("mic-status").textContent = `Pronto! ${catalogoDipendenti.length} dipendenti sincronizzati.`;
+      console.log("Dipendenti caricati:", catalogoDipendenti);
+
+      if (catalogoDipendenti.length > 0) {
+        document.getElementById("btn-mic").disabled = false;
+        document.getElementById("mic-status").textContent = `Pronto! Sincronizzati ${catalogoDipendenti.length} dipendenti. Tocca e parla.`;
+        document.getElementById("transcript").textContent = "In attesa della tua voce...";
+      } else {
+        document.getElementById("mic-status").textContent = "Nessun dipendente trovato nel database!";
+      }
     });
 
     function showToast(msg) {
@@ -359,16 +371,14 @@
           let score = 0;
           const nomeDipLower = dip.nome.toLowerCase();
           
-          // Controlla ogni singola parte del nome del dipendente nel testo pronunciato
           dip.tokens.forEach(tok => {
-            if (tok.length >= 2 && t.includes(tok)) {
-              score += 25;
+            if (tok.length >= 3 && t.includes(tok)) {
+              score += 50;
             }
           });
 
-          // Se il nome completo o parte di esso è contenuto nella frase
           if (t.includes(nomeDipLower)) {
-            score += 100;
+            score += 150;
           }
 
           if (score > 0) punteggi.push({ nome: dip.nome, score });
@@ -376,7 +386,6 @@
 
         if (punteggi.length > 0) {
           punteggi.sort((a, b) => b.score - a.score);
-          // Prende il migliore o i migliori compatibili
           punteggi.forEach(p => {
             if (!dipendentiCoinvolti.includes(p.nome)) dipendentiCoinvolti.push(p.nome);
           });
@@ -396,7 +405,6 @@
       }
 
       window.operazioniProposte = [];
-      // Prende al massimo il primo dipendente più probabile per evitare falsi positivi multipli
       const dipendenteScelto = dipendentiCoinvolti.length > 0 ? [dipendentiCoinvolti[0]] : [];
 
       dipendenteScelto.forEach(nomeDip => {
