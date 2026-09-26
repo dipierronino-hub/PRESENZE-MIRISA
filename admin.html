@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mirisa Ceramiche - Cruscotto Direzionale Presenze & Buste Paga</title>
+  <title>Mirisa Ceramiche - Cruscotto Presenze & Buste Paga</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
   
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -105,7 +105,7 @@
     }
     .dropzone.dragover { background: rgba(56, 189, 248, 0.15); border-color: #fff; }
     .btn-action {
-      background: var(--accent); color: #04101e; border: none; padding: 10px 18px;
+      background: var(--accent); color: #04101e; border: none; padding: 10px 20px;
       border-radius: 8px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
     }
     .btn-action:hover { background: var(--accent-hover); }
@@ -130,26 +130,23 @@
       display: flex; justify-content: space-between; align-items: center; gap: 12px;
     }
 
-    #loading-state {
-      padding: 40px; text-align: center; color: var(--accent); font-weight: 700;
-    }
-
+    #loading-state { padding: 40px; text-align: center; color: var(--accent); font-weight: 700; }
     #toast { position: fixed; bottom: 20px; right: 20px; background: #1e293b; color: #fff; padding: 12px 20px; border-radius: 8px; border-left: 4px solid var(--success); display: none; z-index: 10000; font-size: 13px; font-weight: 600; }
   </style>
 </head>
 <body>
 
-  <!-- MODAL AUTENTICAZIONE RISERVATA -->
+  <!-- MODAL AUTENTICAZIONE -->
   <div id="auth-overlay">
     <div class="auth-modal">
       <div style="font-size: 34px; color: var(--accent); margin-bottom: 10px;"><i class="fa-solid fa-lock"></i></div>
       <h2>Area Riservata</h2>
       <p>Mirisa Ceramiche - Presenze & Buste Paga</p>
       
-      <input type="email" id="auth-email" class="auth-input" placeholder="Email (es. dipierro.nino@gmail.com)" value="dipierro.nino@gmail.com">
+      <input type="email" id="auth-email" class="auth-input" placeholder="Email" value="dipierro.nino@gmail.com">
       <input type="password" id="auth-pass" class="auth-input" placeholder="Password">
       
-      <button type="button" id="btn-login-action" class="auth-btn">
+      <button type="button" id="btn-login" class="auth-btn" onclick="window.effettuaLogin()">
         <i class="fa-solid fa-arrow-right-to-bracket"></i> Accedi
       </button>
       <div id="auth-err" style="color: var(--danger); font-size: 12px; font-weight: 700; margin-top: 14px; display: none; background: rgba(239, 68, 68, 0.15); padding: 10px; border-radius: 6px; text-align: left;"></div>
@@ -163,33 +160,33 @@
     </div>
     <div style="display: flex; align-items: center; gap: 14px;">
       <span id="label-operatore" style="font-size: 13px; color: var(--accent); font-weight: 600;">
-        <i class="fa-solid fa-circle-notch fa-spin"></i> Connessione...
+        <i class="fa-solid fa-user-shield"></i> Amministrazione
       </span>
-      <button id="btn-logout-action" style="display: none; background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
+      <button id="btn-logout" onclick="window.effettuaLogout()" style="display: none; background: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid var(--danger); padding: 5px 12px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer;">
         Esci
       </button>
     </div>
   </header>
 
   <div class="nav-tabs">
-    <button class="nav-btn active" id="tab-btn-planning"><i class="fa-solid fa-calendar-days"></i> Planning Presenze</button>
-    <button class="nav-btn" id="tab-btn-buste"><i class="fa-solid fa-file-invoice-dollar"></i> Divisione Buste Paga</button>
-    <button class="nav-btn" id="tab-btn-anagrafica"><i class="fa-solid fa-users"></i> Gestione Dipendenti, CF, WhatsApp & Email</button>
+    <button class="nav-btn active" id="tab-btn-planning" onclick="window.vaiATab('planning')"><i class="fa-solid fa-calendar-days"></i> Planning Presenze</button>
+    <button class="nav-btn" id="tab-btn-buste" onclick="window.vaiATab('buste')"><i class="fa-solid fa-file-invoice-dollar"></i> Divisione Buste Paga</button>
+    <button class="nav-btn" id="tab-btn-anagrafica" onclick="window.vaiATab('anagrafica')"><i class="fa-solid fa-users"></i> Gestione Dipendenti, CF, WhatsApp & Email</button>
   </div>
 
-  <!-- TAB 1: PLANNING PRESENZE -->
+  <!-- TAB 1: PLANNING -->
   <div id="tab-planning" class="tab-content">
     <div class="card">
       <div class="toolbar">
         <div>
           <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Seleziona Periodo:</label>
-          <select id="select-mese">
+          <select id="select-mese" onchange="window.rigeneraPlanning()">
             <option value="0">Gennaio</option><option value="1">Febbraio</option><option value="2">Marzo</option>
             <option value="3">Aprile</option><option value="4">Maggio</option><option value="5">Giugno</option>
             <option value="6">Luglio</option><option value="7">Agosto</option><option value="8" selected>Settembre</option>
             <option value="9">Ottobre</option><option value="10">Novembre</option><option value="11">Dicembre</option>
           </select>
-          <select id="select-anno">
+          <select id="select-anno" onchange="window.rigeneraPlanning()">
             <option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option>
           </select>
         </div>
@@ -202,16 +199,15 @@
       </div>
 
       <div class="table-container">
-        <div id="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Caricamento dati...</div>
+        <div id="loading-state"><i class="fa-solid fa-spinner fa-spin"></i> Connessione database...</div>
         <table id="tabella-planning" style="display: none;"></table>
       </div>
     </div>
   </div>
 
-  <!-- TAB 2: DIVISIONE BUSTE PAGA PDF -->
+  <!-- TAB 2: DIVISIONE BUSTE PAGA -->
   <div id="tab-buste" class="tab-content" style="display: none;">
     <div class="card">
-      
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 16px; background: #081120; padding: 12px 16px; border-radius: 8px; border: 1px solid var(--surface-border);">
         <div style="display: flex; align-items: center; gap: 10px;">
           <i class="fa-solid fa-calendar-check" style="color: var(--accent);"></i>
@@ -240,7 +236,7 @@
         </p>
 
         <input type="file" id="input-pdf-buste" accept="application/pdf" style="display: none;">
-        <button class="btn-action" id="btn-sfoglia-pdf">
+        <button class="btn-action" onclick="document.getElementById('input-pdf-buste').click()">
           <i class="fa-solid fa-folder-open"></i> Seleziona PDF Cedolone
         </button>
 
@@ -249,7 +245,7 @@
 
       <div id="barra-download-tutti" style="display: none; margin-top: 20px; justify-content: space-between; align-items: center; background: #081120; border: 1px solid var(--surface-border); border-radius: 8px; padding: 12px 18px;">
         <span id="totale-estratti-label" style="font-weight: 700; font-size: 14px; color: var(--accent);"></span>
-        <button class="btn-action" id="btn-scarica-zip-action">
+        <button class="btn-action" onclick="window.scaricaZipTutti()">
           <i class="fa-solid fa-file-zipper"></i> Scarica Tutti in Cartella ZIP (per Google Drive)
         </button>
       </div>
@@ -258,7 +254,7 @@
     </div>
   </div>
 
-  <!-- TAB 3: GESTIONE ANAGRAFICA DIPENDENTI, CF, WHATSAPP & EMAIL -->
+  <!-- TAB 3: ANAGRAFICA -->
   <div id="tab-anagrafica" class="tab-content" style="display: none;">
     <div class="card">
       <h3 id="form-titolo" style="margin-top: 0; font-size: 16px; color: var(--accent);">
@@ -268,15 +264,15 @@
       <input type="hidden" id="edit-dip-id" value="">
       
       <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
-        <input type="text" id="nuovo-nome" placeholder="Cognome e Nome (es. Ressa Vito)" style="flex: 2; min-width: 170px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
-        <input type="text" id="nuovo-cf" placeholder="Codice Fiscale (16 caratteri)" maxlength="16" style="flex: 1.4; min-width: 160px; text-transform: uppercase; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
-        <input type="tel" id="nuovo-tel" placeholder="Cellulare WhatsApp (es. 3331234567)" style="flex: 1.4; min-width: 150px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
+        <input type="text" id="nuovo-nome" placeholder="Cognome e Nome" style="flex: 2; min-width: 170px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
+        <input type="text" id="nuovo-cf" placeholder="Codice Fiscale" maxlength="16" style="flex: 1.4; min-width: 160px; text-transform: uppercase; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
+        <input type="tel" id="nuovo-tel" placeholder="Cellulare WhatsApp" style="flex: 1.4; min-width: 150px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
         <input type="email" id="nuovo-email" placeholder="Email Dipendente" style="flex: 1.6; min-width: 180px; background: #081120; border: 1px solid var(--surface-border); color: #fff; padding: 10px; border-radius: 6px;">
         
-        <button id="btn-salva-dip-action" class="btn-action">
+        <button id="btn-salva-dip" onclick="window.salvaDipendente()" class="btn-action">
           <i class="fa-solid fa-floppy-disk"></i> <span id="btn-salva-testo">Salva</span>
         </button>
-        <button id="btn-annulla-edit-action" style="display: none; background: #1e293b; color: #fff; border: 1px solid var(--surface-border); padding: 10px 14px; border-radius: 8px; cursor: pointer;">
+        <button id="btn-annulla-edit" onclick="window.annullaModifica()" style="display: none; background: #1e293b; color: #fff; border: 1px solid var(--surface-border); padding: 10px 14px; border-radius: 8px; cursor: pointer;">
           Annulla
         </button>
       </div>
@@ -300,9 +296,10 @@
 
   <div id="toast"></div>
 
+  <!-- SCRIPT MODULARE FIREBASE E MOTORE APPLICATIVO -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { getDatabase, ref as dbRef, set, update, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
     const firebaseConfig = {
@@ -322,7 +319,6 @@
 
     let dipendenti = [];
     let presenzeTutte = {};
-    let listenersConnessi = false;
     let cedoliniElaborati = [];
 
     function showToast(msg) {
@@ -332,51 +328,48 @@
       setTimeout(() => t.style.display = "none", 3000);
     }
 
-    function mostraTab(tabId) {
+    // Gestione Navigazione Tab
+    window.vaiATab = function(tabId) {
       document.querySelectorAll(".tab-content").forEach(el => el.style.display = "none");
       document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
       document.getElementById(`tab-${tabId}`).style.display = "block";
       document.getElementById(`tab-btn-${tabId}`).classList.add("active");
-    }
-    document.getElementById("tab-btn-planning").addEventListener("click", () => mostraTab("planning"));
-    document.getElementById("tab-btn-buste").addEventListener("click", () => mostraTab("buste"));
-    document.getElementById("tab-btn-anagrafica").addEventListener("click", () => mostraTab("anagrafica"));
+    };
 
-    setPersistence(auth, browserLocalPersistence).catch(console.error);
-
+    // Controllo Stato Accesso
     onAuthStateChanged(auth, (user) => {
-      if (user) {
-        document.getElementById("auth-overlay").style.display = "none";
-        document.getElementById("label-operatore").innerHTML = `<i class="fa-solid fa-user-check" style="color:var(--success);"></i> ${user.email}`;
-        document.getElementById("btn-logout-action").style.display = "inline-block";
+      const overlay = document.getElementById("auth-overlay");
+      const labelOp = document.getElementById("label-operatore");
+      const btnLogout = document.getElementById("btn-logout");
 
-        if (!listenersConnessi) {
-          connettiDatabase();
-          listenersConnessi = true;
-        }
+      if (user) {
+        overlay.style.display = "none";
+        labelOp.innerHTML = `<i class="fa-solid fa-user-check" style="color:var(--success);"></i> ${user.email}`;
+        btnLogout.style.display = "inline-block";
+        connettiDatabase();
       } else {
-        document.getElementById("auth-overlay").style.display = "flex";
-        document.getElementById("label-operatore").innerHTML = `<i class="fa-solid fa-lock"></i> Non connesso`;
-        document.getElementById("btn-logout-action").style.display = "none";
-        listenersConnessi = false;
+        overlay.style.display = "flex";
+        labelOp.innerHTML = `<i class="fa-solid fa-lock"></i> Area Riservata`;
+        btnLogout.style.display = "none";
       }
     });
 
-    async function eseguiLogin() {
+    // Funzione Login
+    window.effettuaLogin = async function() {
       const email = document.getElementById("auth-email").value.trim();
       const pass = document.getElementById("auth-pass").value;
       const errBox = document.getElementById("auth-err");
-      const btn = document.getElementById("btn-login-action");
+      const btn = document.getElementById("btn-login");
 
       if (!email || !pass) {
-        errBox.textContent = "Inserisci sia l'email che la password.";
+        errBox.textContent = "Inserisci sia email che password.";
         errBox.style.display = "block";
         return;
       }
 
       try {
         errBox.style.display = "none";
-        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Verifica in corso...`;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Accesso in corso...`;
         btn.disabled = true;
 
         await signInWithEmailAndPassword(auth, email, pass);
@@ -384,30 +377,27 @@
         btn.innerHTML = `<i class="fa-solid fa-arrow-right-to-bracket"></i> Accedi`;
         btn.disabled = false;
         
-        let msg = "Errore di accesso: " + err.message;
+        let msg = "Errore: " + err.message;
         if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
-          msg = "Password errata per l'account specificato. Riprova con attenzione.";
+          msg = "Password errata per l'account inserito.";
         } else if (err.code === "auth/user-not-found") {
-          msg = "Nessun account registrato con questa email.";
-        } else if (err.code === "auth/unauthorized-domain") {
-          msg = "Dominio non autorizzato su Firebase Console.";
+          msg = "Account non trovato.";
         }
         errBox.textContent = msg;
         errBox.style.display = "block";
       }
-    }
+    };
 
-    document.getElementById("btn-login-action").addEventListener("click", eseguiLogin);
     document.getElementById("auth-pass").addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        eseguiLogin();
+        window.effettuaLogin();
       }
     });
 
-    document.getElementById("btn-logout-action").addEventListener("click", () => {
+    window.effettuaLogout = function() {
       signOut(auth);
-    });
+    };
 
     function connettiDatabase() {
       onValue(dbRef(db, "dipendenti"), (snap) => {
@@ -430,23 +420,23 @@
 
         dipendenti.sort((a, b) => a.nome.localeCompare(b.nome));
         renderizzaAnagrafica();
-        rigeneraPlanning();
+        window.rigeneraPlanning();
       }, (error) => {
-        document.getElementById("loading-state").innerHTML = `<span style="color:var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Errore database: ${error.message}</span>`;
+        document.getElementById("loading-state").innerHTML = `<span style="color:var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Errore: ${error.message}</span>`;
       });
 
       onValue(dbRef(db, "presenze"), (snap) => {
         presenzeTutte = snap.val() || {};
-        rigeneraPlanning();
+        window.rigeneraPlanning();
       });
     }
 
-    function rigeneraPlanning() {
+    window.rigeneraPlanning = function() {
       const table = document.getElementById("tabella-planning");
       const loader = document.getElementById("loading-state");
 
       if (dipendenti.length === 0) {
-        loader.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> In attesa dei collaboratori...`;
+        loader.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> In attesa dei dati collaboratori...`;
         loader.style.display = "block";
         table.style.display = "none";
         return;
@@ -511,10 +501,7 @@
       });
 
       table.appendChild(tbody);
-    }
-
-    document.getElementById("select-mese").addEventListener("change", rigeneraPlanning);
-    document.getElementById("select-anno").addEventListener("change", rigeneraPlanning);
+    };
 
     function cambiaStatoPlanning(dataIso, safeKey, nome, statoAttuale) {
       const sequenza = ["", "Intera", "Mattina", "Pomeriggio", "Assente", "Ferie"];
@@ -568,7 +555,7 @@
 
         const btnMod = document.createElement("button");
         btnMod.innerHTML = '<i class="fa-solid fa-pen"></i>';
-        btnMod.title = "Modifica Completa";
+        btnMod.title = "Modifica";
         btnMod.style.cssText = "background: rgba(56, 189, 248, 0.2); color: var(--accent); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; margin-right: 6px; font-weight: 600;";
         btnMod.addEventListener("click", () => avviaModificaDipendente(dip.id, dip.nome, dip.cf, dip.tel, dip.email));
 
@@ -599,12 +586,12 @@
       
       document.getElementById("form-titolo").innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Modifica: <span style="color:#fff;">${nome}</span>`;
       document.getElementById("btn-salva-testo").textContent = "Salva Modifiche";
-      document.getElementById("btn-salva-dip-action").style.background = "var(--success)";
-      document.getElementById("btn-annulla-edit-action").style.display = "inline-block";
+      document.getElementById("btn-salva-dip").style.background = "var(--success)";
+      document.getElementById("btn-annulla-edit").style.display = "inline-block";
       document.getElementById("nuovo-cf").focus();
     }
 
-    function annullaModifica() {
+    window.annullaModifica = function() {
       document.getElementById("edit-dip-id").value = "";
       document.getElementById("nuovo-nome").value = "";
       document.getElementById("nuovo-cf").value = "";
@@ -613,12 +600,11 @@
       
       document.getElementById("form-titolo").innerHTML = `<i class="fa-solid fa-user-plus"></i> Inserisci / Modifica Collaboratore`;
       document.getElementById("btn-salva-testo").textContent = "Salva";
-      document.getElementById("btn-salva-dip-action").style.background = "var(--accent)";
-      document.getElementById("btn-annulla-edit-action").style.display = "none";
-    }
-    document.getElementById("btn-annulla-edit-action").addEventListener("click", annullaModifica);
+      document.getElementById("btn-salva-dip").style.background = "var(--accent)";
+      document.getElementById("btn-annulla-edit").style.display = "none";
+    };
 
-    async function salvaDipendente() {
+    window.salvaDipendente = async function() {
       const editId = document.getElementById("edit-dip-id").value;
       const nomeInput = document.getElementById("nuovo-nome");
       const cfInput = document.getElementById("nuovo-cf");
@@ -635,62 +621,58 @@
 
       try {
         await set(dbRef(db, `dipendenti/${targetId}`), { nome, cf, tel, email });
-        showToast(`Dati di ${nome} salvati correttamente!`);
-        annullaModifica();
+        showToast(`Dati di ${nome} salvati!`);
+        window.annullaModifica();
       } catch (err) {
         alert("Errore salvataggio: " + err.message);
       }
-    }
-    document.getElementById("btn-salva-dip-action").addEventListener("click", salvaDipendente);
+    };
 
     async function modificaCfRapido(id, nomeAttuale, cfAttuale) {
-      const nuovoCf = prompt(`Inserisci il Codice Fiscale per ${nomeAttuale}:`, cfAttuale || "");
+      const nuovoCf = prompt(`Codice Fiscale per ${nomeAttuale}:`, cfAttuale || "");
       if (nuovoCf === null) return;
-      
       const cfPulito = nuovoCf.trim().toUpperCase();
       try {
         await update(dbRef(db, `dipendenti/${id}`), { cf: cfPulito });
-        showToast(`Codice Fiscale per ${nomeAttuale} aggiornato!`);
+        showToast(`Codice Fiscale aggiornato!`);
       } catch (err) {
-        alert("Errore salvataggio CF: " + err.message);
+        alert("Errore: " + err.message);
       }
     }
 
     async function modificaTelRapido(id, nomeAttuale, telAttuale) {
-      const nuovoTel = prompt(`Inserisci il numero di cellulare WhatsApp (${nomeAttuale}):`, telAttuale || "");
+      const nuovoTel = prompt(`Cellulare WhatsApp per ${nomeAttuale}:`, telAttuale || "");
       if (nuovoTel === null) return;
-      
       const telPulito = nuovoTel.trim().replace(/\s+/g, "");
       try {
         await update(dbRef(db, `dipendenti/${id}`), { tel: telPulito });
-        showToast(`Numero WhatsApp per ${nomeAttuale} aggiornato!`);
+        showToast(`Cellulare aggiornato!`);
       } catch (err) {
-        alert("Errore salvataggio Cellulare: " + err.message);
+        alert("Errore: " + err.message);
       }
     }
 
     async function modificaEmailRapido(id, nomeAttuale, emailAttuale) {
-      const nuovaEmail = prompt(`Inserisci l'indirizzo Email per ${nomeAttuale}:`, emailAttuale || "");
+      const nuovaEmail = prompt(`Indirizzo Email per ${nomeAttuale}:`, emailAttuale || "");
       if (nuovaEmail === null) return;
-      
       const emailPulita = nuovaEmail.trim().toLowerCase();
       try {
         await update(dbRef(db, `dipendenti/${id}`), { email: emailPulita });
-        showToast(`Email per ${nomeAttuale} aggiornata!`);
+        showToast(`Email aggiornata!`);
       } catch (err) {
-        alert("Errore salvataggio Email: " + err.message);
+        alert("Errore: " + err.message);
       }
     }
 
     function eliminaDipendente(id) {
-      if (confirm("Vuoi davvero eliminare questo collaboratore dall'anagrafica?")) {
+      if (confirm("Vuoi davvero eliminare questo collaboratore?")) {
         remove(dbRef(db, `dipendenti/${id}`));
       }
     }
 
+    // Split Buste Paga
     const dropZone = document.getElementById("drop-zone");
     const inputBuste = document.getElementById("input-pdf-buste");
-    document.getElementById("btn-sfoglia-pdf").addEventListener("click", () => inputBuste.click());
 
     dropZone.addEventListener("dragover", (e) => { e.preventDefault(); dropZone.classList.add("dragover"); });
     dropZone.addEventListener("dragleave", () => dropZone.classList.remove("dragover"));
@@ -831,7 +813,7 @@
         }
         if (cedolinoCorrente) gruppiCedolini.push(cedolinoCorrente);
 
-        boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-gear fa-spin"></i> Divisione pagine e generazione file singoli...</span>`;
+        boxStato.innerHTML = `<span style="color: var(--accent);"><i class="fa-solid fa-gear fa-spin"></i> Divisione pagine e generazione file...</span>`;
 
         const meseScelto = selMeseCed.value;
         const annoScelto = selAnnoCed.value;
@@ -857,7 +839,7 @@
           });
         }
 
-        boxStato.innerHTML = `<span style="color: var(--success);"><i class="fa-solid fa-circle-check"></i> Elaborazione completata! ${cedoliniElaborati.length} cedolini separati con successo per <strong>${meseScelto} ${annoScelto}</strong>.</span>`;
+        boxStato.innerHTML = `<span style="color: var(--success);"><i class="fa-solid fa-circle-check"></i> Completato! ${cedoliniElaborati.length} cedolini per <strong>${meseScelto} ${annoScelto}</strong>.</span>`;
         document.getElementById("totale-estratti-label").textContent = `${cedoliniElaborati.length} Cedolini Pronti (${meseScelto} ${annoScelto})`;
         barraDownload.style.display = "flex";
 
@@ -889,7 +871,7 @@
                 <i class="fa-solid fa-download"></i> Scarica
               </a>
               ${linkWa ? `
-                <a href="${linkWa}" target="_blank" class="btn-whatsapp" style="width: 100%; justify-content: center;" title="Invia tramite WhatsApp">
+                <a href="${linkWa}" target="_blank" class="btn-whatsapp" style="width: 100%; justify-content: center;" title="Invia WhatsApp">
                   <i class="fa-brands fa-whatsapp"></i> WhatsApp
                 </a>
               ` : `
@@ -898,7 +880,7 @@
                 </button>
               `}
               ${linkMail ? `
-                <a href="${linkMail}" class="btn-mail" style="width: 100%; justify-content: center;" title="Invia tramite Email">
+                <a href="${linkMail}" class="btn-mail" style="width: 100%; justify-content: center;" title="Invia Email">
                   <i class="fa-solid fa-envelope"></i> Email
                 </a>
               ` : `
@@ -912,11 +894,11 @@
         });
 
       } catch (err) {
-        boxStato.innerHTML = `<span style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Errore elaborazione: ${err.message}</span>`;
+        boxStato.innerHTML = `<span style="color: var(--danger);"><i class="fa-solid fa-triangle-exclamation"></i> Errore: ${err.message}</span>`;
       }
     }
 
-    document.getElementById("btn-scarica-zip-action").addEventListener("click", async () => {
+    window.scaricaZipTutti = async function() {
       if (cedoliniElaborati.length === 0) return;
       const meseScelto = document.getElementById("select-mese-cedolino").value;
       const annoScelto = document.getElementById("select-anno-cedolino").value;
@@ -928,7 +910,7 @@
       const zipBlob = await zip.generateAsync({ type: "blob" });
       saveAs(zipBlob, `Buste_Paga_Mirisa_${meseScelto}_${annoScelto}.zip`);
       showToast("Download ZIP avviato!");
-    });
+    };
   </script>
 </body>
 </html>
