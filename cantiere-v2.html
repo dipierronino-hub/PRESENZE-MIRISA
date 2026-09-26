@@ -162,7 +162,6 @@
 
     function pad(n) { return String(n).padStart(2, '0'); }
 
-    // Gestione Offset Memorizzato
     let offsetAttivo = parseInt(localStorage.getItem("mirisa_offset") || "0", 10);
 
     window.impostaOffset = function(val) {
@@ -175,7 +174,6 @@
       if (window.ultimaFrase) elaboraFrase(window.ultimaFrase);
     };
 
-    // Ripristino pulsante attivo
     impostaOffset(offsetAttivo);
 
     const dOggi = new Date();
@@ -349,40 +347,37 @@
 
       const infoData = estraiTuttiIGiorni(frase);
       const statoGlobale = estraiStatoRigoroso(frase);
-      const t = frase.toLowerCase();
+      const t = frase.toLowerCase().replace(/[^a-z0-9\s]/g, "");
 
       let dipendentiCoinvolti = [];
 
-      if (t.includes("tutt") || t.includes("squadra")) {
+      if (t.includes("tutti") || t.includes("squadra")) {
         dipendentiCoinvolti = catalogoDipendenti.map(d => d.nome);
       } else {
         let punteggi = [];
         catalogoDipendenti.forEach(dip => {
           let score = 0;
-          dip.tokens.forEach(tok => {
-            if (t.includes(tok)) score += 5;
+          const nomeDipLower = dip.nome.toLowerCase();
+          
+          const partiNome = nomeDipLower.split(/\s+/);
+          partiNome.forEach(parte => {
+            if (parte.length >= 3 && t.includes(parte)) {
+              score += 40;
+            }
           });
 
-          if (t.includes("sansone") && dip.nome.toLowerCase().includes("sansone")) score += 30;
-          if (t.includes("andrea") && dip.nome.toLowerCase().includes("andrea")) score += 20;
-          if (t.includes("ressa") && dip.nome.toLowerCase().includes("ressa")) score += 30;
-          if (t.includes("vito") && dip.nome.toLowerCase().includes("vito")) score += 20;
-          if (t.includes("bulicko") && dip.nome.toLowerCase().includes("bulicko")) score += 30;
-          if (t.includes("davide") && dip.nome.toLowerCase().includes("davide")) score += 20;
-          if (t.includes("scarano") && dip.nome.toLowerCase().includes("scarano")) score += 30;
-          if (t.includes("margherita") && dip.nome.toLowerCase().includes("margherita")) score += 20;
-          if (t.includes("loschiavone") && dip.nome.toLowerCase().includes("loschiavone")) score += 30;
-          if (t.includes("isabella") && dip.nome.toLowerCase().includes("isabella")) score += 20;
-          if (t.includes("pellump") && dip.nome.toLowerCase().includes("pellump")) score += 30;
-          if (t.includes("campobasso") && dip.nome.toLowerCase().includes("campobasso")) score += 30;
-          if ((t.includes("dipierro") || t.includes("di piero")) && dip.nome.toLowerCase().includes("dipierro")) score += 30;
+          dip.tokens.forEach(tok => {
+            if (t.includes(tok)) score += 10;
+          });
 
           if (score > 0) punteggi.push({ nome: dip.nome, score });
         });
 
         if (punteggi.length > 0) {
           punteggi.sort((a, b) => b.score - a.score);
-          dipendentiCoinvolti.push(punteggi[0].nome);
+          punteggi.forEach(p => {
+            if (!dipendentiCoinvolti.includes(p.nome)) dipendentiCoinvolti.push(p.nome);
+          });
         }
       }
 
@@ -401,7 +396,6 @@
       window.operazioniProposte = [];
       dipendentiCoinvolti.forEach(nomeDip => {
         giorniFinali.forEach(giorno => {
-          // Calcolo data con applicazione dell'offset selezionato
           const dCompensata = new Date(annoFinale, meseFinale - 1, giorno + offsetAttivo, 12, 0, 0);
           const dataIsoScrittura = `${dCompensata.getFullYear()}-${pad(dCompensata.getMonth() + 1)}-${pad(dCompensata.getDate())}`;
 
