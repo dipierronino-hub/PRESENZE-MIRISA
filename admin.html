@@ -104,6 +104,10 @@
     .dropzone { border: 2px dashed var(--accent); background: rgba(56, 189, 248, 0.04); border-radius: var(--radius); padding: 30px; text-align: center; transition: all 0.2s; }
     .btn-action { background: var(--accent); color: #04101e; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 800; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
     .btn-action:hover { background: var(--accent-hover); }
+    
+    .btn-whatsapp { background: var(--whatsapp); color: #04101e; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 800; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+    .btn-mail { background: var(--mail-color); color: #fff; border: none; padding: 10px 16px; border-radius: 6px; font-weight: 800; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }
+
 
     .cedolini-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr)); gap: 16px; margin-top: 20px; }
     .cedolino-card { background: #081120; border: 1px solid var(--surface-border); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
@@ -190,6 +194,22 @@
   <!-- TAB 2: DATI PER CONSULENTE -->
   <div id="tab-consulente" class="tab-content" style="display: none;">
     <div class="card">
+      
+      <!-- CONTATTI CONSULENTE -->
+      <div style="margin-bottom: 20px; background: #081120; border: 1px solid var(--surface-border); border-radius: 8px; padding: 16px;">
+        <div style="font-weight: 700; color: var(--accent); margin-bottom: 10px;"><i class="fa-solid fa-address-book"></i> Contatti Consulente</div>
+        <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+          <input type="email" id="consulente-email" placeholder="Email Studio Paghe" style="background: #0f1b33; color: #fff; padding: 10px; border-radius: 6px; border: 1px solid var(--surface-border); width: 220px; outline: none;">
+          <input type="tel" id="consulente-tel" placeholder="Cellulare WhatsApp" style="background: #0f1b33; color: #fff; padding: 10px; border-radius: 6px; border: 1px solid var(--surface-border); width: 180px; outline: none;">
+          <button id="btn-salva-consulente" class="btn-action" style="padding: 10px 16px; font-size: 13px;"><i class="fa-solid fa-floppy-disk"></i> Salva Contatti</button>
+          
+          <div style="width: 1px; height: 30px; background: var(--surface-border); margin: 0 10px;"></div>
+          
+          <a href="#" id="link-wa-consulente" target="_blank" class="btn-whatsapp" style="display: none;"><i class="fa-brands fa-whatsapp"></i> Invia WhatsApp</a>
+          <a href="#" id="link-mail-consulente" class="btn-mail" style="display: none;"><i class="fa-solid fa-envelope"></i> Invia Email</a>
+        </div>
+      </div>
+
       <div class="toolbar">
         <div>
           <label style="font-size: 13px; color: var(--text-muted); font-weight: 600;">Mese Elaborazione:</label>
@@ -204,11 +224,11 @@
           </select>
         </div>
         <button class="btn-action" style="background: var(--success);" id="btn-stampa-consulente">
-          <i class="fa-solid fa-print"></i> Genera Report PDF Consulente
+          <i class="fa-solid fa-file-pdf"></i> 1. Genera e Salva PDF
         </button>
       </div>
       <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 15px;">
-        <em>Nota: Inserisci eventuali Extra e clicca fuori dal campo per salvare in automatico. Togli la spunta se un dipendente non deve comparire nel PDF.</em>
+        <em>Nota: Inserisci eventuali Extra e si sommeranno in tempo reale. Clicca fuori dalla casella per salvare in cloud. Togli la spunta per non includere un dipendente.</em>
       </p>
       <div class="table-container">
         <table>
@@ -349,7 +369,6 @@
     let presenzeTutte = {};
     let cedoliniElaborati = [];
     let contabilitaTutta = {};
-    let extraConsulenteTutto = {};
 
     function showToast(msg) {
       const t = document.getElementById("toast"); t.textContent = msg; t.style.display = "block";
@@ -390,7 +409,7 @@
     document.getElementById("tab-btn-storico").addEventListener("click", () => vaiATab("storico"));
     document.getElementById("tab-btn-anagrafica").addEventListener("click", () => vaiATab("anagrafica"));
 
-    // DB CONN
+    // DB CONN E CONTATTI CONSULENTE
     function connettiDatabase() {
       onValue(dbRef(db, "dipendenti"), (snap) => {
         const data = snap.val() || {};
@@ -401,11 +420,63 @@
           else { dipendenti.push({ id, nome: item.nome || id, cf: item.cf || "", costo: parseFloat(item.costo) || 0, email: item.email || "" }); }
         });
         dipendenti.sort((a, b) => a.nome.localeCompare(b.nome));
-        renderizzaAnagrafica(); rigeneraPlanning(); popolaSelectStoricoDipendenti(); popolaDatiConsulente();
+        renderizzaAnagrafica(); rigeneraPlanning(); popolaSelectStoricoDipendenti(); 
+        if(document.getElementById("tab-consulente").style.display === "block") popolaDatiConsulente();
       });
-      onValue(dbRef(db, "presenze"), (snap) => { presenzeTutte = snap.val() || {}; rigeneraPlanning(); popolaDatiConsulente(); });
-      onValue(dbRef(db, "contabilita"), (snap) => { contabilitaTutta = snap.val() || {}; if (cedoliniElaborati.length > 0) renderizzaGrigliaCedolini(); if (document.getElementById("tab-storico").style.display === "block") popolaStoricoAnnuale(); });
-      onValue(dbRef(db, "dati_consulente"), (snap) => { extraConsulenteTutto = snap.val() || {}; if (document.getElementById("tab-consulente").style.display === "block") popolaDatiConsulente(); });
+      onValue(dbRef(db, "presenze"), (snap) => { 
+        presenzeTutte = snap.val() || {}; 
+        rigeneraPlanning(); 
+        if(document.getElementById("tab-consulente").style.display === "block") popolaDatiConsulente();
+      });
+      onValue(dbRef(db, "contabilita"), (snap) => { 
+        contabilitaTutta = snap.val() || {}; 
+        if (cedoliniElaborati.length > 0) renderizzaGrigliaCedolini(); 
+        if (document.getElementById("tab-storico").style.display === "block") popolaStoricoAnnuale(); 
+      });
+      
+      // Caricamento impostazioni consulente (Email e Telefono)
+      onValue(dbRef(db, "impostazioni/consulente"), (snap) => {
+        const data = snap.val() || {};
+        document.getElementById("consulente-email").value = data.email || "";
+        document.getElementById("consulente-tel").value = data.tel || "";
+        aggiornaLinkInvioConsulente();
+      });
+    }
+
+    // GESTIONE CONTATTI CONSULENTE
+    document.getElementById("btn-salva-consulente").addEventListener("click", async () => {
+      const email = document.getElementById("consulente-email").value.trim();
+      const tel = document.getElementById("consulente-tel").value.trim();
+      try {
+        await set(dbRef(db, "impostazioni/consulente"), { email, tel });
+        showToast("Contatti Studio Paghe salvati!");
+      } catch (e) {
+        alert("Errore salvataggio: " + e.message);
+      }
+    });
+
+    function aggiornaLinkInvioConsulente() {
+      const email = document.getElementById("consulente-email").value.trim();
+      const tel = document.getElementById("consulente-tel").value.trim().replace(/[^0-9]/g, "");
+      const mese = document.getElementById("consulente-mese").value;
+      const anno = document.getElementById("consulente-anno").value;
+
+      const btnWa = document.getElementById("link-wa-consulente");
+      const btnMail = document.getElementById("link-mail-consulente");
+
+      if (tel) {
+        let t = tel.length === 10 && !tel.startsWith("39") ? "39" + tel : tel;
+        const msg = encodeURIComponent(`Buongiorno, le trasmetto in allegato il riepilogo dati presenze e spettanze di ${mese} ${anno} per l'elaborazione delle buste paga.\n\nAmministrazione Mirisa Ceramiche`);
+        btnWa.href = `https://wa.me/${t}?text=${msg}`;
+        btnWa.style.display = "inline-flex";
+      } else { btnWa.style.display = "none"; }
+
+      if (email) {
+        const subject = encodeURIComponent(`Dati Buste Paga - ${mese} ${anno} - Mirisa Ceramiche`);
+        const body = encodeURIComponent(`Buongiorno,\n\nle trasmetto in allegato il riepilogo in formato PDF dei dati presenze e spettanze relativi al mese di ${mese} ${anno}.\n\nResto a disposizione per qualsiasi chiarimento.\n\nCordiali saluti,\nAmministrazione Mirisa Ceramiche`);
+        btnMail.href = `mailto:${email}?subject=${subject}&body=${body}`;
+        btnMail.style.display = "inline-flex";
+      } else { btnMail.style.display = "none"; }
     }
 
     // TAB 1: PLANNING
@@ -454,6 +525,7 @@
 
     // TAB 2: DATI PER CONSULENTE E CALCOLO PAGA
     function popolaDatiConsulente() {
+      aggiornaLinkInvioConsulente();
       const tbody = document.getElementById("consulente-tbody");
       const meseScelto = document.getElementById("consulente-mese").value;
       const annoScelto = document.getElementById("consulente-anno").value;
@@ -463,7 +535,6 @@
       const meseNum = ELENCO_MESI.indexOf(meseScelto.toUpperCase());
       const giorniMese = new Date(annoScelto, meseNum + 1, 0).getDate();
       const chiavePeriodo = `${annoScelto}_${meseScelto}`;
-      const datiExtraPeriodo = extraConsulenteTutto[chiavePeriodo] || {};
 
       dipendenti.forEach(dip => {
         const safeKey = dip.nome.replace(/[^a-zA-Z0-9]/g, "_");
@@ -480,7 +551,8 @@
         
         const giorniLav = conteggioP + (conteggioM * 0.5);
         const costoBase = giorniLav * (dip.costo || 0);
-        const extraVal = datiExtraPeriodo[safeKey] ? parseFloat(datiExtraPeriodo[safeKey].extra) || 0 : 0;
+        const contData = (contabilitaTutta[chiavePeriodo] && contabilitaTutta[chiavePeriodo][safeKey]) || {};
+        const extraVal = parseFloat(contData.extra) || 0;
         const totFinale = costoBase + extraVal;
 
         const tr = document.createElement("tr");
@@ -489,19 +561,24 @@
           <td style="text-align: left; padding-left: 14px; font-weight: 700; color: #fff;">${dip.nome}</td>
           <td>${giorniLav}</td>
           <td style="color: var(--text-muted);">€ ${(dip.costo || 0).toFixed(2)}</td>
-          <td><input type="number" step="0.01" class="input-extra-cons" data-safekey="${safeKey}" value="${extraVal || 0}" style="width: 80px; text-align: right; background: #081120; border: 1px solid var(--surface-border); color: #fff; border-radius: 4px; padding: 4px;"></td>
-          <td style="font-weight: 800; color: var(--accent);">€ ${totFinale.toFixed(2)}</td>
+          <td><input type="number" step="0.01" class="input-extra-cons" data-safekey="${safeKey}" data-basecosto="${costoBase}" value="${extraVal || 0}" style="width: 80px; text-align: right; background: #081120; border: 1px solid var(--surface-border); color: #fff; border-radius: 4px; padding: 4px;"></td>
+          <td class="td-totale-finale" style="font-weight: 800; color: var(--accent);">€ ${totFinale.toFixed(2)}</td>
         `;
         tbody.appendChild(tr);
       });
 
-      // Salva Extra al volo
       document.querySelectorAll(".input-extra-cons").forEach(inp => {
+        inp.addEventListener("input", (e) => {
+          const val = parseFloat(e.target.value) || 0;
+          const baseCosto = parseFloat(e.target.getAttribute("data-basecosto")) || 0;
+          const tdTotale = e.target.closest("tr").querySelector(".td-totale-finale");
+          tdTotale.textContent = "€ " + (baseCosto + val).toFixed(2);
+        });
         inp.addEventListener("change", async (e) => {
           const sk = e.target.getAttribute("data-safekey");
           const val = parseFloat(e.target.value) || 0;
-          await set(dbRef(db, `dati_consulente/${chiavePeriodo}/${sk}`), { extra: val });
-          showToast("Extra salvato!");
+          try { await update(dbRef(db, `contabilita/${chiavePeriodo}/${sk}`), { extra: val }); showToast("Extra memorizzato!"); } 
+          catch(err) { alert("Errore salvataggio: " + err.message); }
         });
       });
     }
@@ -547,7 +624,6 @@
 
       const giorniMese = new Date(annoScelto, meseNum + 1, 0).getDate();
       const chiavePeriodo = `${annoScelto}_${meseScelto}`;
-      const datiExtraPeriodo = extraConsulenteTutto[chiavePeriodo] || {};
 
       cks.forEach(chk => {
         const nome = chk.getAttribute("data-dip");
@@ -567,7 +643,8 @@
         }
 
         const giorniLav = conteggioP + (conteggioM * 0.5);
-        const extraVal = datiExtraPeriodo[safeKey] ? parseFloat(datiExtraPeriodo[safeKey].extra) || 0 : 0;
+        const contData = (contabilitaTutta[chiavePeriodo] && contabilitaTutta[chiavePeriodo][safeKey]) || {};
+        const extraVal = parseFloat(contData.extra) || 0;
         const totFinale = (giorniLav * (dipObj.costo || 0)) + extraVal;
 
         html += `
@@ -687,16 +764,16 @@
               <select id="bnk-${i}" style="width: 130px; text-align: right;">
                 <option value="" ${!contData.banca?'selected':''}>-Seleziona-</option>
                 <option value="BCC BARI E TARANTO" ${contData.banca==='BCC BARI E TARANTO'?'selected':''}>BCC BARI</option>
-                <option value="CASSA RURALE" ${contData.banca==='CASSA RURALE'?'selected':''}>CASSA RURALE</option>
-                <option value="BPP" ${contData.banca==='BPP'?'selected':''}>BPP</option>
-                <option value="BPPB" ${contData.banca==='BPPB'?'selected':''}>BPPB</option>
+                <option value="CASSA RURALE CASTELLANA GROTTE" ${contData.banca==='CASSA RURALE CASTELLANA GROTTE'?'selected':''}>CASSA RURALE</option>
+                <option value="BANCA POPOLARE PUGLIESE" ${contData.banca==='BANCA POPOLARE PUGLIESE'?'selected':''}>BPP</option>
+                <option value="BANCA POPOLARE PUGLIA E BASILICATA" ${contData.banca==='BANCA POPOLARE PUGLIA E BASILICATA'?'selected':''}>BPPB</option>
               </select>
             </div>
             <button class="btn-action" style="width:100%;font-size:11px;" id="btn-salva-cont-${i}">Salva Contabilità</button>
           </div>
         `;
         card.querySelector(`#btn-salva-cont-${i}`).addEventListener("click", async () => {
-          await set(dbRef(db, `contabilita/${chiave}/${safeKey}`), {
+          await update(dbRef(db, `contabilita/${chiave}/${safeKey}`), {
             nome: item.nome, acconto: parseFloat(document.getElementById(`acc-${i}`).value)||0, bonifico: parseFloat(document.getElementById(`bon-${i}`).value)||0,
             dataBonifico: document.getElementById(`dat-${i}`).value, banca: document.getElementById(`bnk-${i}`).value
           });
