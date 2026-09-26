@@ -41,8 +41,11 @@
       border-radius: var(--radius); padding: 32px; width: 100%; max-width: 380px;
       text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.7);
     }
-    .auth-logo { width: 90px; height: 90px; object-fit: contain; border-radius: 10px; background: #fff; padding: 6px; margin-bottom: 15px; }
-    .logo-img { width: 55px; height: 55px; object-fit: contain; border-radius: 8px; background: #fff; padding: 4px; }
+    
+    /* Stili Logo e Fallback elegante */
+    .auth-logo { width: 120px; height: auto; object-fit: contain; border-radius: 8px; background: #fff; padding: 10px; margin-bottom: 15px; }
+    .logo-img { width: 65px; height: auto; object-fit: contain; border-radius: 6px; background: #fff; padding: 4px; }
+    .fallback-m { color: #8b0000; background: #fff; display: none; align-items: center; justify-content: center; font-weight: 900; font-family: sans-serif; }
     
     .auth-modal h2 { margin: 0 0 6px; font-size: 20px; color: #fff; }
     .auth-modal p { margin: 0 0 20px; font-size: 13px; color: var(--text-muted); }
@@ -123,8 +126,10 @@
   <!-- SCHERMATA LOGIN -->
   <div id="auth-overlay">
     <div class="auth-modal">
-      <img src="logo.jpg" alt="Mirisa Ceramiche" class="auth-logo" onerror="this.style.display='none'; document.getElementById('icon-fallback').style.display='block';">
-      <div id="icon-fallback" style="font-size: 40px; color: var(--accent); margin-bottom: 10px; display: none;"><i class="fa-solid fa-lock"></i></div>
+      <!-- LOGO CON FALLBACK ELEGANTE -->
+      <img src="270776_2.jpg" alt="Mirisa Ceramiche" class="auth-logo" onerror="this.style.display='none'; document.getElementById('icon-fallback').style.display='flex';">
+      <div id="icon-fallback" class="fallback-m" style="width: 120px; height: 60px; border-radius: 8px; font-size: 38px; margin: 0 auto 15px auto;">M</div>
+      
       <h2>Area Riservata</h2>
       <p>Mirisa Ceramiche - Presenze & Buste Paga</p>
       <input type="password" id="auth-pass" class="auth-input" placeholder="Inserisci Password Amministratore">
@@ -135,7 +140,10 @@
 
   <header>
     <div class="brand-container">
-      <img src="logo.jpg" alt="Logo" class="logo-img" onerror="this.style.display='none'">
+      <!-- LOGO HEADER CON FALLBACK ELEGANTE -->
+      <img src="270776_2.jpg" alt="Logo" class="logo-img" onerror="this.style.display='none'; document.getElementById('header-fallback').style.display='flex';">
+      <div id="header-fallback" class="fallback-m" style="width: 65px; height: 45px; border-radius: 6px; font-size: 28px;">M</div>
+
       <div class="brand">
         <h1>MIRISA <span>CERAMICHE</span></h1>
         <p>Cruscotto Direzionale Presenze, Paga Base & Buste Paga</p>
@@ -364,7 +372,7 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
     function pad(n) { return String(n).padStart(2, '0'); }
 
-    // Funzione Matematica FORZATA per punto migliaia e virgola decimale (Formato Italiano Perfetto)
+    // Formattazione Euro - Obbliga al punto per migliaia e virgola per decimali (Es: 1.250,50)
     function formattaEuro(num) {
       const n = Number(num) || 0;
       let parts = n.toFixed(2).split(".");
@@ -416,7 +424,7 @@
     document.getElementById("tab-btn-storico").addEventListener("click", () => vaiATab("storico"));
     document.getElementById("tab-btn-anagrafica").addEventListener("click", () => vaiATab("anagrafica"));
 
-    // DB CONN E CONTATTI CONSULENTE
+    // DB CONN
     function connettiDatabase() {
       onValue(dbRef(db, "dipendenti"), (snap) => {
         const data = snap.val() || {};
@@ -440,7 +448,6 @@
         if (cedoliniElaborati.length > 0) renderizzaGrigliaCedolini(); 
         if (document.getElementById("tab-storico").style.display === "block") popolaStoricoAnnuale(); 
       });
-      
       onValue(dbRef(db, "impostazioni/consulente"), (snap) => {
         const data = snap.val() || {};
         document.getElementById("consulente-email").value = data.email || "";
@@ -527,7 +534,7 @@
       if (!prossimoStato) { remove(dbRef(db, `presenze/${dataIso}/${safeKey}`)); } else { set(dbRef(db, `presenze/${dataIso}/${safeKey}`), { dipendente: nome, data: dataIso, stato: prossimoStato }); }
     }
 
-    // TAB 2: DATI PER CONSULENTE E CALCOLO PAGA
+    // TAB 2: DATI PER CONSULENTE
     function popolaDatiConsulente() {
       aggiornaLinkInvioConsulente();
       const tbody = document.getElementById("consulente-tbody");
@@ -564,7 +571,7 @@
           <td><input type="checkbox" class="chk-export-consulente" data-dip="${dip.nome}" checked style="cursor: pointer; width: 16px; height: 16px;"></td>
           <td style="text-align: left; padding-left: 14px; font-weight: 700; color: #fff;">${dip.nome}</td>
           <td>${giorniLav}</td>
-          <td style="color: var(--text-muted);">€ ${formattaEuro(dip.costo || 0)}</td>
+          <td style="color: var(--text-muted);">€ ${formattaEuro(dip.costo)}</td>
           <td><input type="number" step="0.01" class="input-extra-cons" data-safekey="${safeKey}" data-basecosto="${costoBase}" value="${extraVal || 0}" style="width: 80px; text-align: right; background: #081120; border: 1px solid var(--surface-border); color: #fff; border-radius: 4px; padding: 4px;"></td>
           <td class="td-totale-finale" style="font-weight: 800; color: var(--accent);">€ ${formattaEuro(totFinale)}</td>
         `;
@@ -681,7 +688,7 @@
       setTimeout(() => { win.print(); }, 500);
     });
 
-    // TAB 3: DIVISIONE BUSTE PAGA PDF
+    // TAB 3: DIVISIONE BUSTE PAGA
     const dropZone = document.getElementById("drop-zone");
     const inputBuste = document.getElementById("input-pdf-buste");
     document.getElementById("btn-sfoglia-file").addEventListener("click", () => inputBuste.click());
@@ -772,7 +779,7 @@
             <div class="contabilita-row">Acconto: <input type="number" step="0.01" id="acc-${i}" value="${contData.acconto||0}"></div>
             <div class="contabilita-row">Saldo: <input type="number" step="0.01" id="bon-${i}" value="${contData.bonifico||0}"></div>
             <div class="contabilita-row">Data: <input type="date" id="dat-${i}" value="${contData.dataBonifico||''}"></div>
-            <div class="contabilita-row">Banca: 
+            <div class="contabilita-row">Banca di Addebito: 
               <select id="bnk-${i}" style="width: 130px; text-align: right;">
                 <option value="" ${!contData.banca?'selected':''}>-Seleziona-</option>
                 <option value="BCC BARI E TARANTO" ${contData.banca==='BCC BARI E TARANTO'?'selected':''}>BCC BARI</option>
